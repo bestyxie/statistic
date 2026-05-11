@@ -1,0 +1,17 @@
+{
+  "name": "statistic",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --filter @statistic/api dev & pnpm --filter @statistic/web dev",
+    "dev:api": "pnpm --filter @statistic/api dev",
+    "dev:web": "pnpm --filter @statistic/web dev",
+    "build": "pnpm --filter @statistic/web build",
+    "lint": "eslint .",
+    "db:init": "pnpm --filter @statistic/api db:init"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["esbuild"]
+  }
+}

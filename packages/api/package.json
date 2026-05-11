@@ -1,0 +1,26 @@
+{
+  "name": "@statistic/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/local-server.ts",
+    "dev:worker": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:init": "wrangler d1 execute statistic-db --local --file=../../schema.sql",
+    "db:init:remote": "wrangler d1 execute statistic-db --remote --file=../../schema.sql"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.0.2",
+    "crypto-js": "^4.2.0",
+    "hono": "^4.12.18"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260511.1",
+    "@statistic/shared": "workspace:*",
+    "@types/crypto-js": "^4.2.2",
+    "sql.js": "^1.14.1",
+    "tsx": "^4.21.0",
+    "wrangler": "^4.90.0"
+  }
+}
