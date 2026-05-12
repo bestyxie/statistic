@@ -51,3 +51,39 @@ export async function queryBestSelling(params: QueryParams) {
     return decrypt(text)
   }
 }
+
+// --- 查询商品访客列表 ---
+const VISITOR_URL =
+  'https://gz.aliyizhan.com/visitor/queryProductVisitorList.action?equipUUID=d6d91048-0b2d-3907-87f3-2807aeb5cc9a'
+
+export interface VisitorQueryParams {
+  /** 商品 code (sku) */
+  visitorValue: string
+  /** 搜索天数偏移，1=昨天 */
+  searchDay?: number
+  /** 搜索类型，固定 1 */
+  searchType?: number
+}
+
+export async function queryProductVisitors(params: VisitorQueryParams) {
+  const body = {
+    pager: { pageIndex: 0 },
+    searchType: params.searchType ?? 1,
+    searchDay: params.searchDay ?? 1,
+    visitorValue: params.visitorValue,
+  }
+
+  const resp = await fetch(VISITOR_URL, {
+    method: 'POST',
+    headers: HEADERS,
+    body: JSON.stringify(body),
+  })
+
+  const text = await resp.text()
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return decrypt(text)
+  }
+}

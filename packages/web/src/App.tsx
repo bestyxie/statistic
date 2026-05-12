@@ -7,6 +7,8 @@ import Shops from './pages/Shops'
 import Products from './pages/Products'
 import DataEntry from './pages/DataEntry'
 import Stats from './pages/Stats'
+import ProductDetail from './pages/ProductDetail'
+import Visitors from './pages/Visitors'
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'))
@@ -35,6 +37,8 @@ function App() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/shops" element={<Shops />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/visitors" element={<Visitors />} />
         <Route path="/data-entry" element={<DataEntry />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="*" element={<Navigate to="/" replace />} />

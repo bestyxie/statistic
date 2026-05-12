@@ -1,3 +1,5 @@
+DROP TABLE IF EXISTS product_visitor_relations;
+DROP TABLE IF EXISTS visitors;
 DROP TABLE IF EXISTS daily_product_stats;
 DROP TABLE IF EXISTS daily_shop_stats;
 DROP TABLE IF EXISTS products;
@@ -54,4 +56,28 @@ CREATE TABLE daily_product_stats (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
   UNIQUE(product_id, date)
+);
+
+-- 访客主表（独立存在，不随商品删除）
+CREATE TABLE visitors (
+  id TEXT PRIMARY KEY,
+  ext_visitor_id TEXT UNIQUE NOT NULL,
+  nick_name TEXT DEFAULT '',
+  icon_url TEXT DEFAULT '',
+  city_name TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  first_seen_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 商品-访客关联表（记录某访客某天访问了某商品）
+CREATE TABLE product_visitor_relations (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  visitor_id TEXT NOT NULL,
+  date TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT,
+  UNIQUE(product_id, visitor_id, date)
 );

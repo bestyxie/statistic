@@ -64,6 +64,42 @@ export class LocalD1 {
       }
     }
 
+    // Migrate: add UNIQUE index if missing
+    const indexes = this.db.exec("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='products' AND sql LIKE '%shop_id%sku%'")
+    if (indexes.length === 0) {
+      this.db.run('CREATE UNIQUE INDEX IF NOT EXISTS idx_products_shop_sku ON products(shop_id, sku)')
+    }
+
+    // Migrate: create visitors table if missing
+    const visitorTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='visitors'")
+    if (visitorTable.length === 0) {
+      this.db.run(`
+        CREATE TABLE visitors (
+          id TEXT PRIMARY KEY,
+          ext_visitor_id TEXT UNIQUE NOT NULL,
+          nick_name TEXT DEFAULT '',
+          icon_url TEXT DEFAULT '',
+          city_name TEXT DEFAULT '',
+          description TEXT DEFAULT '',
+          first_seen_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `)
+      this.db.run(`
+        CREATE TABLE product_visitor_relations (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          visitor_id TEXT NOT NULL,
+          date TEXT NOT NULL,
+          created_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+          FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT,
+          UNIQUE(product_id, visitor_id, date)
+        )
+      `)
+      this.dirty = true
+    }
+
     // Auto-save every 5 seconds if dirty
     setInterval(() => { if (this.dirty) this.save() }, 5000)
   }

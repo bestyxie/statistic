@@ -3,10 +3,10 @@
  * 自动抓取昨天商品访客数据并录入到统计系统
  * 用法: npx tsx src/scripts/import-yesterday.ts
  */
-import { queryBestSelling } from './query-best-selling'
+import { queryBestSelling, queryProductVisitors } from './query-best-selling'
 
 const API_BASE = 'http://localhost:3001/api'
-const SHOP_ID = '47f4f287-a4cb-453d-aa44-3ea3ec2dcc03'
+const SHOP_ID = 'eee675ce-2a83-4413-96b2-155c2c0385a4'
 
 // 昨天的日期 YYYY-MM-DD
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
@@ -82,6 +82,49 @@ async function main() {
   } else {
     console.log(`\n导入失败: ${importData.error}`)
   }
+
+  // 5. 抓取每个商品的访客列表并导入
+  console.log('\n正在抓取商品访客列表...')
+  let totalVisitorRecords = 0
+
+  for (const item of allItems) {
+    const code = item.code
+    if (!code) continue
+
+    try {
+      const visitorResult = await queryProductVisitors({ visitorValue: code })
+      const visitors: any[] = visitorResult?.data ?? []
+
+      if (visitors.length === 0) continue
+
+      // 导入访客数据
+      const visitorRes = await fetch(`${API_BASE}/stats/import-visitors`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          shop_id: SHOP_ID,
+          product_sku: code,
+          date: yesterday,
+          visitors,
+        }),
+      })
+      const visitorData = await visitorRes.json()
+
+      if (visitorData.message) {
+        totalVisitorRecords += visitors.length
+        console.log(`  ${item.code}: ${visitors.length} 个访客`)
+      } else {
+        console.log(`  ${item.code}: 导入失败 - ${visitorData.error}`)
+      }
+    } catch (e: any) {
+      console.log(`  ${item.code}: 抓取失败 - ${e.message}`)
+    }
+  }
+
+  console.log(`\n访客导入完成! 共 ${totalVisitorRecords} 条访客记录`)
 }
 
 main().catch((e) => {

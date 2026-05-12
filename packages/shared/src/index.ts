@@ -53,6 +53,55 @@ export interface TopProduct {
   total_viewers: number
 }
 
+/**
+ * 外部访客数据（queryProductVisitorList API 返回的单个访客）
+ * 主要字段:
+ *   id         → 外部系统访客唯一 ID
+ *   nickName   → 昵称
+ *   iconUrl    → 头像 URL
+ *   cityName   → 城市
+ *   description → 个人描述
+ */
+export interface ExternalVisitor {
+  id: string
+  nickName: string | null
+  iconUrl: string | null
+  cityName: string | null
+  description: string | null
+  mobilePhone: string | null
+  [key: string]: unknown
+}
+
+/**
+ * 访客主表（对应 visitors 表，独立存在，不随商品删除）
+ *
+ * 字段映射（ExternalVisitor → Visitor）:
+ *   id                       → ext_visitor_id  （外部访客 ID）
+ *   nickName                 → nick_name        （昵称）
+ *   iconUrl                  → icon_url         （头像）
+ *   cityName                 → city_name        （城市）
+ *   description              → description      （个人描述）
+ */
+export interface Visitor {
+  id: string
+  ext_visitor_id: string
+  nick_name: string
+  icon_url: string
+  city_name: string
+  description: string
+  first_seen_at: string
+  updated_at: string
+}
+
+/** 商品-访客关联记录（对应 product_visitor_relations 表，某访客某天访问了某商品） */
+export interface ProductVisitorRelation {
+  id: string
+  product_id: string
+  visitor_id: string
+  date: string
+  created_at: string
+}
+
 /** 外部数据源格式（vroList） */
 export interface ExternalData {
   encrypt: boolean

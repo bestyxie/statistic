@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'
-import type { Shop, Product, DashboardData, ExternalProduct, ExternalData } from '@statistic/shared'
+import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor } from '@statistic/shared'
 
 const API_BASE = '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
@@ -68,11 +68,11 @@ export const api = {
     request<{ message: string }>(`/shops/${id}`, { method: 'DELETE' }),
 
   // Products
-  getProducts: (shopId?: string) =>
-    request<Product[]>(`/products${shopId ? `?shop_id=${shopId}` : ''}`),
+  getProducts: (shopId?: string, page?: number, pageSize?: number) =>
+    request<{ items: Product[]; total: number; page: number; page_size: number }>(`/products${shopId ? `?shop_id=${shopId}&` : '?'}page=${page || 1}&page_size=${pageSize || 30}`),
   createProduct: (data: { shop_id: string; name: string; image_url?: string; sku?: string; price?: string }) =>
     request<Product>('/products', { method: 'POST', body: JSON.stringify(data) }),
-  updateProduct: (id: string, data: { name: string; image_url?: string; sku?: string; price?: string }) =>
+  updateProduct: (id: string, data: { name: string; image_url?: string; description?: string; sku?: string; price?: string }) =>
     request<{ message: string }>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id: string) =>
     request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
@@ -86,4 +86,12 @@ export const api = {
     request<any>(`/stats/top-products?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
   importData: (data: ExternalData, shopId: string, date: string) =>
     request<{ message: string; imported_products: number; total_visitors: number }>('/stats/import', { method: 'POST', body: JSON.stringify({ data, shop_id: shopId, date }) }),
+  getProductStats: (productId: string, start?: string, end?: string) =>
+    request<{ product: Product; stats: { date: string; view_count: number; viewer_count: number }[] }>(`/stats/product/${productId}${start || end ? `?start=${start || ''}&end=${end || ''}` : ''}`),
+
+  // Visitors
+  getProductVisitors: (productId: string, date?: string) =>
+    request<(Visitor & { date: string })[]>(`/stats/product/${productId}/visitors${date ? `?date=${date}` : ''}`),
+  getVisitors: (page?: number, limit?: number, search?: string) =>
+    request<{ visitors: (Visitor & { visit_count: number })[]; total: number; page: number; limit: number }>(`/stats/visitors?page=${page || 1}&limit=${limit || 30}${search ? `&search=${search}` : ''}`),
 }

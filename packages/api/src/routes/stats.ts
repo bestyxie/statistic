@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
-import type { ExternalData } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor } from '@statistic/shared'
+import { extractPrice } from '../utils/price'
 
 type Env = { DB: D1Database }
 
@@ -39,12 +40,13 @@ stats.post('/import', async (c) => {
 
   // Upsert each product
   for (const item of parsed.data.vroList) {
-    const productId = crypto.randomUUID()
-    const product = await db.prepare(
+    const price = extractPrice(item.description || '')
+    await db.prepare(
       `INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), updated_at = datetime("now")
-       RETURNING id`
-    ).bind(productId, shop_id, item.code, item.picUrl || '', item.description || '', item.code, '', item.picUrl || null, item.description || null).first()
+       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), price = COALESCE(?, price), updated_at = datetime("now")`
+    ).bind(crypto.randomUUID(), shop_id, item.code, item.picUrl || '', item.description || '', item.code, price, item.picUrl || null, item.description || null, price || null).run()
+
+    const product = await db.prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?').bind(shop_id, item.code).first()
 
     await db.prepare(
       'INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(product_id, date) DO UPDATE SET view_count = ?, viewer_count = ?'
@@ -144,6 +146,169 @@ stats.get('/top-products', async (c) => {
   ).bind(...params, limit).all()
 
   return c.json(results.results)
+})
+
+// --- Single product daily stats ---
+stats.get('/product/:id', async (c) => {
+  const db = c.env.DB
+  const productId = c.req.param('id')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+
+  const product = await db.prepare('SELECT id, name, image_url, sku FROM products WHERE id = ?').bind(productId).first()
+  if (!product) {
+    return c.json({ error: '商品不存在' }, 404)
+  }
+
+  const conditions = ['date >= ?', 'date <= ?']
+  const params: string[] = [
+    start || new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10),
+    end || new Date().toISOString().slice(0, 10),
+  ]
+  const where = conditions.join(' AND ')
+
+  const stats = await db.prepare(
+    `SELECT date, view_count, viewer_count FROM daily_product_stats WHERE product_id = ? AND ${where} ORDER BY date`
+  ).bind(productId, ...params).all()
+
+  return c.json({ product, stats: stats.results })
+})
+
+// --- Import visitors for a product ---
+stats.post('/import-visitors', async (c) => {
+  const { shop_id, product_sku, date, visitors } = await c.req.json<{
+    shop_id: string
+    product_sku: string
+    date: string
+    visitors: ExternalVisitor[]
+  }>()
+
+  if (!shop_id || !product_sku || !date || !visitors?.length) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+
+  // Find the product by shop_id and sku
+  const product = await db
+    .prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
+    .bind(shop_id, product_sku)
+    .first<{ id: string }>()
+
+  if (!product) {
+    return c.json({ error: `商品不存在: ${product_sku}` }, 404)
+  }
+
+  let imported = 0
+
+  for (const v of visitors) {
+    if (!v.id) continue
+
+    // Upsert visitor
+    await db.prepare(
+      `INSERT INTO visitors (id, ext_visitor_id, nick_name, icon_url, city_name, description)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(ext_visitor_id) DO UPDATE SET
+         nick_name = COALESCE(?, nick_name),
+         icon_url = COALESCE(?, icon_url),
+         city_name = COALESCE(?, city_name),
+         description = COALESCE(?, description),
+         updated_at = datetime('now')`
+    )
+      .bind(
+        crypto.randomUUID(), v.id,
+        v.nickName || '', v.iconUrl || '', v.cityName || '', v.description || '',
+        v.nickName || null, v.iconUrl || null, v.cityName || null, v.description || null,
+      )
+      .run()
+
+    // Get visitor internal id
+    const visitor = await db
+      .prepare('SELECT id FROM visitors WHERE ext_visitor_id = ?')
+      .bind(v.id)
+      .first<{ id: string }>()
+
+    if (!visitor) continue
+
+    // Insert relation (ignore if duplicate)
+    await db.prepare(
+      `INSERT OR IGNORE INTO product_visitor_relations (id, product_id, visitor_id, date)
+       VALUES (?, ?, ?, ?)`
+    )
+      .bind(crypto.randomUUID(), product.id, visitor.id, date)
+      .run()
+
+    imported++
+  }
+
+  return c.json({ message: '访客数据导入成功', imported_visitors: imported })
+})
+
+// --- Get visitors for a product on a date ---
+stats.get('/product/:id/visitors', async (c) => {
+  const db = c.env.DB
+  const productId = c.req.param('id')
+  const date = c.req.query('date')
+
+  const conditions = ['pvr.product_id = ?']
+  const params: string[] = [productId]
+
+  if (date) {
+    conditions.push('pvr.date = ?')
+    params.push(date)
+  }
+
+  const where = conditions.join(' AND ')
+
+  const results = await db.prepare(
+    `SELECT v.id, v.ext_visitor_id, v.nick_name, v.icon_url, v.city_name, v.description, pvr.date
+     FROM product_visitor_relations pvr
+     JOIN visitors v ON pvr.visitor_id = v.id
+     WHERE ${where}
+     ORDER BY pvr.date DESC, v.nick_name`
+  )
+    .bind(...params)
+    .all()
+
+  return c.json(results.results)
+})
+
+// --- Get all visitors (paginated) ---
+stats.get('/visitors', async (c) => {
+  const db = c.env.DB
+  const page = parseInt(c.req.query('page') || '1')
+  const limit = parseInt(c.req.query('limit') || '30')
+  const offset = (page - 1) * limit
+  const search = c.req.query('search')
+
+  let where = '1=1'
+  const params: string[] = []
+
+  if (search) {
+    where += ' AND (nick_name LIKE ? OR description LIKE ? OR city_name LIKE ?)'
+    params.push(`%${search}%`, `%${search}%`, `%${search}%`)
+  }
+
+  const total = await db.prepare(
+    `SELECT COUNT(*) as count FROM visitors WHERE ${where}`
+  ).bind(...params).first<{ count: number }>()
+
+  const results = await db.prepare(
+    `SELECT v.*, COUNT(pvr.id) as visit_count
+     FROM visitors v
+     LEFT JOIN product_visitor_relations pvr ON v.id = pvr.visitor_id
+     WHERE ${where}
+     GROUP BY v.id
+     ORDER BY visit_count DESC, v.updated_at DESC
+     LIMIT ? OFFSET ?`
+  ).bind(...params, limit, offset).all()
+
+  return c.json({
+    visitors: results.results,
+    total: total?.count || 0,
+    page,
+    limit,
+  })
 })
 
 export default stats
