@@ -12,6 +12,10 @@ export default function Products() {
   const setSelectedShop = (v: string) => setSearchParams((p) => { p.delete('page'); if (v) p.set('shop', v); else p.delete('shop'); return p })
   const page = parseInt(searchParams.get('page') || '1')
   const setPage = (p: number) => setSearchParams((prev) => { prev.set('page', String(p)); return prev })
+  const visitDate = searchParams.get('date') || ''
+  const setVisitDate = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('date', v); else prev.delete('date'); return prev })
+  const search = searchParams.get('search') || ''
+  const setSearch = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('search', v); else prev.delete('search'); return prev })
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
@@ -23,14 +27,14 @@ export default function Products() {
 
   const load = () => {
     setLoading(true)
-    api.getProducts(selectedShop || undefined, page, pageSize).then((res) => {
+    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined).then((res) => {
       setProducts(res.items)
       setTotal(res.total)
     }).finally(() => setLoading(false))
   }
 
   useEffect(() => { api.getShops().then(setShops) }, [])
-  useEffect(() => { load() }, [selectedShop, page])
+  useEffect(() => { load() }, [selectedShop, page, visitDate, search])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -94,6 +98,13 @@ export default function Products() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-gray-800">商品管理</h1>
         <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="搜索商品描述..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
+          />
           <select
             value={selectedShop}
             onChange={(e) => setSelectedShop(e.target.value)}
@@ -104,6 +115,12 @@ export default function Products() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          <input
+            type="date"
+            value={visitDate}
+            onChange={(e) => setVisitDate(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
@@ -244,7 +261,7 @@ export default function Products() {
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">商品描述</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">店铺</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">价格</th>
-                    <th className="text-right py-3 px-5 text-gray-500 font-medium">昨日访客</th>
+                    <th className="text-right py-3 px-5 text-gray-500 font-medium">{visitDate ? `${visitDate.slice(5)} 访客` : '昨日访客'}</th>
                     <th className="text-right py-3 px-5 text-gray-500 font-medium">操作</th>
                   </tr>
                 </thead>
@@ -258,7 +275,7 @@ export default function Products() {
                           <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                         )}
                       </td>
-                      <td className="py-3 px-5 font-medium text-gray-800 max-w-xs truncate">{p.description || '-'}</td>
+                      <td className="py-3 px-5 font-medium text-gray-800 max-w-xs truncate" title={p.description || undefined}>{p.description || '-'}</td>
                       <td className="py-3 px-5 text-gray-600">{p.shop_name}</td>
                       <td className="py-3 px-5 text-gray-600">{p.price || '-'}</td>
                       <td className="py-3 px-5 text-right font-medium">{(p as any).yesterday_visitors || 0}</td>

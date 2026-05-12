@@ -437,23 +437,33 @@ stats.get('/visitors', async (c) => {
   const params: string[] = []
 
   if (search) {
-    where += ' AND (nick_name LIKE ? OR description LIKE ? OR city_name LIKE ?)'
+    where += ' AND (v.nick_name LIKE ? OR v.description LIKE ? OR v.city_name LIKE ?)'
     params.push(`%${search}%`, `%${search}%`, `%${search}%`)
   }
 
+  const visitDate = c.req.query('date')
+
+  // 日期筛选：用子查询避免 JOIN 笛卡尔积
+  const dateFilter = visitDate
+    ? ` AND v.id IN (SELECT visitor_id FROM product_visitor_relations WHERE date = ?)`
+    : ''
+  if (visitDate) params.push(visitDate)
+
   const total = await db.prepare(
-    `SELECT COUNT(*) as count FROM visitors WHERE ${where}`
+    `SELECT COUNT(*) as count FROM visitors v WHERE ${where}${dateFilter}`
   ).bind(...params).first<{ count: number }>()
 
+  const countParams = [...params]
+
   const results = await db.prepare(
-    `SELECT v.*, COUNT(pvr.id) as visit_count
+    `SELECT v.*, COALESCE(SUM(pvr.visit_count), 0) as visit_count
      FROM visitors v
-     LEFT JOIN product_visitor_relations pvr ON v.id = pvr.visitor_id
-     WHERE ${where}
+     LEFT JOIN product_visitor_relations pvr ON v.id = pvr.visitor_id${visitDate ? ' AND pvr.date = ?' : ''}
+     WHERE ${where}${dateFilter}
      GROUP BY v.id
      ORDER BY visit_count DESC, v.updated_at DESC
      LIMIT ? OFFSET ?`
-  ).bind(...params, limit, offset).all()
+  ).bind(...countParams, ...(visitDate ? [visitDate] : []), limit, offset).all()
 
   return c.json({
     visitors: results.results,

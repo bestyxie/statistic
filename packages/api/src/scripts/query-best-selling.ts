@@ -140,3 +140,20 @@ export async function queryVisitorRecordByUid(params: {
     searchDay: params.searchDay ?? 1,
   })
 }
+
+// --- 查询商品详情（获取价格） ---
+const PRODUCT_DETAIL_URL =
+  'https://gz.aliyizhan.com/personProduct/productPrivateDetailsV2.action?marketCode=gz&equipUUID=d6d91048-0b2d-3907-87f3-2807aeb5cc9a'
+
+export async function queryProductDetail(pid: string) {
+  const url = `${PRODUCT_DETAIL_URL}&pid=${pid}`
+  const resp = await fetch(url, { method: 'GET', headers: HEADERS })
+  const text = await resp.text()
+
+  // 响应可能是明文 JSON 或加密的，先尝试 JSON 解析，失败则解密
+  try {
+    return JSON.parse(text)
+  } catch {
+    return decrypt(text)
+  }
+}

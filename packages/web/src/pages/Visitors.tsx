@@ -24,18 +24,20 @@ export default function Visitors() {
   const setPage = (p: number) => setSearchParams((prev) => { prev.set('page', String(p)); return prev })
   const search = searchParams.get('search') || ''
   const setSearch = (v: string) => setSearchParams((prev) => { if (v) prev.set('search', v); else prev.delete('search'); return prev })
+  const visitDate = searchParams.get('date') || ''
+  const setVisitDate = (v: string) => setSearchParams((prev) => { if (v) prev.set('date', v); else prev.delete('date'); return prev })
   const [loading, setLoading] = useState(true)
   const [productModal, setProductModal] = useState<{ visitor: VisitorRow | null; products: VisitorProduct[]; loading: boolean }>({ visitor: null, products: [], loading: false })
   const limit = 30
 
   useEffect(() => {
     loadVisitors()
-  }, [page, search])
+  }, [page, search, visitDate])
 
   async function loadVisitors() {
     setLoading(true)
     try {
-      const res = await api.getVisitors(page, limit, search || undefined)
+      const res = await api.getVisitors(page, limit, search || undefined, visitDate || undefined)
       setVisitors(res.visitors as VisitorRow[])
       setTotal(res.total)
     } catch (e: any) {
@@ -59,8 +61,6 @@ export default function Visitors() {
     }
   }
 
-  const totalPages = Math.ceil(total / limit)
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -77,6 +77,12 @@ export default function Visitors() {
           onChange={(e) => setSearch(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        />
+        <input
+          type="date"
+          value={visitDate}
+          onChange={(e) => setVisitDate(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <button
           onClick={handleSearch}
@@ -137,25 +143,62 @@ export default function Visitors() {
           </div>
 
           {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 mt-4">
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page <= 1}
-                className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 hover:bg-gray-50"
-              >
-                上一页
-              </button>
-              <span className="text-sm text-gray-600">{page} / {totalPages}</span>
-              <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page >= totalPages}
-                className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 hover:bg-gray-50"
-              >
-                下一页
-              </button>
-            </div>
-          )}
+          {total > limit && (() => {
+            const tp = Math.ceil(total / limit)
+            const pages: (number | '...')[] = []
+            if (tp <= 7) {
+              for (let i = 1; i <= tp; i++) pages.push(i)
+            } else {
+              pages.push(1)
+              if (page > 3) pages.push('...')
+              for (let i = Math.max(2, page - 1); i <= Math.min(tp - 1, page + 1); i++) pages.push(i)
+              if (page < tp - 2) pages.push('...')
+              pages.push(tp)
+            }
+            return (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
+                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{tp} 页</span>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => setPage(page - 1)}
+                    disabled={page <= 1}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >上一页</button>
+                  {pages.map((p, i) =>
+                    p === '...' ? (
+                      <span key={`dots-${i}`} className="px-2 text-gray-400">...</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => setPage(p)}
+                        className={`px-3 py-1 text-sm rounded-md border ${p === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50'}`}
+                      >{p}</button>
+                    )
+                  )}
+                  <button
+                    onClick={() => setPage(page + 1)}
+                    disabled={page >= tp}
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >下一页</button>
+                  <span className="mx-2 text-gray-400">|</span>
+                  <span className="text-sm text-gray-500">跳至</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={tp}
+                    className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const v = parseInt((e.target as HTMLInputElement).value)
+                        if (v >= 1 && v <= tp) setPage(v)
+                      }
+                    }}
+                  />
+                  <span className="text-sm text-gray-500">页</span>
+                </div>
+              </div>
+            )
+          })()}
         </>
       )}
 
@@ -208,7 +251,7 @@ export default function Visitors() {
                             <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                           )}
                         </td>
-                        <td className="py-2 px-4 text-gray-800 max-w-[200px] truncate">{p.description || p.name || '-'}</td>
+                        <td className="py-2 px-4 text-gray-800 max-w-[200px] truncate" title={p.description || p.name || undefined}>{p.description || p.name || '-'}</td>
                         <td className="py-2 px-4 text-gray-600">{p.price || '-'}</td>
                         <td className="py-2 px-4 text-right text-gray-500">{p.date}</td>
                         <td className="py-2 px-4 text-right font-medium">{p.visit_count}</td>
