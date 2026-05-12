@@ -87,3 +87,56 @@ export async function queryProductVisitors(params: VisitorQueryParams) {
     return decrypt(text)
   }
 }
+
+// --- 通用请求函数 ---
+async function postAndDecode(url: string, body: unknown) {
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: HEADERS,
+    body: JSON.stringify(body),
+  })
+
+  const text = await resp.text()
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return decrypt(text)
+  }
+}
+
+// --- 查询昨日店铺所有访客列表 ---
+const CUSTOMER_VIEW_URL =
+  'https://gz.aliyizhan.com/visitor/queryCustomerViewByConditionV2.action?marketCode=gz&equipUUID=d6d91048-0b2d-3907-87f3-2807aeb5cc9a'
+
+export async function queryCustomerViewByCondition(params: {
+  pageIndex: number
+  searchType?: number
+  searchDay?: number
+  pageSize?: number
+}) {
+  return postAndDecode(CUSTOMER_VIEW_URL, {
+    pageIndex: params.pageIndex,
+    searchType: params.searchType ?? 1,
+    searchDay: params.searchDay ?? 1,
+    pageSize: params.pageSize ?? 30,
+  })
+}
+
+// --- 查询单个访客浏览的商品列表 ---
+const VISITOR_RECORD_URL =
+  'https://gz.aliyizhan.com/visitor/queryVisitorRecordByUidV2.action?marketCode=gz&equipUUID=d6d91048-0b2d-3907-87f3-2807aeb5cc9a'
+
+export async function queryVisitorRecordByUid(params: {
+  visitorUid: string
+  searchDay?: number
+  searchType?: number
+  pageIndex?: number
+}) {
+  return postAndDecode(VISITOR_RECORD_URL, {
+    pageIndex: params.pageIndex ?? 0,
+    searchType: params.searchType ?? 1,
+    visitorUid: params.visitorUid,
+    searchDay: params.searchDay ?? 1,
+  })
+}

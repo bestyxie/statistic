@@ -100,6 +100,14 @@ export class LocalD1 {
       this.dirty = true
     }
 
+    // Migrate: add visit_count column to product_visitor_relations if missing
+    const cols = this.db.exec("PRAGMA table_info('product_visitor_relations')")
+    const hasVisitCount = cols.length > 0 && cols[0].values.some((col: unknown[]) => col[1] === 'visit_count')
+    if (!hasVisitCount) {
+      this.db.run('ALTER TABLE product_visitor_relations ADD COLUMN visit_count INTEGER DEFAULT 1')
+      this.dirty = true
+    }
+
     // Auto-save every 5 seconds if dirty
     setInterval(() => { if (this.dirty) this.save() }, 5000)
   }

@@ -99,7 +99,48 @@ export interface ProductVisitorRelation {
   product_id: string
   visitor_id: string
   date: string
+  visit_count: number
   created_at: string
+}
+
+/**
+ * 外部访客列表数据（queryCustomerViewByConditionV2 返回的单个访客）
+ * 主要字段:
+ *   uid                → ext_visitor_id  （外部访客 ID）
+ *   nick_name          → nick_name        （昵称）
+ *   iconUrl            → icon_url         （头像）
+ *   productVisitorNum  → 该访客浏览商品总次数
+ */
+export interface ExternalCustomerVisitor {
+  uid: string
+  nick_name: string | null
+  iconUrl: string | null
+  productVisitorNum: number | null
+  [key: string]: unknown
+}
+
+/**
+ * 外部访客浏览商品记录（queryVisitorRecordByUidV2 返回的单条记录）
+ * 同一商品出现多次代表该访客多次访问
+ * 主要字段:
+ *   code        → 商品 SKU
+ *   description → 商品描述
+ *   picUrl      → 商品图片
+ *   pid         → 商品外部 ID
+ *   visitorTime → 访问时间戳
+ */
+export interface ExternalVisitorRecord {
+  id: string | null
+  code: string
+  description: string | null
+  picUrl: string | null
+  pid: string | null
+  visitorValue: string | null
+  visitorAction: number | null
+  visitorTime: number | null
+  pictureCount: number | null
+  mediaType: string | null
+  [key: string]: unknown
 }
 
 /** 外部数据源格式（vroList） */

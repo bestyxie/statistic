@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord } from '@statistic/shared'
 import { extractPrice } from '../utils/price'
 
 type Env = { DB: D1Database }
@@ -174,6 +174,28 @@ stats.get('/product/:id', async (c) => {
   return c.json({ product, stats: stats.results })
 })
 
+// --- Import/update shop daily stats ---
+stats.post('/import-shop-stats', async (c) => {
+  const { shop_id, date, visitor_count } = await c.req.json<{
+    shop_id: string
+    date: string
+    visitor_count: number
+  }>()
+
+  if (!shop_id || !date) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+
+  await db.prepare(
+    `INSERT INTO daily_shop_stats (id, shop_id, date, visitor_count) VALUES (?, ?, ?, ?)
+     ON CONFLICT(shop_id, date) DO UPDATE SET visitor_count = ?`
+  ).bind(crypto.randomUUID(), shop_id, date, visitor_count, visitor_count).run()
+
+  return c.json({ message: '店铺统计已更新', visitor_count })
+})
+
 // --- Import visitors for a product ---
 stats.post('/import-visitors', async (c) => {
   const { shop_id, product_sku, date, visitors } = await c.req.json<{
@@ -230,10 +252,10 @@ stats.post('/import-visitors', async (c) => {
 
     if (!visitor) continue
 
-    // Insert relation (ignore if duplicate)
+    // Insert relation with visit_count=1 (ignore if duplicate)
     await db.prepare(
-      `INSERT OR IGNORE INTO product_visitor_relations (id, product_id, visitor_id, date)
-       VALUES (?, ?, ?, ?)`
+      `INSERT OR IGNORE INTO product_visitor_relations (id, product_id, visitor_id, date, visit_count)
+       VALUES (?, ?, ?, ?, 1)`
     )
       .bind(crypto.randomUUID(), product.id, visitor.id, date)
       .run()
@@ -242,6 +264,136 @@ stats.post('/import-visitors', async (c) => {
   }
 
   return c.json({ message: '访客数据导入成功', imported_visitors: imported })
+})
+
+// --- Import single visitor's browsed products ---
+stats.post('/import-by-visitor', async (c) => {
+  const { shop_id, date, visitor, product_visits } = await c.req.json<{
+    shop_id: string
+    date: string
+    visitor: {
+      uid: string
+      nick_name: string | null
+      iconUrl: string | null
+    }
+    product_visits: {
+      code: string
+      description: string | null
+      picUrl: string | null
+      pid: string | null
+      visit_count: number
+    }[]
+  }>()
+
+  if (!shop_id || !date || !visitor?.uid || !product_visits?.length) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+
+  // Upsert visitor
+  await db.prepare(
+    `INSERT INTO visitors (id, ext_visitor_id, nick_name, icon_url)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(ext_visitor_id) DO UPDATE SET
+       nick_name = COALESCE(?, nick_name),
+       icon_url = COALESCE(?, icon_url),
+       updated_at = datetime('now')`
+  ).bind(
+    crypto.randomUUID(), visitor.uid, visitor.nick_name || '', visitor.iconUrl || '',
+    visitor.nick_name || null, visitor.iconUrl || null,
+  ).run()
+
+  const visitorRow = await db
+    .prepare('SELECT id FROM visitors WHERE ext_visitor_id = ?')
+    .bind(visitor.uid)
+    .first<{ id: string }>()
+
+  if (!visitorRow) {
+    return c.json({ error: '访客创建失败' }, 500)
+  }
+
+  let imported = 0
+
+  for (const pv of product_visits) {
+    if (!pv.code) continue
+
+    const price = extractPrice(pv.description || '')
+
+    // Upsert product
+    await db.prepare(
+      `INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), price = COALESCE(?, price), updated_at = datetime("now")`
+    ).bind(
+      crypto.randomUUID(), shop_id, pv.code, pv.picUrl || '', pv.description || '', pv.code, price,
+      pv.picUrl || null, pv.description || null, price || null,
+    ).run()
+
+    const product = await db
+      .prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
+      .bind(shop_id, pv.code)
+      .first<{ id: string }>()
+
+    if (!product) continue
+
+    // Upsert relation with visit_count
+    await db.prepare(
+      `INSERT INTO product_visitor_relations (id, product_id, visitor_id, date, visit_count)
+       VALUES (?, ?, ?, ?, ?)
+       ON CONFLICT(product_id, visitor_id, date) DO UPDATE SET visit_count = ?`
+    ).bind(
+      crypto.randomUUID(), product.id, visitorRow.id, date, pv.visit_count, pv.visit_count,
+    ).run()
+
+    imported++
+  }
+
+  return c.json({ message: '访客商品数据导入成功', imported })
+})
+
+// --- Recalculate product daily stats from visitor relations ---
+stats.post('/recalculate-product-stats', async (c) => {
+  const { shop_id, product_sku, date } = await c.req.json<{
+    shop_id: string
+    product_sku: string
+    date: string
+  }>()
+
+  if (!shop_id || !product_sku || !date) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+
+  const product = await db
+    .prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
+    .bind(shop_id, product_sku)
+    .first<{ id: string }>()
+
+  if (!product) {
+    return c.json({ error: `商品不存在: ${product_sku}` }, 404)
+  }
+
+  // 从 product_visitor_relations 聚合统计
+  const agg = await db.prepare(
+    `SELECT COALESCE(SUM(visit_count), 0) as total_views, COUNT(*) as total_viewers
+     FROM product_visitor_relations WHERE product_id = ? AND date = ?`
+  ).bind(product.id, date).first<{ total_views: number; total_viewers: number }>()
+
+  const view_count = agg?.total_views || 0
+  const viewer_count = agg?.total_viewers || 0
+
+  // Upsert daily_product_stats
+  await db.prepare(
+    `INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(product_id, date) DO UPDATE SET view_count = ?, viewer_count = ?`
+  ).bind(
+    crypto.randomUUID(), product.id, shop_id, date, view_count, viewer_count,
+    view_count, viewer_count,
+  ).run()
+
+  return c.json({ message: '统计已更新', product_sku, view_count, viewer_count })
 })
 
 // --- Get visitors for a product on a date ---
@@ -261,7 +413,7 @@ stats.get('/product/:id/visitors', async (c) => {
   const where = conditions.join(' AND ')
 
   const results = await db.prepare(
-    `SELECT v.id, v.ext_visitor_id, v.nick_name, v.icon_url, v.city_name, v.description, pvr.date
+    `SELECT v.id, v.ext_visitor_id, v.nick_name, v.icon_url, v.city_name, v.description, pvr.date, pvr.visit_count
      FROM product_visitor_relations pvr
      JOIN visitors v ON pvr.visitor_id = v.id
      WHERE ${where}
@@ -309,6 +461,22 @@ stats.get('/visitors', async (c) => {
     page,
     limit,
   })
+})
+
+// --- Get products visited by a visitor ---
+stats.get('/visitors/:id/products', async (c) => {
+  const db = c.env.DB
+  const visitorId = c.req.param('id')
+
+  const results = await db.prepare(
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, pvr.date, pvr.visit_count
+     FROM product_visitor_relations pvr
+     JOIN products p ON pvr.product_id = p.id
+     WHERE pvr.visitor_id = ?
+     ORDER BY pvr.date DESC, pvr.visit_count DESC`
+  ).bind(visitorId).all()
+
+  return c.json(results.results)
 })
 
 export default stats

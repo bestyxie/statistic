@@ -76,6 +76,7 @@ CREATE TABLE product_visitor_relations (
   product_id TEXT NOT NULL,
   visitor_id TEXT NOT NULL,
   date TEXT NOT NULL,
+  visit_count INTEGER DEFAULT 1,
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT,

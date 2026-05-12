@@ -8,7 +8,9 @@
     "dev:worker": "wrangler dev",
     "deploy": "wrangler deploy",
     "db:init": "wrangler d1 execute statistic-db --local --file=../../schema.sql",
-    "db:init:remote": "wrangler d1 execute statistic-db --remote --file=../../schema.sql"
+    "db:init:remote": "wrangler d1 execute statistic-db --remote --file=../../schema.sql",
+    "import:yesterday": "tsx src/scripts/import-yesterday.ts",
+    "import:visitors": "tsx src/scripts/import-by-visitors.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.2",

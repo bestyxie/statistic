@@ -94,4 +94,6 @@ export const api = {
     request<(Visitor & { date: string })[]>(`/stats/product/${productId}/visitors${date ? `?date=${date}` : ''}`),
   getVisitors: (page?: number, limit?: number, search?: string) =>
     request<{ visitors: (Visitor & { visit_count: number })[]; total: number; page: number; limit: number }>(`/stats/visitors?page=${page || 1}&limit=${limit || 30}${search ? `&search=${search}` : ''}`),
+  getVisitorProducts: (visitorId: string) =>
+    request<{ id: string; name: string; image_url: string; sku: string; price: string; description: string; date: string; visit_count: number }[]>(`/stats/visitors/${visitorId}/products`),
 }
