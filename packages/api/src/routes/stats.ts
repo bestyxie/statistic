@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord } from '@statistic/shared'
-import { extractPrice } from '../utils/price'
+import { extractPrice, extractPriceWithApi } from '../utils/price'
 
 type Env = { DB: D1Database }
 
@@ -318,12 +318,12 @@ stats.post('/import-by-visitor', async (c) => {
   for (const pv of product_visits) {
     if (!pv.code) continue
 
-    const price = extractPrice(pv.description || '')
+    const price = await extractPriceWithApi(pv.description || '', pv.code)
 
     // Upsert product
     await db.prepare(
       `INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), price = COALESCE(?, price), updated_at = datetime("now")`
+       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), price = COALESCE(NULLIF(?, ''), price), updated_at = datetime("now")`
     ).bind(
       crypto.randomUUID(), shop_id, pv.code, pv.picUrl || '', pv.description || '', pv.code, price,
       pv.picUrl || null, pv.description || null, price || null,
