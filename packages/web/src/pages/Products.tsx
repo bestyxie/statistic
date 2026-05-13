@@ -15,11 +15,15 @@ export default function Products() {
   const visitDate = searchParams.get('date') || ''
   const setVisitDate = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('date', v); else prev.delete('date'); return prev })
   const search = searchParams.get('search') || ''
-  const setSearch = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('search', v); else prev.delete('search'); return prev })
+  const [searchInput, setSearchInput] = useState(search)
+  const doSearch = () => setSearchParams((prev) => { prev.delete('page'); if (searchInput) prev.set('search', searchInput); else prev.delete('search'); return prev })
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
   const [showFullDesc, setShowFullDesc] = useState(false)
+  const [showTxForm, setShowTxForm] = useState(false)
+  const [txProduct, setTxProduct] = useState<Product | null>(null)
+  const [txForm, setTxForm] = useState({ price: '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' })
   const [form, setForm] = useState({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
@@ -35,6 +39,9 @@ export default function Products() {
 
   useEffect(() => { api.getShops().then(setShops) }, [])
   useEffect(() => { load() }, [selectedShop, page, visitDate, search])
+
+  // sync URL search back to input when URL changes
+  useEffect(() => { setSearchInput(search) }, [search])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,13 +105,20 @@ export default function Products() {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="text-2xl font-bold text-gray-800">商品管理</h1>
         <div className="flex gap-2">
-          <input
-            type="text"
-            placeholder="搜索商品描述..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="搜索商品描述..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && doSearch()}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40 pr-7"
+            />
+            {searchInput && (
+              <button type="button" onClick={() => { setSearchInput(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
+            )}
+          </div>
+          <button onClick={doSearch} className="px-3 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">搜索</button>
           <select
             value={selectedShop}
             onChange={(e) => setSelectedShop(e.target.value)}
@@ -115,12 +129,17 @@ export default function Products() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          <input
-            type="date"
-            value={visitDate}
-            onChange={(e) => setVisitDate(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <input
+              type="date"
+              value={visitDate}
+              onChange={(e) => setVisitDate(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 pr-7"
+            />
+            {visitDate && (
+              <button type="button" onClick={() => setVisitDate('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
+            )}
+          </div>
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
@@ -246,6 +265,55 @@ export default function Products() {
         </div>
       )}
 
+      {/* 成交录入弹窗 */}
+      {showTxForm && txProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-md w-full">
+            <h2 className="text-lg font-semibold mb-4">录入成交 — {txProduct.description?.slice(0, 30) || txProduct.sku}</h2>
+            <form onSubmit={async (e) => {
+              e.preventDefault()
+              try {
+                await api.createTransaction({
+                  product_id: txProduct.id,
+                  shop_id: txProduct.shop_id,
+                  price: txForm.price,
+                  quantity: parseInt(txForm.quantity) || 1,
+                  date: txForm.date,
+                  note: txForm.note,
+                })
+                setShowTxForm(false)
+                setTxProduct(null)
+              } catch (err: any) {
+                alert(err.message)
+              }
+            }} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">成交价</label>
+                <input type="text" value={txForm.price} onChange={(e) => setTxForm({ ...txForm, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
+                  <input type="number" min={1} value={txForm.quantity} onChange={(e) => setTxForm({ ...txForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">日期</label>
+                  <input type="date" value={txForm.date} onChange={(e) => setTxForm({ ...txForm, date: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+                <input type="text" value={txForm.note} onChange={(e) => setTxForm({ ...txForm, note: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="可选" />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm">确认成交</button>
+                <button type="button" onClick={() => { setShowTxForm(false); setTxProduct(null) }} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">取消</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
           <p className="text-center py-12 text-gray-400">加载中...</p>
@@ -282,6 +350,7 @@ export default function Products() {
                       <td className="py-3 px-5 text-right">
                         <button onClick={() => handleEdit(p)} className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
                         <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
+                        <button onClick={() => { setTxProduct(p); setTxForm({ price: p.price || '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' }); setShowTxForm(true) }} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
                         <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700">删除</button>
                       </td>
                     </tr>

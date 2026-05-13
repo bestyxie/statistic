@@ -23,9 +23,15 @@ export default function Visitors() {
   const page = parseInt(searchParams.get('page') || '1')
   const setPage = (p: number) => setSearchParams((prev) => { prev.set('page', String(p)); return prev })
   const search = searchParams.get('search') || ''
-  const setSearch = (v: string) => setSearchParams((prev) => { if (v) prev.set('search', v); else prev.delete('search'); return prev })
   const visitDate = searchParams.get('date') || ''
-  const setVisitDate = (v: string) => setSearchParams((prev) => { if (v) prev.set('date', v); else prev.delete('date'); return prev })
+  const [searchInput, setSearchInput] = useState(search)
+  const [dateInput, setDateInput] = useState(visitDate)
+  const doSearch = () => setSearchParams((prev) => {
+    prev.delete('page')
+    if (searchInput) prev.set('search', searchInput); else prev.delete('search')
+    if (dateInput) prev.set('date', dateInput); else prev.delete('date')
+    return prev
+  })
   const [loading, setLoading] = useState(true)
   const [productModal, setProductModal] = useState<{ visitor: VisitorRow | null; products: VisitorProduct[]; loading: boolean }>({ visitor: null, products: [], loading: false })
   const limit = 30
@@ -33,6 +39,8 @@ export default function Visitors() {
   useEffect(() => {
     loadVisitors()
   }, [page, search, visitDate])
+
+  useEffect(() => { setSearchInput(search); setDateInput(visitDate) }, [search, visitDate])
 
   async function loadVisitors() {
     setLoading(true)
@@ -45,10 +53,6 @@ export default function Visitors() {
     } finally {
       setLoading(false)
     }
-  }
-
-  function handleSearch() {
-    setPage(1)
   }
 
   async function showVisitorProducts(visitor: VisitorRow) {
@@ -70,22 +74,32 @@ export default function Visitors() {
 
       {/* 搜索 */}
       <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="搜索昵称、描述、城市..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        <input
-          type="date"
-          value={visitDate}
-          onChange={(e) => setVisitDate(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="搜索昵称、描述、城市..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && doSearch()}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 pr-7"
+          />
+          {searchInput && (
+            <button type="button" onClick={() => { setSearchInput(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
+          )}
+        </div>
+        <div className="relative">
+          <input
+            type="date"
+            value={dateInput}
+            onChange={(e) => setDateInput(e.target.value)}
+            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 pr-7"
+          />
+          {dateInput && (
+            <button type="button" onClick={() => { setDateInput(''); setSearchParams((prev) => { prev.delete('date'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
+          )}
+        </div>
         <button
-          onClick={handleSearch}
+          onClick={doSearch}
           className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"
         >
           搜索
