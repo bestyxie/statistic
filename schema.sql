@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS product_visitor_relations;
 DROP TABLE IF EXISTS visitors;
+DROP TABLE IF EXISTS transactions;
 DROP TABLE IF EXISTS daily_product_stats;
 DROP TABLE IF EXISTS daily_shop_stats;
 DROP TABLE IF EXISTS products;
@@ -81,4 +82,30 @@ CREATE TABLE product_visitor_relations (
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (visitor_id) REFERENCES visitors(id) ON DELETE RESTRICT,
   UNIQUE(product_id, visitor_id, date)
+);
+
+-- 成交记录
+CREATE TABLE transactions (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  shop_id TEXT NOT NULL,
+  price TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  date TEXT NOT NULL,
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+);
+
+-- 退款记录（关联成交记录）
+CREATE TABLE refunds (
+  id TEXT PRIMARY KEY,
+  transaction_id TEXT NOT NULL,
+  price TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  date TEXT NOT NULL,
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
 );

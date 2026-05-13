@@ -96,4 +96,38 @@ export const api = {
     request<{ visitors: (Visitor & { visit_count: number })[]; total: number; page: number; limit: number }>(`/stats/visitors?page=${page || 1}&limit=${limit || 30}${search ? `&search=${search}` : ''}${date ? `&date=${date}` : ''}`),
   getVisitorProducts: (visitorId: string) =>
     request<{ id: string; name: string; image_url: string; sku: string; price: string; description: string; date: string; visit_count: number }[]>(`/stats/visitors/${visitorId}/products`),
+
+  // Transactions
+  createTransaction: (data: { product_id: string; shop_id: string; price: string; quantity?: number; date: string; note?: string }) =>
+    request<any>('/stats/transactions', { method: 'POST', body: JSON.stringify(data) }),
+  getTransactions: (params?: { shop_id?: string; product_id?: string; start?: string; end?: string; page?: number; limit?: number; search?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.shop_id) q.set('shop_id', params.shop_id)
+    if (params?.product_id) q.set('product_id', params.product_id)
+    if (params?.start) q.set('start', params.start)
+    if (params?.end) q.set('end', params.end)
+    if (params?.page) q.set('page', String(params.page))
+    if (params?.limit) q.set('limit', String(params.limit))
+    if (params?.search) q.set('search', params.search)
+    return request<{ items: any[]; total: number; page: number; limit: number }>(`/stats/transactions?${q.toString()}`)
+  },
+  deleteTransaction: (id: string) =>
+    request<{ message: string }>(`/stats/transactions/${id}`, { method: 'DELETE' }),
+  getTransactionTrend: (start: string, end: string, shopId?: string) =>
+    request<{ date: string; tx_count: number; tx_amount: number }[]>(`/stats/transactions/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
+  getDashboardRefunds: (shopId?: string) =>
+    request<{ todayRefundCount: number; todayRefundAmount: number; yesterdayRefundCount: number; yesterdayRefundAmount: number }>(`/stats/dashboard-refunds${shopId ? `?shop_id=${shopId}` : ''}`),
+
+  // Refunds
+  createRefund: (data: { transaction_id: string; price: string; quantity?: number; date: string; note?: string }) =>
+    request<any>('/stats/refunds', { method: 'POST', body: JSON.stringify(data) }),
+  getRefunds: (params?: { start?: string; end?: string; shop_id?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.start) q.set('start', params.start)
+    if (params?.end) q.set('end', params.end)
+    if (params?.shop_id) q.set('shop_id', params.shop_id)
+    return request<any[]>(`/stats/refunds?${q.toString()}`)
+  },
+  deleteRefund: (id: string) =>
+    request<{ message: string }>(`/stats/refunds/${id}`, { method: 'DELETE' }),
 }

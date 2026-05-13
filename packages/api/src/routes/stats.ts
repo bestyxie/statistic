@@ -84,15 +84,51 @@ stats.get('/dashboard', async (c) => {
 
   const topParams = shopId ? [sevenDaysAgo, shopId] : [sevenDaysAgo]
   const topProducts = await db.prepare(
-    `SELECT p.name, p.image_url, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ps.date >= ?${shopId ? ' AND ps.shop_id = ?' : ''} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT 10`
+    `SELECT p.id, p.name, p.image_url, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ps.date >= ?${shopId ? ' AND ps.shop_id = ?' : ''} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT 10`
   ).bind(...topParams).all()
+
+  // 成交汇总
+  const txShopFilter = shopId ? ' AND shop_id = ?' : ''
+  const txTodayParams = shopId ? [today, shopId] : [today]
+  const txYesterdayParams = shopId ? [yesterday, shopId] : [yesterday]
+
+  const [todayTx, yesterdayTx] = await Promise.all([
+    db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(CAST(price AS REAL) * quantity), 0) as total_amount FROM transactions WHERE date = ?${txShopFilter}`).bind(...txTodayParams).first<{ count: number; total_amount: number }>(),
+    db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(CAST(price AS REAL) * quantity), 0) as total_amount FROM transactions WHERE date = ?${txShopFilter}`).bind(...txYesterdayParams).first<{ count: number; total_amount: number }>(),
+  ])
 
   return c.json({
     today: (todayStats?.total as number) || 0,
     yesterday: (yesterdayStats?.total as number) || 0,
     trend: trend.results,
     topProducts: topProducts.results,
+    todayTxCount: todayTx?.count || 0,
+    todayTxAmount: todayTx?.total_amount || 0,
+    yesterdayTxCount: yesterdayTx?.count || 0,
+    yesterdayTxAmount: yesterdayTx?.total_amount || 0,
   })
+})
+
+// Dashboard 退款汇总
+stats.get('/dashboard-refunds', async (c) => {
+    const db = c.env.DB
+    const shopId = c.req.query('shop_id')
+
+    const today = new Date().toISOString().slice(0, 10)
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+
+    const shopFilter = shopId ? ' AND t.shop_id = ?' : ''
+    const [todayRefund, yesterdayRefund] = await Promise.all([
+      db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(CAST(r.price AS REAL) * r.quantity), 0) as total_amount FROM refunds r JOIN transactions t ON r.transaction_id = t.id WHERE r.date = ?${shopFilter}`).bind(today, ...(shopId ? [shopId] : [])).first<{ count: number; total_amount: number }>(),
+      db.prepare(`SELECT COUNT(*) as count, COALESCE(SUM(CAST(r.price AS REAL) * r.quantity), 0) as total_amount FROM refunds r JOIN transactions t ON r.transaction_id = t.id WHERE r.date = ?${shopFilter}`).bind(yesterday, ...(shopId ? [shopId] : [])).first<{ count: number; total_amount: number }>(),
+    ])
+
+    return c.json({
+      todayRefundCount: todayRefund?.count || 0,
+      todayRefundAmount: todayRefund?.total_amount || 0,
+      yesterdayRefundCount: yesterdayRefund?.count || 0,
+      yesterdayRefundAmount: yesterdayRefund?.total_amount || 0,
+    })
 })
 
 // --- Trend query ---
@@ -142,7 +178,7 @@ stats.get('/top-products', async (c) => {
   const where = conditions.join(' AND ')
 
   const results = await db.prepare(
-    `SELECT p.name, p.image_url, p.sku, p.price, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ?`
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ?`
   ).bind(...params, limit).all()
 
   return c.json(results.results)
@@ -487,6 +523,174 @@ stats.get('/visitors/:id/products', async (c) => {
   ).bind(visitorId).all()
 
   return c.json(results.results)
+})
+
+// --- Transactions CRUD ---
+
+// Create transaction
+stats.post('/transactions', async (c) => {
+  const { product_id, shop_id, price, quantity, date, note } = await c.req.json<{
+    product_id: string
+    shop_id: string
+    price: string
+    quantity?: number
+    date: string
+    note?: string
+  }>()
+
+  if (!product_id || !shop_id || !price || !date) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+  const id = crypto.randomUUID()
+
+  await db.prepare(
+    'INSERT INTO transactions (id, product_id, shop_id, price, quantity, date, note) VALUES (?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, product_id, shop_id, price, quantity || 1, date, note || '').run()
+
+  return c.json({ id, product_id, shop_id, price, quantity: quantity || 1, date, note: note || '' })
+})
+
+// List transactions
+stats.get('/transactions', async (c) => {
+  const db = c.env.DB
+  const shopId = c.req.query('shop_id')
+  const productId = c.req.query('product_id')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const search = c.req.query('search')
+  const page = Math.max(1, parseInt(c.req.query('page') || '1'))
+  const limit = Math.max(1, parseInt(c.req.query('limit') || '30'))
+  const offset = (page - 1) * limit
+
+  const conditions: string[] = []
+  const params: string[] = []
+
+  if (shopId) { conditions.push('t.shop_id = ?'); params.push(shopId) }
+  if (productId) { conditions.push('t.product_id = ?'); params.push(productId) }
+  if (start) { conditions.push('t.date >= ?'); params.push(start) }
+  if (end) { conditions.push('t.date <= ?'); params.push(end) }
+  if (search) { conditions.push('p.description LIKE ?'); params.push(`%${search}%`) }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const total = await db.prepare(
+    `SELECT COUNT(*) as count FROM transactions t JOIN products p ON t.product_id = p.id ${where}`
+  ).bind(...params).first<{ count: number }>()
+
+  const results = await db.prepare(
+    `SELECT t.*, p.name as product_name, p.image_url, p.sku, p.description, s.name as shop_name
+     FROM transactions t
+     JOIN products p ON t.product_id = p.id
+     JOIN shops s ON t.shop_id = s.id
+     ${where}
+     ORDER BY t.date DESC, t.created_at DESC
+     LIMIT ? OFFSET ?`
+  ).bind(...params, limit, offset).all()
+
+  return c.json({
+    items: results.results,
+    total: total?.count || 0,
+    page,
+    limit,
+  })
+})
+
+// Delete transaction
+stats.delete('/transactions/:id', async (c) => {
+  const db = c.env.DB
+  await db.prepare('DELETE FROM transactions WHERE id = ?').bind(c.req.param('id')).run()
+  return c.json({ message: '删除成功' })
+})
+
+// Transaction trend
+stats.get('/transactions/trend', async (c) => {
+  const db = c.env.DB
+  const shopId = c.req.query('shop_id')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+
+  if (!start || !end) {
+    return c.json({ error: '请提供 start 和 end 日期参数' }, 400)
+  }
+
+  const conditions = ['date >= ?', 'date <= ?']
+  const params: string[] = [start, end]
+  if (shopId) { conditions.push('shop_id = ?'); params.push(shopId) }
+  const where = `WHERE ${conditions.join(' AND ')}`
+
+  const results = await db.prepare(
+    `SELECT date, COUNT(*) as tx_count, COALESCE(SUM(CAST(price AS REAL) * quantity), 0) as tx_amount FROM transactions ${where} GROUP BY date ORDER BY date`
+  ).bind(...params).all()
+
+  return c.json(results.results)
+})
+
+// --- Refunds CRUD ---
+
+// Create refund
+stats.post('/refunds', async (c) => {
+  const { transaction_id, price, quantity, date, note } = await c.req.json<{
+    transaction_id: string
+    price: string
+    quantity?: number
+    date: string
+    note?: string
+  }>()
+
+  if (!transaction_id || !price || !date) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+
+  const tx = await db.prepare('SELECT * FROM transactions WHERE id = ?').bind(transaction_id).first()
+  if (!tx) {
+    return c.json({ error: '成交记录不存在' }, 404)
+  }
+
+  const id = crypto.randomUUID()
+  await db.prepare(
+    'INSERT INTO refunds (id, transaction_id, price, quantity, date, note) VALUES (?, ?, ?, ?, ?, ?)'
+  ).bind(id, transaction_id, price, quantity || 1, date, note || '').run()
+
+  return c.json({ id, transaction_id, price, quantity: quantity || 1, date, note: note || '' })
+})
+
+// List refunds
+stats.get('/refunds', async (c) => {
+  const db = c.env.DB
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const shopId = c.req.query('shop_id')
+
+  const conditions: string[] = []
+  const params: string[] = []
+
+  if (start) { conditions.push('r.date >= ?'); params.push(start) }
+  if (end) { conditions.push('r.date <= ?'); params.push(end) }
+  if (shopId) { conditions.push('t.shop_id = ?'); params.push(shopId) }
+
+  const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
+
+  const results = await db.prepare(
+    `SELECT r.*, p.name as product_name, p.image_url, p.sku, t.price as tx_price, t.quantity as tx_quantity, t.date as tx_date
+     FROM refunds r
+     JOIN transactions t ON r.transaction_id = t.id
+     JOIN products p ON t.product_id = p.id
+     ${where}
+     ORDER BY r.date DESC, r.created_at DESC`
+  ).bind(...params).all()
+
+  return c.json(results.results)
+})
+
+// Delete refund
+stats.delete('/refunds/:id', async (c) => {
+  const db = c.env.DB
+  await db.prepare('DELETE FROM refunds WHERE id = ?').bind(c.req.param('id')).run()
+  return c.json({ message: '删除成功' })
 })
 
 export default stats

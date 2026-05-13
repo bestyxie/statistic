@@ -7,6 +7,7 @@ export default function Dashboard() {
   const [data, setData] = useState<DashboardData | null>(null)
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState('')
+  const [refundData, setRefundData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -15,9 +16,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     setLoading(true)
-    api.getDashboard(selectedShop || undefined)
-      .then(setData)
-      .finally(() => setLoading(false))
+    Promise.all([
+      api.getDashboard(selectedShop || undefined),
+      api.getDashboardRefunds(selectedShop || undefined),
+    ]).then(([d, r]) => {
+      setData(d)
+      setRefundData(r)
+    }).finally(() => setLoading(false))
   }, [selectedShop])
 
   if (loading || !data) {
@@ -43,7 +48,7 @@ export default function Dashboard() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-4">
         <div className="bg-white rounded-lg border border-gray-200 p-5">
           <p className="text-sm text-gray-500">今日访客</p>
           <p className="text-3xl font-bold text-gray-800 mt-1">{data.today}</p>
@@ -57,6 +62,26 @@ export default function Dashboard() {
           <p className={`text-3xl font-bold mt-1 ${Number(changePercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {changePercent === '-' ? '-' : `${Number(changePercent) >= 0 ? '+' : ''}${changePercent}%`}
           </p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <p className="text-sm text-gray-500">今日成交</p>
+          <p className="text-3xl font-bold text-orange-600 mt-1">{(data as any).todayTxCount || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">金额 ¥{((data as any).todayTxAmount || 0).toFixed(0)}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <p className="text-sm text-gray-500">昨日成交</p>
+          <p className="text-3xl font-bold text-orange-600 mt-1">{(data as any).yesterdayTxCount || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">金额 ¥{((data as any).yesterdayTxAmount || 0).toFixed(0)}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <p className="text-sm text-gray-500">今日退款</p>
+          <p className="text-3xl font-bold text-red-500 mt-1">{refundData?.todayRefundCount || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">金额 ¥{(refundData?.todayRefundAmount || 0).toFixed(0)}</p>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-5">
+          <p className="text-sm text-gray-500">昨日退款</p>
+          <p className="text-3xl font-bold text-red-500 mt-1">{refundData?.yesterdayRefundCount || 0}</p>
+          <p className="text-xs text-gray-400 mt-1">金额 ¥{(refundData?.yesterdayRefundAmount || 0).toFixed(0)}</p>
         </div>
       </div>
 

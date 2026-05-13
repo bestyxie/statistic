@@ -103,6 +103,29 @@ export interface ProductVisitorRelation {
   created_at: string
 }
 
+/** 成交记录（对应 transactions 表） */
+export interface Transaction {
+  id: string
+  product_id: string
+  shop_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+  created_at: string
+}
+
+/** 退款记录（关联成交记录） */
+export interface Refund {
+  id: string
+  transaction_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+  created_at: string
+}
+
 /**
  * 外部访客列表数据（queryCustomerViewByConditionV2 返回的单个访客）
  * 主要字段:

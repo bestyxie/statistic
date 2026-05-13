@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { Shop } from '@statistic/shared'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 
 export default function Stats() {
+  const navigate = useNavigate()
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState('')
   const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
@@ -12,19 +14,26 @@ export default function Stats() {
   const [shopTrend, setShopTrend] = useState<any[]>([])
   const [productTrend, setProductTrend] = useState<any[]>([])
   const [topProducts, setTopProducts] = useState<any[]>([])
-
+  const [txTrend, setTxTrend] = useState<any[]>([])
+  const [txList, setTxList] = useState<any[]>([])
+  const [txTotal, setTxTotal] = useState(0)
   useEffect(() => { api.getShops().then(setShops) }, [])
 
   const handleQuery = async () => {
     setLoading(true)
     try {
-      const [trendRes, topRes] = await Promise.all([
+      const [trendRes, topRes, txTrendRes, txListRes] = await Promise.all([
         api.getTrend(start, end, selectedShop || undefined),
         api.getTopProducts(start, end, selectedShop || undefined),
+        api.getTransactionTrend(start, end, selectedShop || undefined),
+        api.getTransactions({ shop_id: selectedShop || undefined, start, end, page: 1, limit: 30 }),
       ])
       setShopTrend(trendRes.shopTrend || [])
       setProductTrend(trendRes.productTrend || [])
       setTopProducts(topRes || [])
+      setTxTrend(txTrendRes || [])
+      setTxList(txListRes.items || [])
+      setTxTotal(txListRes.total || 0)
     } catch (err: any) {
       alert(err.message)
     } finally {
@@ -169,6 +178,7 @@ export default function Stats() {
                   <th className="text-left py-3 px-3 text-gray-500 font-medium">SKU</th>
                   <th className="text-right py-3 px-3 text-gray-500 font-medium">浏览次数</th>
                   <th className="text-right py-3 px-3 text-gray-500 font-medium">浏览人数</th>
+                  <th className="text-right py-3 px-3 text-gray-500 font-medium">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -184,6 +194,9 @@ export default function Stats() {
                     <td className="py-3 px-3 text-gray-400">{p.sku || '-'}</td>
                     <td className="py-3 px-3 text-right font-medium">{p.total_views}</td>
                     <td className="py-3 px-3 text-right font-medium">{p.total_viewers}</td>
+                    <td className="py-3 px-3 text-right">
+                      <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -191,6 +204,68 @@ export default function Stats() {
           </div>
         ) : (
           <p className="text-center text-gray-400 py-12">暂无数据</p>
+        )}
+      </div>
+
+      {/* Transaction trend */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <h2 className="text-lg font-semibold text-gray-800 mb-4">成交趋势</h2>
+        {txTrend.length > 0 ? (
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={txTrend}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+              <YAxis yAxisId="left" tick={{ fontSize: 12 }} />
+              <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} />
+              <Tooltip />
+              <Legend />
+              <Bar yAxisId="left" dataKey="tx_count" fill="#f97316" name="成交笔数" />
+              <Line yAxisId="right" type="monotone" dataKey="tx_amount" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="成交金额" />
+            </BarChart>
+          </ResponsiveContainer>
+        ) : (
+          <p className="text-center text-gray-400 py-12">暂无成交数据</p>
+        )}
+      </div>
+
+      {/* Transaction list link */}
+      <div className="bg-white rounded-lg border border-gray-200 p-5">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-gray-800">成交明细</h2>
+          <button onClick={() => navigate('/transactions')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">查看全部 →</button>
+        </div>
+        {txList.length > 0 ? (
+          <div className="overflow-x-auto mt-4">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-left py-3 px-3 text-gray-500 font-medium">日期</th>
+                  <th className="text-left py-3 px-3 text-gray-500 font-medium">商品</th>
+                  <th className="text-right py-3 px-3 text-gray-500 font-medium">成交价</th>
+                  <th className="text-right py-3 px-3 text-gray-500 font-medium">数量</th>
+                  <th className="text-right py-3 px-3 text-gray-500 font-medium">金额</th>
+                </tr>
+              </thead>
+              <tbody>
+                {txList.slice(0, 10).map((tx) => (
+                  <tr key={tx.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-3 px-3 text-gray-500">{tx.date}</td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-2">
+                        {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
+                        <span className="text-gray-800 max-w-[150px] truncate" title={tx.product_name}>{tx.product_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-right font-medium">¥{tx.price}</td>
+                    <td className="py-3 px-3 text-right">{tx.quantity}</td>
+                    <td className="py-3 px-3 text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="text-center text-gray-400 py-12">暂无成交数据</p>
         )}
       </div>
     </div>

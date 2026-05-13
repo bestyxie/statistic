@@ -108,6 +108,44 @@ export class LocalD1 {
       this.dirty = true
     }
 
+    // Migrate: create transactions table if missing
+    const txTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'")
+    if (txTable.length === 0) {
+      this.db.run(`
+        CREATE TABLE transactions (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          shop_id TEXT NOT NULL,
+          price TEXT NOT NULL,
+          quantity INTEGER DEFAULT 1,
+          date TEXT NOT NULL,
+          note TEXT DEFAULT '',
+          created_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+          FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
+        )
+      `)
+      this.dirty = true
+    }
+
+    // Migrate: create refunds table if missing
+    const refundTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='refunds'")
+    if (refundTable.length === 0) {
+      this.db.run(`
+        CREATE TABLE refunds (
+          id TEXT PRIMARY KEY,
+          transaction_id TEXT NOT NULL,
+          price TEXT NOT NULL,
+          quantity INTEGER DEFAULT 1,
+          date TEXT NOT NULL,
+          note TEXT DEFAULT '',
+          created_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
+        )
+      `)
+      this.dirty = true
+    }
+
     // Auto-save every 5 seconds if dirty
     setInterval(() => { if (this.dirty) this.save() }, 5000)
   }

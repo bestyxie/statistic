@@ -11,6 +11,7 @@ const navItems = [
   { to: '/shops', label: '店铺管理' },
   { to: '/products', label: '商品管理' },
   { to: '/visitors', label: '访客列表' },
+  { to: '/transactions', label: '成交明细' },
   { to: '/data-entry', label: '数据录入' },
   { to: '/stats', label: '数据查询' },
 ]
