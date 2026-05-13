@@ -38,13 +38,21 @@ export default function Stats() {
   const productChartData = Object.values(
     productTrend.reduce((acc: Record<string, any>, item: any) => {
       if (!acc[item.date]) {
-        acc[item.date] = { date: item.date, views: 0, viewers: 0 }
+        acc[item.date] = { date: item.date, views: 0, visitors: 0 }
       }
       acc[item.date].views += item.view_count || 0
-      acc[item.date].viewers += item.viewer_count || 0
       return acc
     }, {})
   ).sort((a: any, b: any) => a.date.localeCompare(b.date))
+
+  // Merge shop visitor count (deduplicated) into product chart data
+  const shopVisitorMap = shopTrend.reduce((acc: Record<string, number>, s: any) => {
+    acc[s.date] = s.visitor_count
+    return acc
+  }, {})
+  productChartData.forEach((d: any) => {
+    d.visitors = shopVisitorMap[d.date] || 0
+  })
 
   return (
     <div className="space-y-6">
@@ -140,7 +148,7 @@ export default function Stats() {
               <Tooltip />
               <Legend />
               <Line type="monotone" dataKey="views" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="浏览次数" />
-              <Line type="monotone" dataKey="viewers" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="浏览人数" />
+              <Line type="monotone" dataKey="visitors" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="独立访客数" />
             </LineChart>
           </ResponsiveContainer>
         ) : (
