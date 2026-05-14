@@ -162,7 +162,7 @@ export default function Transactions() {
                         <div className="flex items-center gap-2">
                           {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
                           <div className="flex items-center gap-2">
-                            <span className={`text-sm max-w-[200px] truncate ${isFullyRefunded ? 'text-gray-400 line-through' : 'text-gray-800'}`} title={tx.product_name}>{tx.product_name}</span>
+                            <span className={`text-sm max-w-[200px] truncate block ${isFullyRefunded ? 'text-gray-400 line-through' : 'text-gray-800'}`} title={tx.description || tx.product_name}>{tx.description || tx.product_name}</span>
                             {hasRefund && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                 已退{refundQuantity}件
@@ -243,7 +243,7 @@ export default function Transactions() {
           <div className="bg-white rounded-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">录入退款</h3>
             <div className="mb-4 p-3 bg-gray-50 rounded-md">
-              <p className="text-sm text-gray-700">原成交：<span className="font-medium">{refundModal.product_name}</span></p>
+              <p className="text-sm text-gray-700">原成交：<span className="font-medium max-w-[280px] truncate inline-block" title={refundModal.description || refundModal.product_name}>{refundModal.description || refundModal.product_name}</span></p>
               <p className="text-sm text-gray-600 mt-1">¥{refundModal.price} x {refundModal.quantity}</p>
               {(refundModal.refund_quantity || 0) > 0 && (
                 <p className="text-sm text-red-600 mt-1">

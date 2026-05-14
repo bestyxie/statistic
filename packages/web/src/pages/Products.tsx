@@ -367,7 +367,7 @@ export default function Products() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowProductTx(false)}>
           <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">成交记录 — {productTxProduct.description?.slice(0, 50) || productTxProduct.sku}</h2>
+              <h2 className="text-lg font-semibold max-w-[400px] truncate" title={productTxProduct.description || productTxProduct.sku}>成交记录 — {productTxProduct.description || productTxProduct.sku}</h2>
               <button onClick={() => setShowProductTx(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
 
@@ -411,7 +411,7 @@ export default function Products() {
                             <div className="flex items-center gap-2">
                               {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
                               <div className="flex items-center gap-2">
-                                <span className={`text-gray-800 max-w-[150px] truncate ${isFullyRefunded ? 'line-through text-gray-400' : ''}`} title={tx.product_name}>{tx.product_name}</span>
+                                <span className={`text-gray-800 max-w-[150px] truncate block ${isFullyRefunded ? 'line-through text-gray-400' : ''}`} title={tx.description || tx.product_name}>{tx.description || tx.product_name}</span>
                                 {hasRefund && (
                                   <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
                                     已退{refundQuantity}件

@@ -188,7 +188,7 @@ export default function Stats() {
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
                         {p.image_url && <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />}
-                        <span className="font-medium text-gray-800">{p.name}</span>
+                        <span className="font-medium text-gray-800 max-w-[200px] truncate block" title={p.description || p.name}>{p.description || p.name}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-gray-400">{p.sku || '-'}</td>
@@ -253,7 +253,7 @@ export default function Stats() {
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-2">
                         {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
-                        <span className="text-gray-800 max-w-[150px] truncate" title={tx.product_name}>{tx.product_name}</span>
+                        <span className="text-gray-800 max-w-[150px] truncate block" title={tx.description || tx.product_name}>{tx.description || tx.product_name}</span>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-right font-medium">¥{tx.price}</td>

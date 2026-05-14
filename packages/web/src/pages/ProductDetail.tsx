@@ -76,7 +76,7 @@ export default function ProductDetail() {
                 <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
               )}
               <div>
-                <h2 className="text-lg font-semibold text-gray-800">{product.name}</h2>
+                <h2 className="text-lg font-semibold text-gray-800">{product.description || product.name}</h2>
                 {product.sku && <p className="text-sm text-gray-500 font-mono">SKU: {product.sku}</p>}
               </div>
             </div>

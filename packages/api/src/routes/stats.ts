@@ -155,7 +155,7 @@ stats.get('/trend', async (c) => {
   ).bind(...params).all()
 
   const productTrend = await db.prepare(
-    `SELECT ps.date, ps.view_count, ps.viewer_count, p.name as product_name, p.image_url FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ps.date >= ? AND ps.date <= ?${shopId ? ' AND ps.shop_id = ?' : ''} ORDER BY ps.date`
+    `SELECT ps.date, ps.view_count, ps.viewer_count, p.name as product_name, p.description, p.image_url FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ps.date >= ? AND ps.date <= ?${shopId ? ' AND ps.shop_id = ?' : ''} ORDER BY ps.date`
   ).bind(start, end, ...(shopId ? [shopId] : [])).all()
 
   return c.json({ shopTrend: shopTrend.results, productTrend: productTrend.results })
@@ -178,7 +178,7 @@ stats.get('/top-products', async (c) => {
   const where = conditions.join(' AND ')
 
   const results = await db.prepare(
-    `SELECT p.id, p.name, p.image_url, p.sku, p.price, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ?`
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ?`
   ).bind(...params, limit).all()
 
   return c.json(results.results)
@@ -191,7 +191,7 @@ stats.get('/product/:id', async (c) => {
   const start = c.req.query('start')
   const end = c.req.query('end')
 
-  const product = await db.prepare('SELECT id, name, image_url, sku FROM products WHERE id = ?').bind(productId).first()
+  const product = await db.prepare('SELECT id, name, image_url, sku, description FROM products WHERE id = ?').bind(productId).first()
   if (!product) {
     return c.json({ error: '商品不存在' }, 404)
   }
