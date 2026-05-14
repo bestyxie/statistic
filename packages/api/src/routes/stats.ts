@@ -580,11 +580,15 @@ stats.get('/transactions', async (c) => {
   ).bind(...params).first<{ count: number }>()
 
   const results = await db.prepare(
-    `SELECT t.*, p.name as product_name, p.image_url, p.sku, p.description, s.name as shop_name
+    `SELECT t.*, p.name as product_name, p.image_url, p.sku, p.description, s.name as shop_name,
+       COALESCE(SUM(r.quantity), 0) as refund_quantity,
+       COUNT(r.id) as refund_count
      FROM transactions t
      JOIN products p ON t.product_id = p.id
      JOIN shops s ON t.shop_id = s.id
+     LEFT JOIN refunds r ON t.id = r.transaction_id
      ${where}
+     GROUP BY t.id
      ORDER BY t.date DESC, t.created_at DESC
      LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all()

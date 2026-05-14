@@ -71,6 +71,8 @@ export default function Transactions() {
   // 汇总
   const totalAmount = items.reduce((s, t) => s + parseFloat(t.price || '0') * (t.quantity || 0), 0)
   const totalQty = items.reduce((s, t) => s + (t.quantity || 0), 0)
+  const totalRefundQty = items.reduce((s, t) => s + (t.refund_quantity || 0), 0)
+  const totalRefundCount = items.reduce((s, t) => s + (t.refund_count || 0), 0)
 
   return (
     <div>
@@ -79,6 +81,9 @@ export default function Transactions() {
         <div className="flex items-center gap-4 text-sm text-gray-500">
           <span>共 {total} 笔</span>
           <span>合计 {totalQty} 件</span>
+          {totalRefundCount > 0 && (
+            <span className="text-red-600">已退 {totalRefundQty} 件</span>
+          )}
           <span className="text-orange-600 font-medium">¥{totalAmount.toFixed(0)}</span>
         </div>
       </div>
@@ -144,30 +149,53 @@ export default function Transactions() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {items.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 text-sm text-gray-500">{tx.date}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
-                        <span className="text-sm text-gray-800 max-w-[200px] truncate" title={tx.product_name}>{tx.product_name}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-500">{tx.shop_name || '-'}</td>
-                    <td className="px-4 py-3 text-sm text-right font-medium">¥{tx.price}</td>
-                    <td className="px-4 py-3 text-sm text-right">{tx.quantity}</td>
-                    <td className="px-4 py-3 text-sm text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
-                    <td className="px-4 py-3 text-sm text-gray-500 max-w-[120px] truncate" title={tx.note}>{tx.note || '-'}</td>
-                    <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => { setRefundModal(tx); setRefundForm({ price: tx.price, quantity: String(tx.quantity), date: new Date().toISOString().slice(0, 10), note: '退款' }) }}
-                        className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        退款
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {items.map((tx) => {
+                  const hasRefund = (tx.refund_count || 0) > 0
+                  const refundQuantity = tx.refund_quantity || 0
+                  const remainingQuantity = tx.quantity - refundQuantity
+                  const isFullyRefunded = remainingQuantity <= 0
+
+                  return (
+                    <tr key={tx.id} className={`hover:bg-gray-50 ${isFullyRefunded ? 'bg-red-50/50' : ''}`}>
+                      <td className="px-4 py-3 text-sm text-gray-500">{tx.date}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
+                          <div className="flex items-center gap-2">
+                            <span className={`text-sm max-w-[200px] truncate ${isFullyRefunded ? 'text-gray-400 line-through' : 'text-gray-800'}`} title={tx.product_name}>{tx.product_name}</span>
+                            {hasRefund && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                已退{refundQuantity}件
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-500">{tx.shop_name || '-'}</td>
+                      <td className="px-4 py-3 text-sm text-right font-medium">¥{tx.price}</td>
+                      <td className="px-4 py-3 text-sm text-right">
+                        <span className={isFullyRefunded ? 'text-gray-400 line-through' : ''}>{tx.quantity}</span>
+                        {hasRefund && (
+                          <span className="text-xs text-red-600 ml-1">
+                            (剩{remainingQuantity})
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
+                      <td className="px-4 py-3 text-sm text-gray-500 max-w-[120px] truncate" title={tx.note}>{tx.note || '-'}</td>
+                      <td className="px-4 py-3 text-right">
+                        {!isFullyRefunded && (
+                          <button
+                            onClick={() => { setRefundModal(tx); setRefundForm({ price: tx.price, quantity: String(remainingQuantity), date: new Date().toISOString().slice(0, 10), note: '退款' }) }}
+                            className="text-red-500 hover:text-red-700 text-sm"
+                          >
+                            退款
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
@@ -214,7 +242,16 @@ export default function Transactions() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setRefundModal(null)}>
           <div className="bg-white rounded-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-4">录入退款</h3>
-            <p className="text-sm text-gray-500 mb-4">原成交：{refundModal.product_name} — ¥{refundModal.price} x {refundModal.quantity}</p>
+            <div className="mb-4 p-3 bg-gray-50 rounded-md">
+              <p className="text-sm text-gray-700">原成交：<span className="font-medium">{refundModal.product_name}</span></p>
+              <p className="text-sm text-gray-600 mt-1">¥{refundModal.price} x {refundModal.quantity}</p>
+              {(refundModal.refund_quantity || 0) > 0 && (
+                <p className="text-sm text-red-600 mt-1">
+                  已退 <span className="font-medium">{refundModal.refund_quantity}</span> 件，
+                  剩余 <span className="font-medium">{refundModal.quantity - (refundModal.refund_quantity || 0)}</span> 件
+                </p>
+              )}
+            </div>
             <form onSubmit={handleRefund} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -223,7 +260,16 @@ export default function Transactions() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
-                  <input type="number" min={1} value={refundForm.quantity} onChange={(e) => setRefundForm({ ...refundForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                  <input
+                    type="number"
+                    min={1}
+                    max={refundModal.quantity - (refundModal.refund_quantity || 0)}
+                    value={refundForm.quantity}
+                    onChange={(e) => setRefundForm({ ...refundForm, quantity: e.target.value })}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">最多可退 {refundModal.quantity - (refundModal.refund_quantity || 0)} 件</p>
                 </div>
               </div>
               <div>
