@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -10,10 +10,48 @@ import Stats from './pages/Stats'
 import ProductDetail from './pages/ProductDetail'
 import Visitors from './pages/Visitors'
 import Transactions from './pages/Transactions'
+import { setNavigateToLogin } from './lib/api'
 
-function App() {
+function AppContent() {
+  const navigate = useNavigate()
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'))
   const [checking, setChecking] = useState(true)
+
+  // 设置全局导航回调
+  useEffect(() => {
+    setNavigateToLogin(() => {
+      setIsLoggedIn(false)
+      navigate('/login', { replace: true })
+    })
+  }, [navigate])
+
+  // 监听 localStorage token 变化
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'token' && !e.newValue) {
+        setIsLoggedIn(false)
+      }
+    }
+
+    // 监听同页面的 localStorage 变化
+    const checkToken = () => {
+      const token = localStorage.getItem('token')
+      if (!token && isLoggedIn) {
+        setIsLoggedIn(false)
+        navigate('/login', { replace: true })
+      }
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+
+    // 使用轮询检查 token（同页面内修改 localStorage 不会触发 storage 事件）
+    const tokenCheckInterval = setInterval(checkToken, 1000)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      clearInterval(tokenCheckInterval)
+    }
+  }, [isLoggedIn, navigate])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -47,6 +85,10 @@ function App() {
       </Routes>
     </Layout>
   )
+}
+
+function App() {
+  return <AppContent />
 }
 
 export default App

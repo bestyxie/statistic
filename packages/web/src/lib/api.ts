@@ -4,6 +4,13 @@ import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visit
 const API_BASE = '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
 
+// 全局导航回调，用于处理 401 跳转
+let navigateToLogin: (() => void) | null = null
+
+export function setNavigateToLogin(fn: () => void) {
+  navigateToLogin = fn
+}
+
 // --- AES-128-ECB decrypt (crypto-js, works in browser) ---
 
 function aesDecrypt(base64Str: string, keyStr: string): string {
@@ -39,7 +46,13 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (res.status === 401) {
     localStorage.removeItem('token')
-    window.location.href = '/login'
+    // 使用全局导航回调而不是 window.location.href
+    if (navigateToLogin) {
+      navigateToLogin()
+    } else {
+      // fallback 到 window.location（在开发环境可能不可靠）
+      window.location.href = '/login'
+    }
     throw new Error('登录已过期')
   }
 
