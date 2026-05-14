@@ -37,7 +37,7 @@ interface ProductRecord {
   visitorTime: number | null
 }
 
-async function main() {
+export async function importByVisitors(shopId: string) {
   console.log(`\n=== 通过访客列表导入数据 ===`)
   console.log(`日期: ${yesterday}`)
   console.log(`店铺: ${SHOP_ID}\n`)

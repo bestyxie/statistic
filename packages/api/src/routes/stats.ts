@@ -354,23 +354,38 @@ stats.post('/import-by-visitor', async (c) => {
   for (const pv of product_visits) {
     if (!pv.code) continue
 
-    const price = await extractPriceWithApi(pv.description || '', pv.code)
-
-    // Upsert product
-    await db.prepare(
-      `INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)
-       ON CONFLICT(shop_id, sku) DO UPDATE SET image_url = COALESCE(?, image_url), description = COALESCE(?, description), price = COALESCE(NULLIF(?, ''), price), updated_at = datetime("now")`
-    ).bind(
-      crypto.randomUUID(), shop_id, pv.code, pv.picUrl || '', pv.description || '', pv.code, price,
-      pv.picUrl || null, pv.description || null, price || null,
-    ).run()
-
-    const product = await db
+    // 检查商品是否已存在
+    const existingProduct = await db
       .prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
       .bind(shop_id, pv.code)
       .first<{ id: string }>()
 
-    if (!product) continue
+    let productId: string | undefined
+
+    if (existingProduct) {
+      // 商品已存在，跳过创建/更新，使用现有商品ID
+      productId = existingProduct.id
+    } else {
+      // 商品不存在，创建新商品
+      const price = await extractPriceWithApi(pv.description || '', pv.code)
+
+      await db.prepare(
+        `INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        crypto.randomUUID(), shop_id, pv.code, pv.picUrl || '', pv.description || '', pv.code, price,
+      ).run()
+
+      const newProduct = await db
+        .prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
+        .bind(shop_id, pv.code)
+        .first<{ id: string }>()
+
+      if (newProduct) {
+        productId = newProduct.id
+      }
+    }
+
+    if (!productId) continue
 
     // Upsert relation with visit_count
     await db.prepare(
@@ -378,7 +393,7 @@ stats.post('/import-by-visitor', async (c) => {
        VALUES (?, ?, ?, ?, ?)
        ON CONFLICT(product_id, visitor_id, date) DO UPDATE SET visit_count = ?`
     ).bind(
-      crypto.randomUUID(), product.id, visitorRow.id, date, pv.visit_count, pv.visit_count,
+      crypto.randomUUID(), productId, visitorRow.id, date, pv.visit_count, pv.visit_count,
     ).run()
 
     imported++
