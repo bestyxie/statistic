@@ -9,6 +9,8 @@ products.get('/', async (c) => {
   const shopId = c.req.query('shop_id')
   const dateFilter = c.req.query('date')
   const search = c.req.query('search')
+  const sortBy = c.req.query('sort_by') || 'created_at'
+  const sortOrder = c.req.query('sort_order') || 'desc'
   const page = Math.max(1, parseInt(c.req.query('page') || '1'))
   const pageSize = Math.max(1, parseInt(c.req.query('page_size') || '30'))
   const offset = (page - 1) * pageSize
@@ -37,8 +39,26 @@ products.get('/', async (c) => {
   const countResult = await db.prepare(`SELECT COUNT(*) as total FROM products p${where}`).bind(...countParams).first()
   const total = (countResult?.total as number) || 0
 
+  // 排序字段映射
+  const sortColumnMap: Record<string, string> = {
+    created_at: 'p.created_at',
+    visitors: 'yesterday_visitors',
+    transactions: 'transaction_count',
+  }
+  const sortColumn = sortColumnMap[sortBy] || 'p.created_at'
+  const orderClause = sortOrder === 'asc' ? 'ASC' : 'DESC'
+
   const dataParams = [statsDate, ...countParams]
-  const query = `SELECT p.*, s.name as shop_name, COALESCE(ps.viewer_count, 0) as yesterday_visitors FROM products p JOIN shops s ON p.shop_id = s.id LEFT JOIN daily_product_stats ps ON ps.product_id = p.id AND ps.date = ?${where} ORDER BY p.created_at DESC LIMIT ? OFFSET ?`
+  const query = `SELECT p.*, s.name as shop_name, COALESCE(ps.viewer_count, 0) as yesterday_visitors,
+    COALESCE(SUM(t.quantity), 0) as transaction_count
+    FROM products p
+    JOIN shops s ON p.shop_id = s.id
+    LEFT JOIN daily_product_stats ps ON ps.product_id = p.id AND ps.date = ?
+    LEFT JOIN transactions t ON t.product_id = p.id
+    ${where}
+    GROUP BY p.id
+    ORDER BY ${sortColumn} ${orderClause}
+    LIMIT ? OFFSET ?`
   const result = await db.prepare(query).bind(...dataParams, pageSize, offset).all()
 
   return c.json({ items: result.results, total, page, page_size: pageSize })

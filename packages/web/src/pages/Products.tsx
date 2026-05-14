@@ -17,6 +17,8 @@ export default function Products() {
   const search = searchParams.get('search') || ''
   const [searchInput, setSearchInput] = useState(search)
   const doSearch = () => setSearchParams((prev) => { prev.delete('page'); if (searchInput) prev.set('search', searchInput); else prev.delete('search'); return prev })
+  const sortBy = searchParams.get('sort_by') || 'created_at'
+  const sortOrder = searchParams.get('sort_order') || 'desc'
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Product | null>(null)
@@ -28,17 +30,63 @@ export default function Products() {
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const pageSize = 30
+  const [showProductTx, setShowProductTx] = useState(false)
+  const [productTxProduct, setProductTxProduct] = useState<Product | null>(null)
+  const [productTxList, setProductTxList] = useState<any[]>([])
+  const [productTxLoading, setProductTxLoading] = useState(false)
 
   const load = () => {
     setLoading(true)
-    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined).then((res) => {
+    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined, sortBy, sortOrder).then((res) => {
       setProducts(res.items)
       setTotal(res.total)
     }).finally(() => setLoading(false))
   }
 
+  const toggleSort = (field: string) => {
+    let newSortBy = field
+    let newSortOrder = 'desc'
+    if (sortBy === field) {
+      if (sortOrder === 'desc') {
+        newSortOrder = 'asc'
+      } else {
+        newSortBy = 'created_at'
+        newSortOrder = 'desc'
+      }
+    }
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (newSortBy !== 'created_at') {
+        prev.set('sort_by', newSortBy)
+        prev.set('sort_order', newSortOrder)
+      } else {
+        prev.delete('sort_by')
+        prev.delete('sort_order')
+      }
+      return prev
+    })
+  }
+
+  const getSortIcon = (field: string) => {
+    if (sortBy !== field) return ' ⇅'
+    return sortOrder === 'asc' ? ' ↑' : ' ↓'
+  }
+
+  const loadProductTransactions = async (productId: string) => {
+    setProductTxLoading(true)
+    try {
+      const res = await api.getTransactions({ product_id: productId, limit: 50 })
+      setProductTxList(res.items || [])
+    } catch (err: any) {
+      console.error('加载成交记录失败:', err)
+      setProductTxList([])
+    } finally {
+      setProductTxLoading(false)
+    }
+  }
+
   useEffect(() => { api.getShops().then(setShops) }, [])
-  useEffect(() => { load() }, [selectedShop, page, visitDate, search])
+  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder])
 
   // sync URL search back to input when URL changes
   useEffect(() => { setSearchInput(search) }, [search])
@@ -314,6 +362,98 @@ export default function Products() {
         </div>
       )}
 
+      {/* 商品成交记录弹窗 */}
+      {showProductTx && productTxProduct && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowProductTx(false)}>
+          <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">成交记录 — {productTxProduct.description?.slice(0, 50) || productTxProduct.sku}</h2>
+              <button onClick={() => setShowProductTx(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+
+            <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+              <span>共 {productTxList.length} 条成交记录</span>
+              <span>总数量: {productTxList.reduce((sum, tx) => sum + (tx.quantity || 0), 0)}</span>
+              <span className="text-red-600">已退: {productTxList.reduce((sum, tx) => sum + (tx.refund_quantity || 0), 0)}</span>
+              <span className="text-orange-600 font-medium">
+                总金额: ¥{productTxList.reduce((sum, tx) => sum + parseFloat(tx.price || '0') * (tx.quantity || 0), 0).toFixed(0)}
+              </span>
+            </div>
+
+            <div className="flex-1 overflow-auto">
+              {productTxLoading ? (
+                <div className="text-center py-12 text-gray-400">加载中...</div>
+              ) : productTxList.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">暂无成交记录</div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50 sticky top-0">
+                    <tr className="border-b border-gray-200">
+                      <th className="text-left py-3 px-4 text-gray-500 font-medium">日期</th>
+                      <th className="text-left py-3 px-4 text-gray-500 font-medium">商品</th>
+                      <th className="text-right py-3 px-4 text-gray-500 font-medium">成交价</th>
+                      <th className="text-right py-3 px-4 text-gray-500 font-medium">数量</th>
+                      <th className="text-right py-3 px-4 text-gray-500 font-medium">金额</th>
+                      <th className="text-left py-3 px-4 text-gray-500 font-medium">备注</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {productTxList.map((tx) => {
+                      const hasRefund = (tx.refund_count || 0) > 0
+                      const refundQuantity = tx.refund_quantity || 0
+                      const remainingQuantity = tx.quantity - refundQuantity
+                      const isFullyRefunded = remainingQuantity <= 0
+
+                      return (
+                        <tr key={tx.id} className={`hover:bg-gray-50 ${isFullyRefunded ? 'bg-red-50/50' : ''}`}>
+                          <td className="py-3 px-4 text-gray-600">{tx.date}</td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-2">
+                              {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
+                              <div className="flex items-center gap-2">
+                                <span className={`text-gray-800 max-w-[150px] truncate ${isFullyRefunded ? 'line-through text-gray-400' : ''}`} title={tx.product_name}>{tx.product_name}</span>
+                                {hasRefund && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                    已退{refundQuantity}件
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium">¥{tx.price}</td>
+                          <td className="py-3 px-4 text-right">
+                            <span className={isFullyRefunded ? 'text-gray-400 line-through' : ''}>{tx.quantity}</span>
+                            {hasRefund && (
+                              <span className="text-xs text-red-600 ml-1">
+                                (剩{remainingQuantity})
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
+                          <td className="py-3 px-4 text-gray-500 max-w-[100px] truncate" title={tx.note}>{tx.note || '-'}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+
+            <div className="flex gap-2 pt-4 border-t border-gray-200 mt-4">
+              <button
+                onClick={() => navigate(`/transactions?product_id=${productTxProduct.id}`)}
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+              >
+                查看完整成交明细
+              </button>
+              <button onClick={() => setShowProductTx(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
           <p className="text-center py-12 text-gray-400">加载中...</p>
@@ -329,7 +469,18 @@ export default function Products() {
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">商品描述</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">店铺</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">价格</th>
-                    <th className="text-right py-3 px-5 text-gray-500 font-medium">{visitDate ? `${visitDate.slice(5)} 访客` : '昨日访客'}</th>
+                    <th
+                      className="text-right py-3 px-5 text-gray-500 font-medium cursor-pointer hover:bg-gray-100"
+                      onClick={() => toggleSort('visitors')}
+                    >
+                      {visitDate ? `${visitDate.slice(5)} 访客` : '昨日访客'}{getSortIcon('visitors')}
+                    </th>
+                    <th
+                      className="text-right py-3 px-5 text-gray-500 font-medium cursor-pointer hover:bg-gray-100"
+                      onClick={() => toggleSort('transactions')}
+                    >
+                      成交数{getSortIcon('transactions')}
+                    </th>
                     <th className="text-right py-3 px-5 text-gray-500 font-medium">操作</th>
                   </tr>
                 </thead>
@@ -347,6 +498,14 @@ export default function Products() {
                       <td className="py-3 px-5 text-gray-600">{p.shop_name}</td>
                       <td className="py-3 px-5 text-gray-600">{p.price || '-'}</td>
                       <td className="py-3 px-5 text-right font-medium">{(p as any).yesterday_visitors || 0}</td>
+                      <td className="py-3 px-5 text-right">
+                        <button
+                          onClick={() => { setProductTxProduct(p); loadProductTransactions(p.id); setShowProductTx(true) }}
+                          className={`font-medium cursor-pointer hover:underline ${(p as any).transaction_count > 0 ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400 hover:text-gray-500'}`}
+                        >
+                          {(p as any).transaction_count || 0}
+                        </button>
+                      </td>
                       <td className="py-3 px-5 text-right">
                         <button onClick={() => handleEdit(p)} className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
                         <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
