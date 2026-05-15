@@ -97,16 +97,20 @@ export async function extractPriceWithApi(description: string, code?: string): P
  * @returns 价格字符串
  */
 export async function getPriceWithFallback(description: string, existingPrice?: string, code?: string): Promise<string> {
-  if (existingPrice && existingPrice.trim() !== '') {
-    return existingPrice.trim()
+  try {
+    if (existingPrice && existingPrice.trim() !== '') {
+      return existingPrice.trim()
+    }
+
+    const fromDesc = extractPrice(description)
+    if (fromDesc) return fromDesc
+
+    if (code) {
+      return await fetchPriceFromApi(code)
+    }
+  } catch {
+    // 静默失败，返回已有价格或空字符串
   }
 
-  const fromDesc = extractPrice(description)
-  if (fromDesc) return fromDesc
-
-  if (code) {
-    return fetchPriceFromApi(code)
-  }
-
-  return ''
+  return existingPrice?.trim() || ''
 }

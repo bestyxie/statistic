@@ -1,25 +1,20 @@
 import { useState } from 'react'
-import type { PurchaseRecord, SupplierProduct } from '@statistic/shared'
+import type { PurchaseRecord } from '@statistic/shared'
+import type { ProductSupplierWithInfo, PurchaseWithProduct } from '../../lib/supplierApi'
 import PurchaseRecordForm from './PurchaseRecordForm'
-
-type PurchaseWithProduct = PurchaseRecord & {
-  product_code: string
-  description: string
-  image_url: string
-}
 
 interface Props {
   purchases: PurchaseWithProduct[]
-  products: SupplierProduct[]
-  onSave: (data: { supplier_product_id: string; price: string; quantity: number; purchase_date: string; note: string }, editingId?: string) => Promise<void>
+  supplierProducts: ProductSupplierWithInfo[]
+  onSave: (data: { product_supplier_id: string; price: string; quantity: number; purchase_date: string; note: string }, editingId?: string) => Promise<void>
   onDelete: (id: string) => void
 }
 
-export default function PurchaseRecordList({ purchases, products, onSave, onDelete }: Props) {
+export default function PurchaseRecordList({ purchases, supplierProducts, onSave, onDelete }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [editingPurchase, setEditingPurchase] = useState<PurchaseWithProduct | null>(null)
 
-  const handleSubmit = async (data: { supplier_product_id: string; price: string; quantity: number; purchase_date: string; note: string }) => {
+  const handleSubmit = async (data: { product_supplier_id: string; price: string; quantity: number; purchase_date: string; note: string }) => {
     await onSave(data, editingPurchase?.id)
     setShowForm(false)
     setEditingPurchase(null)
@@ -41,7 +36,7 @@ export default function PurchaseRecordList({ purchases, products, onSave, onDele
         <h3 className="font-medium text-gray-700 text-sm">拿货记录</h3>
         <button
           onClick={() => { setShowForm(true); setEditingPurchase(null) }}
-          disabled={products.length === 0}
+          disabled={supplierProducts.length === 0}
           className="px-3 py-1 bg-blue-600 text-white rounded text-xs hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
         >
           添加拿货
@@ -50,7 +45,7 @@ export default function PurchaseRecordList({ purchases, products, onSave, onDele
 
       {showForm && (
         <PurchaseRecordForm
-          products={products}
+          supplierProducts={supplierProducts}
           purchase={editingPurchase}
           onSubmit={handleSubmit}
           onCancel={handleCancel}
@@ -77,16 +72,11 @@ export default function PurchaseRecordList({ purchases, products, onSave, onDele
                 <td className="py-2.5 px-5 text-gray-600 text-xs">{p.purchase_date}</td>
                 <td className="py-2.5 px-5">
                   <div className="flex items-center gap-2">
-                    {p.image_url && (
-                      <img
-                        src={p.image_url}
-                        alt=""
-                        className="w-8 h-8 rounded object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                      />
+                    {p.product_image && (
+                      <img src={p.product_image} alt="" className="w-8 h-8 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     )}
-                    <span className="text-gray-800 text-xs truncate max-w-[120px]" title={p.description}>
-                      {p.description || p.product_code || '-'}
+                    <span className="text-gray-800 text-xs truncate max-w-[120px]" title={p.product_description || p.product_name}>
+                      {p.product_description || p.product_name || '-'}
                     </span>
                   </div>
                 </td>

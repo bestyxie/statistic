@@ -136,14 +136,13 @@ export interface Supplier {
   updated_at: string
 }
 
-/** 供应商商品（供货列表） */
-export interface SupplierProduct {
+/** 商品-供应商关联（多对多） */
+export interface ProductSupplier {
   id: string
+  product_id: string
   supplier_id: string
-  product_code: string
   price: string
-  image_url: string
-  description: string
+  note: string
   created_at: string
   updated_at: string
 }

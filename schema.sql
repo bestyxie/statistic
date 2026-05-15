@@ -120,27 +120,28 @@ CREATE TABLE suppliers (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
--- 供应商商品（供货列表）
-CREATE TABLE supplier_products (
+-- 商品-供应商关联（多对多）
+CREATE TABLE product_suppliers (
   id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
   supplier_id TEXT NOT NULL,
-  product_code TEXT DEFAULT '',
   price TEXT DEFAULT '',
-  image_url TEXT DEFAULT '',
-  description TEXT DEFAULT '',
+  note TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE,
+  UNIQUE(product_id, supplier_id)
 );
 
--- 拿货记录（关联供应商商品）
+-- 拿货记录（关联商品-供应商）
 CREATE TABLE purchase_records (
   id TEXT PRIMARY KEY,
-  supplier_product_id TEXT NOT NULL,
+  product_supplier_id TEXT NOT NULL,
   price TEXT NOT NULL,
   quantity INTEGER DEFAULT 1,
   purchase_date TEXT NOT NULL,
   note TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
-  FOREIGN KEY (supplier_product_id) REFERENCES supplier_products(id) ON DELETE CASCADE
+  FOREIGN KEY (product_supplier_id) REFERENCES product_suppliers(id) ON DELETE CASCADE
 );

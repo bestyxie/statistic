@@ -1,15 +1,9 @@
 import { useState, useEffect } from 'react'
-import { supplierApi } from '../../lib/supplierApi'
-import type { Supplier, SupplierProduct, PurchaseRecord } from '@statistic/shared'
+import { supplierApi, type PurchaseWithProduct, type ProductSupplierWithInfo } from '../../lib/supplierApi'
+import type { Supplier } from '@statistic/shared'
 import SupplierForm from './SupplierForm'
 import SupplierList from './SupplierList'
 import PurchaseRecordList from './PurchaseRecordList'
-
-type PurchaseWithProduct = PurchaseRecord & {
-  product_code: string
-  description: string
-  image_url: string
-}
 
 export default function PurchaseRecordsTab() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
@@ -19,7 +13,7 @@ export default function PurchaseRecordsTab() {
   const [showSupplierForm, setShowSupplierForm] = useState(false)
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null)
 
-  const [products, setProducts] = useState<SupplierProduct[]>([])
+  const [supplierProducts, setSupplierProducts] = useState<ProductSupplierWithInfo[]>([])
   const [purchases, setPurchases] = useState<PurchaseWithProduct[]>([])
 
   const loadSuppliers = () => {
@@ -31,7 +25,7 @@ export default function PurchaseRecordsTab() {
 
   useEffect(() => {
     if (!selectedSupplier) return
-    supplierApi.getSupplierProducts(selectedSupplier.id).then(setProducts)
+    supplierApi.getSupplierProducts(selectedSupplier.id).then(setSupplierProducts)
     supplierApi.getPurchaseRecords(selectedSupplier.id).then(setPurchases)
   }, [selectedSupplier])
 
@@ -47,13 +41,13 @@ export default function PurchaseRecordsTab() {
   }
 
   const handleDeleteSupplier = async (id: string) => {
-    if (!confirm('确定删除此供应商？关联的拿货记录也会被删除。')) return
+    if (!confirm('确定删除此供应商？')) return
     await supplierApi.deleteSupplier(id)
     if (selectedSupplier?.id === id) setSelectedSupplier(null)
     loadSuppliers()
   }
 
-  const handlePurchaseSave = async (data: { supplier_product_id: string; price: string; quantity: number; purchase_date: string; note: string }, editingId?: string) => {
+  const handlePurchaseSave = async (data: { product_supplier_id: string; price: string; quantity: number; purchase_date: string; note: string }, editingId?: string) => {
     if (!selectedSupplier) return
     if (editingId) {
       await supplierApi.updatePurchaseRecord(selectedSupplier.id, editingId, data)
@@ -72,21 +66,8 @@ export default function PurchaseRecordsTab() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-end gap-2">
-        <button
-          onClick={() => { setShowSupplierForm(true); setEditingSupplier(null) }}
-          className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm"
-        >
-          管理供应商
-        </button>
-      </div>
-
       {showSupplierForm && (
-        <SupplierForm
-          supplier={editingSupplier}
-          onSubmit={handleSupplierSubmit}
-          onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }}
-        />
+        <SupplierForm supplier={editingSupplier} onSubmit={handleSupplierSubmit} onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }} />
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -96,6 +77,7 @@ export default function PurchaseRecordsTab() {
             selectedId={selectedSupplier?.id}
             loading={loading}
             onSelect={setSelectedSupplier}
+            onAdd={() => { setEditingSupplier(null); setShowSupplierForm(true) }}
             onEdit={(s) => { setEditingSupplier(s); setShowSupplierForm(true) }}
             onDelete={handleDeleteSupplier}
           />
@@ -109,7 +91,7 @@ export default function PurchaseRecordsTab() {
           ) : (
             <PurchaseRecordList
               purchases={purchases}
-              products={products}
+              supplierProducts={supplierProducts}
               onSave={handlePurchaseSave}
               onDelete={handleDeletePurchase}
             />

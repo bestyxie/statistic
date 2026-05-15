@@ -1,5 +1,21 @@
-import type { Supplier, SupplierProduct, PurchaseRecord } from '@statistic/shared'
+import type { Supplier, ProductSupplier, PurchaseRecord } from '@statistic/shared'
 import { request } from './api'
+
+export type ProductSupplierWithInfo = ProductSupplier & {
+  product_name: string
+  product_image: string
+  product_description: string
+  product_sku: string
+  product_price: string
+  supplier_name: string
+}
+
+export type PurchaseWithProduct = PurchaseRecord & {
+  product_name: string
+  product_image: string
+  product_description: string
+  product_sku: string
+}
 
 export const supplierApi = {
   // 供应商
@@ -12,31 +28,37 @@ export const supplierApi = {
   deleteSupplier: (id: string) =>
     request<{ message: string }>(`/suppliers/${id}`, { method: 'DELETE' }),
 
-  // 全量供货商品（搜索）
+  // 全量关联（搜索）
   getAllProducts: (params?: { search?: string; supplier_id?: string }) => {
     const q = new URLSearchParams()
     if (params?.search) q.set('search', params.search)
     if (params?.supplier_id) q.set('supplier_id', params.supplier_id)
-    return request<(SupplierProduct & { supplier_name: string })[]>(`/suppliers/all-products?${q.toString()}`)
+    return request<ProductSupplierWithInfo[]>(`/suppliers/all-products?${q.toString()}`)
   },
 
-  // 供货商品（按供应商）
+  // 商品-供应商关联
+  linkProduct: (data: { product_id: string; supplier_id: string; price?: string; note?: string }) =>
+    request<ProductSupplier>('/suppliers/link', { method: 'POST', body: JSON.stringify(data) }),
+  updateLink: (id: string, data: { price?: string; note?: string; supplier_id?: string }) =>
+    request<{ message: string }>(`/suppliers/link/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  unlinkProduct: (id: string) =>
+    request<{ message: string }>(`/suppliers/link/${id}`, { method: 'DELETE' }),
+
+  // 获取某供应商的关联商品（用于拿货记录下拉）
   getSupplierProducts: (supplierId: string) =>
-    request<SupplierProduct[]>(`/suppliers/${supplierId}/products`),
-  createSupplierProduct: (supplierId: string, data: { product_code?: string; price?: string; image_url?: string; description?: string }) =>
-    request<SupplierProduct>(`/suppliers/${supplierId}/products`, { method: 'POST', body: JSON.stringify(data) }),
-  updateSupplierProduct: (supplierId: string, productId: string, data: { product_code?: string; price?: string; image_url?: string; description?: string }) =>
-    request<{ message: string }>(`/suppliers/${supplierId}/products/${productId}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteSupplierProduct: (supplierId: string, productId: string) =>
-    request<{ message: string }>(`/suppliers/${supplierId}/products/${productId}`, { method: 'DELETE' }),
+    request<ProductSupplierWithInfo[]>(`/suppliers/all-products?supplier_id=${supplierId}`),
 
   // 拿货记录
   getPurchaseRecords: (supplierId: string) =>
-    request<(PurchaseRecord & { product_code: string; description: string; image_url: string })[]>(`/suppliers/${supplierId}/purchases`),
-  createPurchaseRecord: (supplierId: string, data: { supplier_product_id: string; price: string; quantity?: number; purchase_date: string; note?: string }) =>
+    request<PurchaseWithProduct[]>(`/suppliers/${supplierId}/purchases`),
+  createPurchaseRecord: (supplierId: string, data: { product_supplier_id: string; price: string; quantity?: number; purchase_date: string; note?: string }) =>
     request<PurchaseRecord>(`/suppliers/${supplierId}/purchases`, { method: 'POST', body: JSON.stringify(data) }),
   updatePurchaseRecord: (supplierId: string, purchaseId: string, data: { price: string; quantity?: number; purchase_date: string; note?: string }) =>
     request<{ message: string }>(`/suppliers/${supplierId}/purchases/${purchaseId}`, { method: 'PUT', body: JSON.stringify(data) }),
   deletePurchaseRecord: (supplierId: string, purchaseId: string) =>
     request<{ message: string }>(`/suppliers/${supplierId}/purchases/${purchaseId}`, { method: 'DELETE' }),
+
+  // cURL 解析
+  parseCurl: (curl: string) =>
+    request<{ success: boolean; data?: { image_url: string; description: string; price: string; product_code: string }; error?: string; raw?: unknown }>('/suppliers/parse-curl', { method: 'POST', body: JSON.stringify({ curl }) }),
 }

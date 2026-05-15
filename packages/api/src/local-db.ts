@@ -159,32 +159,113 @@ export class LocalD1 {
           updated_at TEXT DEFAULT (datetime('now'))
         )
       `)
+      this.dirty = true
+    }
+
+    // Migrate: migrate from supplier_products to product_suppliers
+    const oldTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='supplier_products'")
+    const newTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='product_suppliers'")
+    if (oldTable.length > 0 && newTable.length === 0) {
+      // Create new tables
       this.db.run(`
-        CREATE TABLE supplier_products (
+        CREATE TABLE product_suppliers (
           id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
           supplier_id TEXT NOT NULL,
-          product_code TEXT DEFAULT '',
           price TEXT DEFAULT '',
-          image_url TEXT DEFAULT '',
-          description TEXT DEFAULT '',
+          note TEXT DEFAULT '',
           created_at TEXT DEFAULT (datetime('now')),
           updated_at TEXT DEFAULT (datetime('now')),
-          FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE
+          FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+          FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE,
+          UNIQUE(product_id, supplier_id)
         )
       `)
       this.db.run(`
-        CREATE TABLE purchase_records (
+        CREATE TABLE purchase_records_new (
           id TEXT PRIMARY KEY,
-          supplier_product_id TEXT NOT NULL,
+          product_supplier_id TEXT NOT NULL,
           price TEXT NOT NULL,
           quantity INTEGER DEFAULT 1,
           purchase_date TEXT NOT NULL,
           note TEXT DEFAULT '',
           created_at TEXT DEFAULT (datetime('now')),
-          FOREIGN KEY (supplier_product_id) REFERENCES supplier_products(id) ON DELETE CASCADE
+          FOREIGN KEY (product_supplier_id) REFERENCES product_suppliers(id) ON DELETE CASCADE
         )
       `)
+      // Migrate data: supplier_products with product_id → product_suppliers
+      try {
+        const spCols = this.db.exec("PRAGMA table_info('supplier_products')")
+        const hasProductId = spCols.length > 0 && spCols[0].values.some((col: unknown[]) => col[1] === 'product_id')
+        if (hasProductId) {
+          const rows = this.db.exec('SELECT id, supplier_id, product_id, price, created_at, updated_at FROM supplier_products WHERE product_id IS NOT NULL AND product_id != \'\'')
+          if (rows.length > 0 && rows[0].values.length > 0) {
+            const insertStmt = this.db.prepare('INSERT OR IGNORE INTO product_suppliers (id, product_id, supplier_id, price, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+            for (const row of rows[0].values) {
+              insertStmt.bind(row as number[])
+              insertStmt.step()
+              insertStmt.free()
+            }
+          }
+        }
+        // Migrate purchase_records → purchase_records_new (skip if can't map)
+        try {
+          const prRows = this.db.exec(`
+            SELECT pr.id, ps.id, pr.price, pr.quantity, pr.purchase_date, pr.note, pr.created_at
+            FROM purchase_records pr
+            JOIN supplier_products sp ON pr.supplier_product_id = sp.id
+            JOIN product_suppliers ps ON sp.product_id = ps.product_id AND sp.supplier_id = ps.supplier_id
+          `)
+          if (prRows.length > 0 && prRows[0].values.length > 0) {
+            const prInsert = this.db.prepare('INSERT INTO purchase_records_new (id, product_supplier_id, price, quantity, purchase_date, note, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+            for (const row of prRows[0].values) {
+              prInsert.bind(row as number[])
+              prInsert.step()
+              prInsert.free()
+            }
+          }
+        } catch { /* skip unmappable purchase records */ }
+      } catch { /* skip migration errors */ }
+
+      // Swap tables
+      this.db.run('DROP TABLE IF EXISTS purchase_records')
+      this.db.run('ALTER TABLE purchase_records_new RENAME TO purchase_records')
+      this.db.run('DROP TABLE supplier_products')
       this.dirty = true
+    }
+
+    // Fresh install: create product_suppliers if neither old nor new table exists
+    if (oldTable.length === 0 && newTable.length === 0) {
+      const prTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='purchase_records'")
+      if (prTable.length === 0) {
+        this.db.run(`
+          CREATE TABLE product_suppliers (
+            id TEXT PRIMARY KEY,
+            product_id TEXT NOT NULL,
+            supplier_id TEXT NOT NULL,
+            price TEXT DEFAULT '',
+            note TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            updated_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+            FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE,
+            UNIQUE(product_id, supplier_id)
+          )
+        `)
+        this.db.run(`
+          CREATE TABLE purchase_records (
+            id TEXT PRIMARY KEY,
+            product_supplier_id TEXT NOT NULL,
+            price TEXT NOT NULL,
+            quantity INTEGER DEFAULT 1,
+            purchase_date TEXT NOT NULL,
+            note TEXT DEFAULT '',
+            created_at TEXT DEFAULT (datetime('now')),
+            FOREIGN KEY (product_supplier_id) REFERENCES product_suppliers(id) ON DELETE CASCADE
+          )
+        `)
+        this.dirty = true
+      }
     }
 
     // Auto-save every 5 seconds if dirty
