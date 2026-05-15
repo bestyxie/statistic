@@ -6,7 +6,7 @@
 import { queryBestSelling, queryProductVisitors } from './query-best-selling'
 
 const API_BASE = 'http://localhost:3001/api'
-const SHOP_ID = 'eee675ce-2a83-4413-96b2-155c2c0385a4'
+const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
 
 // 昨天的日期 YYYY-MM-DD
 const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)

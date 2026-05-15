@@ -5,6 +5,7 @@ import authRoutes from './routes/auth'
 import shopRoutes from './routes/shops'
 import productRoutes from './routes/products'
 import statsRoutes from './routes/stats'
+import supplierRoutes from './routes/suppliers'
 
 type Bindings = {
   DB: D1Database
@@ -41,5 +42,6 @@ app.use('*', async (c, next) => {
 app.route('/shops', shopRoutes)
 app.route('/products', productRoutes)
 app.route('/stats', statsRoutes)
+app.route('/suppliers', supplierRoutes)
 
 export default app

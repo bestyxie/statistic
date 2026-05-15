@@ -126,6 +126,39 @@ export interface Refund {
   created_at: string
 }
 
+/** 供应商 */
+export interface Supplier {
+  id: string
+  wechat_nickname: string
+  wechat_id: string
+  remark: string
+  created_at: string
+  updated_at: string
+}
+
+/** 供应商商品（供货列表） */
+export interface SupplierProduct {
+  id: string
+  supplier_id: string
+  product_code: string
+  price: string
+  image_url: string
+  description: string
+  created_at: string
+  updated_at: string
+}
+
+/** 拿货记录（关联供应商商品） */
+export interface PurchaseRecord {
+  id: string
+  supplier_product_id: string
+  price: string
+  quantity: number
+  purchase_date: string
+  note: string
+  created_at: string
+}
+
 /**
  * 外部访客列表数据（queryCustomerViewByConditionV2 返回的单个访客）
  * 主要字段:

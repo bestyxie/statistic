@@ -37,10 +37,12 @@ interface ProductRecord {
   visitorTime: number | null
 }
 
-export async function importByVisitors(shopId: string) {
+export async function importByVisitors(shopId?: string) {
+  const effectiveShopId = shopId || process.env.SHOP_ID || SHOP_ID
+
   console.log(`\n=== 通过访客列表导入数据 ===`)
   console.log(`日期: ${yesterday}`)
-  console.log(`店铺: ${SHOP_ID}\n`)
+  console.log(`店铺: ${effectiveShopId}\n`)
 
   // 1. 登录
   console.log('正在登录...')
@@ -135,7 +137,7 @@ export async function importByVisitors(shopId: string) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          shop_id: SHOP_ID,
+          shop_id: effectiveShopId,
           date: yesterday,
           visitor: {
             uid,
@@ -167,7 +169,7 @@ export async function importByVisitors(shopId: string) {
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      shop_id: SHOP_ID,
+      shop_id: effectiveShopId,
       date: yesterday,
       visitor_count: storeVisitorNum || allVisitors.length,
     }),
@@ -186,7 +188,7 @@ export async function importByVisitors(shopId: string) {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          shop_id: SHOP_ID,
+          shop_id: effectiveShopId,
           product_sku: code,
           date: yesterday,
         }),
@@ -202,7 +204,20 @@ export async function importByVisitors(shopId: string) {
   console.log(`  关联记录: ${totalRelations}`)
 }
 
-main().catch((e) => {
-  console.error('执行失败:', e.message)
-  process.exit(1)
-})
+// 直接运行脚本（支持手动导入）
+async function main() {
+  try {
+    await importByVisitors()
+  } catch (error: any) {
+    console.error('执行失败:', error.message)
+    process.exit(1)
+  }
+}
+
+// 允许直接运行此脚本
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((e) => {
+    console.error('执行失败:', e.message)
+    process.exit(1)
+  })
+}

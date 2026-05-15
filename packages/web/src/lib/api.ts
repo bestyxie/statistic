@@ -34,7 +34,7 @@ export function decryptData(encryptedBase64: string): { vroList: ExternalProduct
   return { vroList: parsed.data.vroList, totalVisitors, raw: parsed }
 }
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+export async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const token = localStorage.getItem('token')
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

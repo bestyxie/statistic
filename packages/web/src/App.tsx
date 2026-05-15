@@ -10,6 +10,7 @@ import Stats from './pages/Stats'
 import ProductDetail from './pages/ProductDetail'
 import Visitors from './pages/Visitors'
 import Transactions from './pages/Transactions'
+import Suppliers from './pages/Suppliers'
 import { setNavigateToLogin } from './lib/api'
 
 function AppContent() {
@@ -79,6 +80,7 @@ function AppContent() {
         <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/visitors" element={<Visitors />} />
         <Route path="/transactions" element={<Transactions />} />
+        <Route path="/suppliers" element={<Suppliers />} />
         <Route path="/data-entry" element={<DataEntry />} />
         <Route path="/stats" element={<Stats />} />
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -109,3 +109,38 @@ CREATE TABLE refunds (
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (transaction_id) REFERENCES transactions(id) ON DELETE CASCADE
 );
+
+-- 供应商
+CREATE TABLE suppliers (
+  id TEXT PRIMARY KEY,
+  wechat_nickname TEXT NOT NULL,
+  wechat_id TEXT DEFAULT '',
+  remark TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 供应商商品（供货列表）
+CREATE TABLE supplier_products (
+  id TEXT PRIMARY KEY,
+  supplier_id TEXT NOT NULL,
+  product_code TEXT DEFAULT '',
+  price TEXT DEFAULT '',
+  image_url TEXT DEFAULT '',
+  description TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (supplier_id) REFERENCES suppliers(id) ON DELETE CASCADE
+);
+
+-- 拿货记录（关联供应商商品）
+CREATE TABLE purchase_records (
+  id TEXT PRIMARY KEY,
+  supplier_product_id TEXT NOT NULL,
+  price TEXT NOT NULL,
+  quantity INTEGER DEFAULT 1,
+  purchase_date TEXT NOT NULL,
+  note TEXT DEFAULT '',
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (supplier_product_id) REFERENCES supplier_products(id) ON DELETE CASCADE
+);
