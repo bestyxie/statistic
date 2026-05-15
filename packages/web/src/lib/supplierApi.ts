@@ -12,7 +12,15 @@ export const supplierApi = {
   deleteSupplier: (id: string) =>
     request<{ message: string }>(`/suppliers/${id}`, { method: 'DELETE' }),
 
-  // 供货商品
+  // 全量供货商品（搜索）
+  getAllProducts: (params?: { search?: string; supplier_id?: string }) => {
+    const q = new URLSearchParams()
+    if (params?.search) q.set('search', params.search)
+    if (params?.supplier_id) q.set('supplier_id', params.supplier_id)
+    return request<(SupplierProduct & { supplier_name: string })[]>(`/suppliers/all-products?${q.toString()}`)
+  },
+
+  // 供货商品（按供应商）
   getSupplierProducts: (supplierId: string) =>
     request<SupplierProduct[]>(`/suppliers/${supplierId}/products`),
   createSupplierProduct: (supplierId: string, data: { product_code?: string; price?: string; image_url?: string; description?: string }) =>

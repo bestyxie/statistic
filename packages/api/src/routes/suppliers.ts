@@ -35,6 +35,41 @@ suppliers.delete('/:id', async (c) => {
   return c.json({ message: '删除成功' })
 })
 
+// --- 全量供货商品（跨供应商搜索） ---
+
+suppliers.get('/all-products', async (c) => {
+  const db = c.env.DB
+  const search = c.req.query('search')?.trim() || ''
+  const supplierId = c.req.query('supplier_id') || ''
+
+  let sql = `
+    SELECT sp.*, s.wechat_nickname AS supplier_name
+    FROM supplier_products sp
+    JOIN suppliers s ON sp.supplier_id = s.id
+    WHERE 1=1
+  `
+  const params: string[] = []
+
+  if (supplierId) {
+    sql += ' AND sp.supplier_id = ?'
+    params.push(supplierId)
+  }
+
+  if (search) {
+    sql += ' AND (s.wechat_nickname LIKE ? OR sp.product_code LIKE ? OR sp.description LIKE ?)'
+    const like = `%${search}%`
+    params.push(like, like, like)
+  }
+
+  sql += ' ORDER BY sp.created_at DESC'
+
+  const stmt = db.prepare(sql)
+  const result = params.length > 0
+    ? await stmt.bind(...params).all()
+    : await stmt.all()
+  return c.json(result.results)
+})
+
 // --- 供应商商品 CRUD ---
 
 suppliers.get('/:supplierId/products', async (c) => {
