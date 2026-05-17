@@ -196,6 +196,7 @@ export default function Products() {
               添加商品
             </button>
           )}
+          <button onClick={() => navigate('/product-ranking')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">7日排行榜</button>
         </div>
       </div>
 

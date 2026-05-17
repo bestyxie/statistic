@@ -11,6 +11,7 @@ import ProductDetail from './pages/ProductDetail'
 import Visitors from './pages/Visitors'
 import Transactions from './pages/Transactions'
 import Suppliers from './pages/Suppliers'
+import ProductRanking from './pages/ProductRanking'
 import { setNavigateToLogin } from './lib/api'
 
 function AppContent() {
@@ -78,6 +79,7 @@ function AppContent() {
         <Route path="/shops" element={<Shops />} />
         <Route path="/products" element={<Products />} />
         <Route path="/products/:id" element={<ProductDetail />} />
+        <Route path="/product-ranking" element={<ProductRanking />} />
         <Route path="/visitors" element={<Visitors />} />
         <Route path="/transactions" element={<Transactions />} />
         <Route path="/suppliers" element={<Suppliers />} />

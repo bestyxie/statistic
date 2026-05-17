@@ -184,6 +184,50 @@ stats.get('/top-products', async (c) => {
   return c.json(results.results)
 })
 
+// --- Product ranking by views ---
+stats.get('/product-ranking', async (c) => {
+  const db = c.env.DB
+  const days = parseInt(c.req.query('days') || '7')
+  const shopId = c.req.query('shop_id')
+  const limit = parseInt(c.req.query('limit') || '20')
+  const page = parseInt(c.req.query('page') || '1')
+  const offset = (page - 1) * limit
+  const startDate = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10)
+
+  const conditions = ['ps.date >= ?']
+  const params: string[] = [startDate]
+  if (shopId) {
+    conditions.push('ps.shop_id = ?')
+    params.push(shopId)
+  }
+  const where = conditions.join(' AND ')
+
+  const totalRes = await db.prepare(
+    `SELECT COUNT(DISTINCT ps.product_id) as total FROM daily_product_stats ps WHERE ${where}`
+  ).bind(...params).first<{ total: number }>()
+
+  const txShopFilter = shopId ? ' AND shop_id = ?' : ''
+  const txParams = shopId ? [startDate, shopId] : [startDate]
+  const txCounts = await db.prepare(
+    `SELECT product_id, SUM(quantity) as total_tx_count FROM transactions WHERE date >= ?${txShopFilter} GROUP BY product_id`
+  ).bind(...txParams).all()
+  const txMap = new Map<string, number>()
+  for (const t of txCounts.results as any[]) {
+    txMap.set(t.product_id, t.total_tx_count)
+  }
+
+  const results = await db.prepare(
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ? OFFSET ?`
+  ).bind(...params, limit, offset).all()
+
+  const ranking = (results.results as any[]).map((r) => ({
+    ...r,
+    total_tx_count: txMap.get(r.id) || 0,
+  }))
+
+  return c.json({ items: ranking, total: totalRes?.total || 0, page, limit })
+})
+
 // --- Single product daily stats ---
 stats.get('/product/:id', async (c) => {
   const db = c.env.DB
