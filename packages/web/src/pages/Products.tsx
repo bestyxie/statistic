@@ -30,6 +30,8 @@ export default function Products() {
   const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const pageSize = 30
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [refreshing, setRefreshing] = useState(false)
   const [showProductTx, setShowProductTx] = useState(false)
   const [productTxProduct, setProductTxProduct] = useState<Product | null>(null)
   const [productTxList, setProductTxList] = useState<any[]>([])
@@ -41,6 +43,41 @@ export default function Products() {
       setProducts(res.items)
       setTotal(res.total)
     }).finally(() => setLoading(false))
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      const pageIds = products.map((p) => p.id)
+      const allSelected = pageIds.every((id) => next.has(id))
+      for (const id of pageIds) {
+        if (allSelected) next.delete(id); else next.add(id)
+      }
+      return next
+    })
+  }
+
+  const handleRefresh = async () => {
+    if (selectedIds.size === 0) return
+    setRefreshing(true)
+    try {
+      const res = await api.refreshProducts([...selectedIds])
+      alert(`刷新成功，共刷新 ${res.count} 个商品`)
+      setSelectedIds(new Set())
+      load()
+    } catch (err: any) {
+      alert(err.message || '刷新失败')
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const toggleSort = (field: string) => {
@@ -194,6 +231,11 @@ export default function Products() {
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
             >
               添加商品
+            </button>
+          )}
+          {selectedIds.size > 0 && (
+            <button onClick={handleRefresh} disabled={refreshing} className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm disabled:opacity-50">
+              {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
             </button>
           )}
           <button onClick={() => navigate('/product-ranking')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">7日排行榜</button>
@@ -466,6 +508,14 @@ export default function Products() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-center py-3 px-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={products.length > 0 && products.every((p) => selectedIds.has(p.id))}
+                        onChange={toggleSelectAll}
+                        className="rounded border-gray-300"
+                      />
+                    </th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">图片</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">商品描述</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">店铺</th>
@@ -487,7 +537,15 @@ export default function Products() {
                 </thead>
                 <tbody>
                   {products.map((p) => (
-                    <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr key={p.id} className={`border-b border-gray-100 hover:bg-gray-50 ${selectedIds.has(p.id) ? 'bg-blue-50' : ''}`}>
+                      <td className="py-3 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(p.id)}
+                          onChange={() => toggleSelect(p.id)}
+                          className="rounded border-gray-300"
+                        />
+                      </td>
                       <td className="py-3 px-5">
                         {p.image_url ? (
                           <div className="relative group">

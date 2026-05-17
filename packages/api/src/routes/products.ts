@@ -89,4 +89,78 @@ products.delete('/:id', async (c) => {
   return c.json({ message: '删除成功' })
 })
 
+// --- Refresh products via third-party API ---
+products.post('/refresh', async (c) => {
+  const db = c.env.DB
+  const { product_ids } = await c.req.json<{ product_ids: string[] }>()
+
+  if (!product_ids?.length) {
+    return c.json({ error: '请选择商品' }, 400)
+  }
+
+  // 每日刷新数不超过100
+  const today = new Date().toISOString().slice(0, 10)
+  const todayRefreshed = await db.prepare(
+    `SELECT COUNT(*) as cnt FROM products WHERE refreshed_at >= ? AND refreshed_at < ?`
+  ).bind(today, today + 'T23:59:59').first<{ cnt: number }>()
+  if ((todayRefreshed?.cnt || 0) + product_ids.length > 100) {
+    return c.json({ error: `每日刷新数量已达上限（今日已刷新 ${todayRefreshed?.cnt || 0} 个，上限 100）` }, 400)
+  }
+
+  // 查询商品的 image_url
+  const placeholders = product_ids.map(() => '?').join(',')
+  const productsData = await db.prepare(
+    `SELECT id, image_url FROM products WHERE id IN (${placeholders})`
+  ).bind(...product_ids).all()
+
+  // 从 image_url 提取 id：倒数第二个路径段
+  const extractId = (url: string): string | null => {
+    if (!url) return null
+    const parts = url.split('/')
+    // parts: ['http:', '', 'domain', 'person', '{id}', '{num}.jpg']
+    // 倒数第一个斜杠到倒数第三个斜杠中间 = 倒数第二个路径段
+    return parts.length >= 2 ? parts[parts.length - 2] : null
+  }
+
+  const ids: string[] = []
+  for (const p of productsData.results as { id: string; image_url: string }[]) {
+    const extracted = extractId(p.image_url)
+    if (extracted) ids.push(extracted)
+  }
+
+  if (ids.length === 0) {
+    return c.json({ error: '未找到可刷新的商品（缺少图片URL）' }, 400)
+  }
+
+  // 调用第三方接口
+  try {
+    const resp = await fetch('https://yxcapp.cn/personProduct/V3/stickArrayPersonProduct.action', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json;charset=UTF-8',
+        'Origin': 'https://pc.yxcapp.cn',
+        'Referer': 'https://pc.yxcapp.cn/',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36',
+        'Cookie': 'JSESSIONID=dbb7b807-a2f0-48f4-a92b-9b54736fdcc6',
+      },
+      body: JSON.stringify(ids),
+    })
+
+    if (!resp.ok) {
+      return c.json({ error: `第三方接口返回错误: ${resp.status}` }, 502)
+    }
+  } catch (err: any) {
+    return c.json({ error: `调用第三方接口失败: ${err.message}` }, 502)
+  }
+
+  // 更新 refreshed_at
+  const now = new Date().toISOString()
+  for (const p of productsData.results as { id: string }[]) {
+    await db.prepare('UPDATE products SET refreshed_at = ? WHERE id = ?').bind(now, p.id).run()
+  }
+
+  return c.json({ success: true, count: ids.length, refreshed_at: now })
+})
+
 export default products

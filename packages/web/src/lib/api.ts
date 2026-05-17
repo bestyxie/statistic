@@ -89,6 +89,8 @@ export const api = {
     request<{ message: string }>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteProduct: (id: string) =>
     request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
+  refreshProducts: (productIds: string[]) =>
+    request<{ success: boolean; count: number; refreshed_at: string }>('/products/refresh', { method: 'POST', body: JSON.stringify({ product_ids: productIds }) }),
 
   // Stats
   getDashboard: (shopId?: string) =>

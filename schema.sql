@@ -32,6 +32,7 @@ CREATE TABLE products (
   price TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
   updated_at TEXT DEFAULT (datetime('now')),
+  refreshed_at TEXT DEFAULT '',
   FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE,
   UNIQUE(shop_id, sku)
 );

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import HoverPopup from '../components/HoverPopup'
@@ -16,6 +16,10 @@ export default function ProductRanking() {
   const page = parseInt(searchParams.get('page') || '1')
   const setPage = (p: number) => setSearchParams((prev) => { prev.set('page', String(p)); return prev })
 
+  // 多选
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [refreshing, setRefreshing] = useState(false)
+
   useEffect(() => { api.getShops().then(setShops) }, [])
 
   useEffect(() => {
@@ -30,11 +34,51 @@ export default function ProductRanking() {
 
   const handleShopChange = (v: string) => {
     setSelectedShop(v)
+    setSelectedIds(new Set())
     setSearchParams((prev) => {
       prev.delete('page')
       if (v) prev.set('shop', v); else prev.delete('shop')
       return prev
     })
+  }
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id); else next.add(id)
+      return next
+    })
+  }
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      const pageIds = ranking.map((p) => p.id)
+      const allSelected = pageIds.every((id) => next.has(id))
+      for (const id of pageIds) {
+        if (allSelected) next.delete(id); else next.add(id)
+      }
+      return next
+    })
+  }, [ranking])
+
+  const handleRefresh = async () => {
+    if (selectedIds.size === 0) return
+    setRefreshing(true)
+    try {
+      const res = await api.refreshProducts([...selectedIds])
+      alert(`刷新成功，共刷新 ${res.count} 个商品`)
+      setSelectedIds(new Set())
+      // 重新加载当前页
+      setLoading(true)
+      api.getProductRanking(7, selectedShop || undefined, page, pageSize)
+        .then((r) => { setRanking(r.items); setTotal(r.total) })
+        .finally(() => setLoading(false))
+    } catch (err: any) {
+      alert(err.message || '刷新失败')
+    } finally {
+      setRefreshing(false)
+    }
   }
 
   const rankBase = (page - 1) * pageSize
@@ -44,6 +88,11 @@ export default function ProductRanking() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">7日访问量排行榜</h1>
         <div className="flex items-center gap-3">
+          {selectedIds.size > 0 && (
+            <button onClick={handleRefresh} disabled={refreshing} className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm disabled:opacity-50">
+              {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
+            </button>
+          )}
           <select
             value={selectedShop}
             onChange={(e) => handleShopChange(e.target.value)}
@@ -67,6 +116,14 @@ export default function ProductRanking() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-center py-3 px-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={ranking.length > 0 && ranking.every((p) => selectedIds.has(p.id))}
+                    onChange={toggleSelectAll}
+                    className="rounded border-gray-300"
+                  />
+                </th>
                 <th className="text-center py-3 px-5 text-gray-500 font-medium w-16">排名</th>
                 <th className="text-left py-3 px-5 text-gray-500 font-medium">商品</th>
                 <th className="text-left py-3 px-5 text-gray-500 font-medium">编号</th>
@@ -80,7 +137,15 @@ export default function ProductRanking() {
               {ranking.map((p, i) => {
                 const rank = rankBase + i + 1
                 return (
-                  <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={p.id} className={`border-b border-gray-100 hover:bg-gray-50 ${selectedIds.has(p.id) ? 'bg-blue-50' : ''}`}>
+                    <td className="py-3 px-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(p.id)}
+                        onChange={() => toggleSelect(p.id)}
+                        className="rounded border-gray-300"
+                      />
+                    </td>
                     <td className="py-3 px-5 text-center">
                       {rank <= 3 ? (
                         <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-white text-xs font-bold ${rank === 1 ? 'bg-yellow-500' : rank === 2 ? 'bg-gray-400' : 'bg-orange-400'}`}>{rank}</span>

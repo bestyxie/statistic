@@ -108,6 +108,14 @@ export class LocalD1 {
       this.dirty = true
     }
 
+    // Migrate: add refreshed_at column to products if missing
+    const prodCols = this.db.exec("PRAGMA table_info('products')")
+    const hasRefreshedAt = prodCols.length > 0 && prodCols[0].values.some((col: unknown[]) => col[1] === 'refreshed_at')
+    if (!hasRefreshedAt) {
+      this.db.run("ALTER TABLE products ADD COLUMN refreshed_at TEXT DEFAULT ''")
+      this.dirty = true
+    }
+
     // Migrate: create transactions table if missing
     const txTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'")
     if (txTable.length === 0) {
