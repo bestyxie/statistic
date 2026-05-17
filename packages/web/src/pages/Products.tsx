@@ -489,7 +489,12 @@ export default function Products() {
                     <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
                       <td className="py-3 px-5">
                         {p.image_url ? (
-                          <img src={p.image_url} alt="" className="w-12 h-12 rounded object-cover bg-gray-100" />
+                          <div className="relative group">
+                            <img src={p.image_url} alt="" className="w-12 h-12 rounded object-cover bg-gray-100 cursor-pointer" />
+                            <div className="hidden group-hover:block absolute z-50 top-0 left-14 w-48 h-48 bg-white rounded-lg shadow-xl border border-gray-200 p-1">
+                              <img src={p.image_url} alt="" className="w-full h-full rounded object-cover" />
+                            </div>
+                          </div>
                         ) : (
                           <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                         )}
