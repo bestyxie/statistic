@@ -251,7 +251,19 @@ stats.get('/product/:id', async (c) => {
     `SELECT date, view_count, viewer_count FROM daily_product_stats WHERE product_id = ? AND ${where} ORDER BY date`
   ).bind(productId, ...params).all()
 
-  return c.json({ product, stats: stats.results })
+  const txStats = await db.prepare(
+    `SELECT date, SUM(quantity) as tx_count FROM transactions WHERE product_id = ? AND ${where} GROUP BY date`
+  ).bind(productId, ...params).all()
+  const txMap = new Map<string, number>()
+  for (const t of txStats.results as any[]) {
+    txMap.set(t.date, t.tx_count)
+  }
+  const mergedStats = (stats.results as any[]).map((s) => ({
+    ...s,
+    tx_count: txMap.get(s.date) || 0,
+  }))
+
+  return c.json({ product, stats: mergedStats })
 })
 
 // --- Import/update shop daily stats ---

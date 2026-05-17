@@ -8,6 +8,7 @@ interface DailyStat {
   date: string
   view_count: number
   viewer_count: number
+  tx_count: number
 }
 
 type VisitorWithDate = Visitor & { date: string }
@@ -40,6 +41,7 @@ export default function ProductDetail() {
 
   const totalViews = stats.reduce((sum, s) => sum + s.view_count, 0)
   const totalViewers = stats.reduce((sum, s) => sum + s.viewer_count, 0)
+  const totalTx = stats.reduce((sum, s) => sum + (s.tx_count || 0), 0)
 
   const fetchVisitors = async (date: string) => {
     if (!id) return
@@ -114,7 +116,7 @@ export default function ProductDetail() {
           </div>
 
           {/* Summary */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white rounded-lg border border-gray-200 p-5">
               <p className="text-sm text-gray-500">总浏览次数</p>
               <p className="text-2xl font-bold text-gray-800 mt-1">{totalViews.toLocaleString()}</p>
@@ -122,6 +124,10 @@ export default function ProductDetail() {
             <div className="bg-white rounded-lg border border-gray-200 p-5">
               <p className="text-sm text-gray-500">总访客数</p>
               <p className="text-2xl font-bold text-gray-800 mt-1">{totalViewers.toLocaleString()}</p>
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-5">
+              <p className="text-sm text-gray-500">总成交数</p>
+              <p className="text-2xl font-bold text-orange-600 mt-1">{totalTx.toLocaleString()}</p>
             </div>
           </div>
 
@@ -138,6 +144,7 @@ export default function ProductDetail() {
                   <Legend />
                   <Line type="monotone" dataKey="view_count" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="浏览次数" />
                   <Line type="monotone" dataKey="viewer_count" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} name="访客数" />
+                  <Line type="monotone" dataKey="tx_count" stroke="#f97316" strokeWidth={2} dot={{ r: 3 }} name="成交数" />
                 </LineChart>
               </ResponsiveContainer>
             ) : (
@@ -156,6 +163,7 @@ export default function ProductDetail() {
                       <th className="text-left py-2 px-3 text-gray-500 font-medium">日期</th>
                       <th className="text-right py-2 px-3 text-gray-500 font-medium">浏览次数</th>
                       <th className="text-right py-2 px-3 text-gray-500 font-medium">访客数</th>
+                      <th className="text-right py-2 px-3 text-gray-500 font-medium">成交数</th>
                       <th className="text-right py-2 px-3 text-gray-500 font-medium">访客列表</th>
                     </tr>
                   </thead>
@@ -165,6 +173,7 @@ export default function ProductDetail() {
                         <td className="py-2 px-3 text-gray-800">{s.date}</td>
                         <td className="py-2 px-3 text-right font-medium">{s.view_count}</td>
                         <td className="py-2 px-3 text-right font-medium">{s.viewer_count}</td>
+                        <td className="py-2 px-3 text-right font-medium text-orange-600">{s.tx_count || 0}</td>
                         <td className="py-2 px-3 text-right">
                           <button
                             onClick={() => fetchVisitors(s.date)}
