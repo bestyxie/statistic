@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { PurchaseRecord } from '@statistic/shared'
 import type { ProductSupplierWithInfo, PurchaseWithProduct } from '../../lib/supplierApi'
 import PurchaseRecordForm from './PurchaseRecordForm'
+import HoverPopup from '../HoverPopup'
 
 interface Props {
   purchases: PurchaseWithProduct[]
@@ -72,12 +73,16 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
                 <td className="py-2.5 px-5 text-gray-600 text-xs">{p.purchase_date}</td>
                 <td className="py-2.5 px-5">
                   <div className="flex items-center gap-2">
-                    {p.product_image && (
-                      <img src={p.product_image} alt="" className="w-8 h-8 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    {p.product_image ? (
+                      <HoverPopup popup={<div className="w-48 h-48"><img src={p.product_image} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                        <img src={p.product_image} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />
+                      </HoverPopup>
+                    ) : (
+                      <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>
                     )}
-                    <span className="text-gray-800 text-xs truncate max-w-[120px]" title={p.product_description || p.product_name}>
-                      {p.product_description || p.product_name || '-'}
-                    </span>
+                    <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.product_description || p.product_name || '-'}</div>}>
+                      <span className="text-gray-800 text-xs max-w-[120px] truncate block">{p.product_description || p.product_name || '-'}</span>
+                    </HoverPopup>
                   </div>
                 </td>
                 <td className="py-2.5 px-5 text-right text-orange-600 font-medium text-xs">¥{p.price}</td>

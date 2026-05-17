@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import HoverPopup from '../components/HoverPopup'
 import type { Visitor } from '@statistic/shared'
 
 type VisitorRow = Visitor & { visit_count: number }
@@ -260,12 +261,18 @@ export default function Visitors() {
                       <tr key={`${p.id}-${p.date}-${i}`} className="border-b border-gray-100 hover:bg-gray-50">
                         <td className="py-2 px-4">
                           {p.image_url ? (
-                            <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                            <HoverPopup popup={<div className="w-48 h-48"><img src={p.image_url} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                              <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                            </HoverPopup>
                           ) : (
                             <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                           )}
                         </td>
-                        <td className="py-2 px-4 text-gray-800 max-w-[200px] truncate" title={p.description || p.name || undefined}>{p.description || p.name || '-'}</td>
+                        <td className="py-2 px-4">
+                          <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name || '-'}</div>}>
+                            <span className="text-gray-800 max-w-[200px] truncate block">{p.description || p.name || '-'}</span>
+                          </HoverPopup>
+                        </td>
                         <td className="py-2 px-4 text-gray-600">{p.price || '-'}</td>
                         <td className="py-2 px-4 text-right text-gray-500">{p.date}</td>
                         <td className="py-2 px-4 text-right font-medium">{p.visit_count}</td>

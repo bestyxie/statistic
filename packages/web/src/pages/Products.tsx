@@ -499,7 +499,16 @@ export default function Products() {
                           <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                         )}
                       </td>
-                      <td className="py-3 px-5 font-medium text-gray-800 max-w-xs truncate" title={p.description || undefined}>{p.description || '-'}</td>
+                      <td className="py-3 px-5">
+                        <div className="relative group/desc">
+                          <p className="font-medium text-gray-800 max-w-xs truncate">{p.description || '-'}</p>
+                          {p.description && (
+                            <div className="hidden group-hover/desc:block absolute z-50 top-0 left-0 min-w-48 max-w-sm bg-white rounded-lg shadow-xl border border-gray-200 p-3 text-sm font-normal text-gray-700 whitespace-normal break-all select-text">
+                              {p.description}
+                            </div>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-5 text-gray-600">{p.shop_name}</td>
                       <td className="py-3 px-5 text-gray-600">{p.price || '-'}</td>
                       <td className="py-3 px-5 text-right font-medium">{(p as any).yesterday_visitors || 0}</td>

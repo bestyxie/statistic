@@ -3,6 +3,7 @@ import { supplierApi, type ProductSupplierWithInfo } from '../../lib/supplierApi
 import { api } from '../../lib/api'
 import type { Supplier, Product, Shop } from '@statistic/shared'
 import SupplierForm from './SupplierForm'
+import HoverPopup from '../HoverPopup'
 
 type AddMode = 'none' | 'link' | 'curl'
 
@@ -210,9 +211,17 @@ export default function SupplyListTab() {
                 <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
                   {catalogProducts.map((p) => (
                     <div key={p.id} onClick={() => { setSelectedProduct(p); setLinkPrice(p.price) }} className={`px-3 py-2 cursor-pointer flex items-center gap-3 hover:bg-gray-50 ${selectedProduct?.id === p.id ? 'bg-blue-50 border-l-2 border-blue-500' : ''}`}>
-                      {p.image_url && <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />}
+                      {p.image_url ? (
+                        <HoverPopup popup={<div className="w-48 h-48"><img src={p.image_url} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                          <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100 flex-shrink-0" />
+                        </HoverPopup>
+                      ) : (
+                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs flex-shrink-0">无</div>
+                      )}
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm text-gray-800 truncate">{p.description || p.name}</p>
+                        <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
+                          <p className="text-sm text-gray-800 truncate block">{p.description || p.name}</p>
+                        </HoverPopup>
                         <p className="text-xs text-gray-400">{p.sku || '-'} · ¥{p.price || '-'}</p>
                       </div>
                     </div>
@@ -369,11 +378,15 @@ export default function SupplyListTab() {
                   <td className="py-3 px-5">
                     <div className="flex items-center gap-2">
                       {l.product_image ? (
-                        <img src={l.product_image} alt="" className="w-10 h-10 rounded object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                        <HoverPopup popup={<div className="w-48 h-48"><img src={l.product_image} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                          <img src={l.product_image} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                        </HoverPopup>
                       ) : (
                         <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>
                       )}
-                      <span className="text-gray-800 truncate max-w-[160px]" title={l.product_description || l.product_name}>{l.product_description || l.product_name}</span>
+                      <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{l.product_description || l.product_name}</div>}>
+                        <span className="text-gray-800 max-w-[160px] truncate block">{l.product_description || l.product_name}</span>
+                      </HoverPopup>
                     </div>
                   </td>
                   <td className="py-3 px-5 text-gray-700">{l.supplier_name}</td>

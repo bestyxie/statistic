@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api, decryptData } from '../lib/api'
+import HoverPopup from '../components/HoverPopup'
 import type { Shop, ExternalProduct, ExternalData } from '@statistic/shared'
 
 export default function DataEntry() {
@@ -165,13 +166,19 @@ export default function DataEntry() {
                   <tr key={item.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-2 px-3">
                       {item.picUrl ? (
-                        <img src={item.picUrl} alt="" className="w-12 h-12 rounded object-cover bg-gray-100" />
+                        <HoverPopup popup={<div className="w-48 h-48"><img src={item.picUrl} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                          <img src={item.picUrl} alt="" className="w-12 h-12 rounded object-cover bg-gray-100" />
+                        </HoverPopup>
                       ) : (
                         <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                       )}
                     </td>
                     <td className="py-2 px-3 font-mono text-gray-800">{item.code}</td>
-                    <td className="py-2 px-3 text-gray-600 max-w-xs truncate">{item.description}</td>
+                    <td className="py-2 px-3">
+                      <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{item.description}</div>}>
+                        <span className="text-gray-600 max-w-xs truncate block">{item.description}</span>
+                      </HoverPopup>
+                    </td>
                     <td className="py-2 px-3 text-right font-medium">{item.productVisitorNum}</td>
                   </tr>
                 ))}

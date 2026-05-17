@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import HoverPopup from '../components/HoverPopup'
 import type { Shop } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 
@@ -187,8 +188,14 @@ export default function Stats() {
                     <td className="py-3 px-3 font-medium text-gray-400">{i + 1}</td>
                     <td className="py-3 px-3">
                       <div className="flex items-center gap-3">
-                        {p.image_url && <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />}
-                        <span className="font-medium text-gray-800 max-w-[200px] truncate block" title={p.description || p.name}>{p.description || p.name}</span>
+                        {p.image_url && (
+                          <HoverPopup popup={<div className="w-48 h-48"><img src={p.image_url} alt="" className="w-full h-full rounded object-cover" /></div>}>
+                            <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
+                          </HoverPopup>
+                        )}
+                        <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
+                          <span className="font-medium text-gray-800 max-w-[200px] truncate block">{p.description || p.name}</span>
+                        </HoverPopup>
                       </div>
                     </td>
                     <td className="py-3 px-3 text-gray-400">{p.sku || '-'}</td>
