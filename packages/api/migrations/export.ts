@@ -27,6 +27,26 @@ async function main() {
     return `'${escaped}'`
   }
 
+  // 获取有效的 product id 和 visitor id 集合，用于过滤孤儿记录
+  const validProductIds = new Set<string>()
+  let pStmt = db.prepare('SELECT id FROM products')
+  pStmt.bind()
+  while (pStmt.step()) validProductIds.add(String(pStmt.getAsObject().id))
+  pStmt.free()
+
+  const validVisitorIds = new Set<string>()
+  let vStmt = db.prepare('SELECT id FROM visitors')
+  vStmt.bind()
+  while (vStmt.step()) validVisitorIds.add(String(vStmt.getAsObject().id))
+  vStmt.free()
+
+  // 需要按 product_id / visitor_id 过滤的表
+  const orphanFilters: Record<string, (row: Record<string, unknown>) => boolean> = {
+    daily_product_stats: (row) => validProductIds.has(String(row.product_id)),
+    product_visitor_relations: (row) => validProductIds.has(String(row.product_id)) && validVisitorIds.has(String(row.visitor_id)),
+    transactions: (row) => validProductIds.has(String(row.product_id)),
+  }
+
   const lines: string[] = []
 
   lines.push('-- 清空所有表数据')
@@ -36,11 +56,16 @@ async function main() {
   lines.push('')
 
   for (const table of tables) {
+    const filter = orphanFilters[table]
     const stmt = db.prepare(`SELECT * FROM ${table}`)
     stmt.bind()
-    const rows: Record<string, unknown>[] = []
+    const rawRows: Record<string, unknown>[] = []
     while (stmt.step()) {
-      rows.push(stmt.getAsObject())
+      rawRows.push(stmt.getAsObject())
+    }
+    const rows = filter ? rawRows.filter(filter) : rawRows
+    if (filter && rawRows.length !== rows.length) {
+      console.log(`  Filtered ${rawRows.length - rows.length} orphan rows from ${table}`)
     }
     stmt.free()
 
