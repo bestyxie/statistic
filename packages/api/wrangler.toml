@@ -5,7 +5,7 @@ compatibility_date = "2024-12-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "statistic-db"
-database_id = "will-be-set-after-create"
+database_id = "f9ca5a47-5d07-4c42-8047-e9d23a9e48be"
 
 [vars]
 JWT_SECRET = "change-me-in-production"
