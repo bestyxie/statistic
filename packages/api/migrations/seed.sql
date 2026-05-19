@@ -1,9 +1,9 @@
--- 先清空所有表数据（按依赖关系反序）
-DELETE FROM product_visitor_relations;
-DELETE FROM transactions;
+-- 先清空所有表数据（严格按依赖关系反序：被引用的表最后删）
 DELETE FROM refunds;
 DELETE FROM purchase_records;
+DELETE FROM product_visitor_relations;
 DELETE FROM product_suppliers;
+DELETE FROM transactions;
 DELETE FROM daily_product_stats;
 DELETE FROM daily_shop_stats;
 DELETE FROM products;
@@ -1153,6 +1153,14 @@ INSERT OR IGNORE INTO visitors VALUES('6df9c4e8-689d-42c9-986c-86777a8f068a','f5
 INSERT OR IGNORE INTO visitors VALUES('434d2284-b8e9-4629-bb60-b8bc93fea397','f54277ff15064f59ae6a3d32662701c0','y04229532','http://aliyizhan.com/static/pics/heards/yk.png','','','2026-05-18 17:01:04','2026-05-19 02:01:42');
 INSERT OR IGNORE INTO visitors VALUES('00b9c969-a20b-4e92-8087-30537df8dd7b','faacb3d0b8824889b5608d5ffd09fab6','🐾','https://thirdwx.qlogo.cn/mmopen/vi_32/yJCLkq4B4UibzglibkjTlFD4ibbxAxIS4jScP9ViaOyIee7btsd9cnvpDpcS6orVekKSmlo2icOvXicfSU5OhWG5WYPQ/132','','','2026-05-18 17:01:04','2026-05-19 02:01:42');
 INSERT OR IGNORE INTO visitors VALUES('4af55ce8-7ffc-48d6-84b5-88529a931624','fee95b6cf12e4f8fb429debf1ce76d08','f28973627','http://aliyizhan.com/static/pics/heards/yk.png','','','2026-05-18 17:01:05','2026-05-19 02:01:42');
+
+-- suppliers
+INSERT OR IGNORE INTO suppliers VALUES('6e6c2d7d-5c39-4340-b38f-8c1d1b4e7d68','AAA安迪(迪奥.香奈儿)原单工厂放货','LIPING3L11','','2026-05-15 03:38:24','2026-05-15 03:38:24');
+INSERT OR IGNORE INTO suppliers VALUES('93e8685f-25d7-4cd8-a6bc-640c30946c16','恒利工厂放货 VIP','Man13866','','2026-05-15 04:53:18','2026-05-15 04:53:18');
+INSERT OR IGNORE INTO suppliers VALUES('311110a0-bf98-4ff2-b266-2d9fb7c202e0','长城接单号(此号不收米)','Z956434785','','2026-05-15 05:35:04','2026-05-15 05:35:04');
+INSERT OR IGNORE INTO suppliers VALUES('ced33609-f781-4de1-9ed2-d36ba159accf','皇家皮具（赛琳.Celine工厂供货）','L13244839977','','2026-05-15 05:37:34','2026-05-15 05:37:34');
+INSERT OR IGNORE INTO suppliers VALUES('5c56a8a0-1840-4f82-ac5a-4ece37ef8251','钱多多卡包','ppxhcd','','2026-05-15 08:17:48','2026-05-15 08:17:48');
+INSERT OR IGNORE INTO suppliers VALUES('1b76c144-373e-43d5-89aa-65ba2fe85cd7','菠萝蜜（小迪包包工厂）','A5772017','','2026-05-17 04:09:57','2026-05-17 04:09:57');
 
 -- products
 INSERT OR IGNORE INTO products VALUES('a0217b59-f471-46c7-958c-3bc78a2aba83','eee675ce-2a83-4413-96b2-155c2c0385a4','1141032681','http://product.aliyizhan.com/person/79fdffdf554a48559b505e136a79d090/c6fe724a2f18418eb65e26a877cf7564/0.jpg',replace('400:380:340 新品 头层牛皮 BALMAIN SS25新品绝对是整套造型的点睛之笔👜！黑色皮革经褶皱工艺处理，如云朵般柔软又不失型格☁️，标志性金色大扣以金属锋芒注入华丽基因，mini尺寸精巧灵动，背挎时链条与肩线的互动、手拎时包身与整体造型的呼应，都在细节处撬动时尚杠杆⚙️，让简约穿搭瞬间迸发高级张力！\n款号：1W8801\n\n尺寸：42x26.5x14cm \n尺寸：35×20×8cm\n尺寸：30x16x9.5cm','\n',char(10)),'1141032681','400','2026-05-11 11:48:05','2026-05-13 02:15:31','');
@@ -4736,6 +4744,16 @@ INSERT OR IGNORE INTO product_visitor_relations VALUES('ebcde094-1e67-43cd-a226-
 INSERT OR IGNORE INTO product_visitor_relations VALUES('7c4453af-7939-416f-8c08-2c8c3358bd19','27b240cf-cf19-43fc-8f49-7db3d884424f','434d2284-b8e9-4629-bb60-b8bc93fea397','2026-05-18','2026-05-19 02:01:42',1);
 INSERT OR IGNORE INTO product_visitor_relations VALUES('f5d66d15-2a3d-41a4-b30c-a6949f016352','b3f702f1-3b7d-4da7-85d4-49dc2f36bdf5','00b9c969-a20b-4e92-8087-30537df8dd7b','2026-05-18','2026-05-19 02:01:42',1);
 INSERT OR IGNORE INTO product_visitor_relations VALUES('9682226f-a215-4f71-9295-60876097535e','44cbb824-9297-4fca-a203-6357e96f46f9','4af55ce8-7ffc-48d6-84b5-88529a931624','2026-05-18','2026-05-19 02:01:42',1);
+
+-- product_suppliers
+INSERT OR IGNORE INTO product_suppliers VALUES('42a7777a-46de-472d-b2c5-d5d24ad617a5','3864f0df-a609-4e43-8999-ef3fa3b3db0e','6e6c2d7d-5c39-4340-b38f-8c1d1b4e7d68','510','','2026-05-15 05:28:54','2026-05-15 05:29:02');
+INSERT OR IGNORE INTO product_suppliers VALUES('dc8997ea-5be8-4203-86f5-fe80b55cc479','dd28ef33-ac56-4579-9582-90d993bed872','311110a0-bf98-4ff2-b266-2d9fb7c202e0','200','','2026-05-15 05:35:31','2026-05-15 05:35:31');
+INSERT OR IGNORE INTO product_suppliers VALUES('7eeec561-d1b0-4ec2-91e7-1db4afcbe5f6','a4bc3036-6249-49cf-8a05-664053ad6984','ced33609-f781-4de1-9ed2-d36ba159accf','700','','2026-05-15 05:38:15','2026-05-15 05:38:15');
+INSERT OR IGNORE INTO product_suppliers VALUES('f6926bb5-be62-4c0c-81ae-9644d330c106','90b5467a-053f-4059-a0db-e0de255da1b5','ced33609-f781-4de1-9ed2-d36ba159accf','520','','2026-05-15 06:15:05','2026-05-15 06:15:14');
+INSERT OR IGNORE INTO product_suppliers VALUES('02f12978-dc43-470e-b1b0-d9b047c16c46','0bd6c955-d2b6-4487-b13e-d22ad73f64c7','ced33609-f781-4de1-9ed2-d36ba159accf','350','','2026-05-15 07:10:45','2026-05-15 07:10:51');
+INSERT OR IGNORE INTO product_suppliers VALUES('7829960c-238a-4761-b3b7-5b43130f8a0d','727bd9a3-65a2-484c-a71a-ddf3f52b0a64','93e8685f-25d7-4cd8-a6bc-640c30946c16','220','','2026-05-15 08:00:48','2026-05-15 08:10:02');
+INSERT OR IGNORE INTO product_suppliers VALUES('89306d15-d7f6-4233-9753-3e23ac8a91b8','73a04d41-9d76-4f73-ad0d-82fa8fe18688','5c56a8a0-1840-4f82-ac5a-4ece37ef8251','190','','2026-05-15 08:17:15','2026-05-15 08:17:57');
+INSERT OR IGNORE INTO product_suppliers VALUES('5fdb2ae6-2ac2-485a-aa1c-399ca383fa08','a86f4b3a-a994-42b5-b9b8-89b6dc59de9b','1b76c144-373e-43d5-89aa-65ba2fe85cd7','290','','2026-05-17 04:10:47','2026-05-17 04:10:47');
 
 -- transactions
 INSERT OR IGNORE INTO transactions VALUES('00af76b4-db96-48ff-b384-4c5724be7902','b55f3bc4-7bca-4ecd-9393-238031bf7066','eee675ce-2a83-4413-96b2-155c2c0385a4','220',1,'2026-05-11','','2026-05-13 06:41:55');
