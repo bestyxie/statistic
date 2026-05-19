@@ -13,10 +13,29 @@
 
 import { exec } from 'child_process'
 import { promisify } from 'util'
+import { copyFileSync, mkdirSync, existsSync } from 'fs'
+import { join, resolve } from 'path'
 
 const execAsync = promisify(exec)
 
 const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
+const DB_PATH = resolve(__dirname, '../../.wrangler/state/v3/d1/statistic-db.sqlite')
+const BACKUP_DIR = resolve(__dirname, '../../backups')
+
+function backupDatabase(): string | null {
+  if (!existsSync(DB_PATH)) {
+    console.log('数据库文件不存在，跳过备份')
+    return null
+  }
+  if (!existsSync(BACKUP_DIR)) {
+    mkdirSync(BACKUP_DIR, { recursive: true })
+  }
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const backupPath = join(BACKUP_DIR, `statistic-db-${timestamp}.sqlite`)
+  copyFileSync(DB_PATH, backupPath)
+  console.log(`数据库已备份到: ${backupPath}`)
+  return backupPath
+}
 
 function getNextRunTime(): Date {
   const now = new Date()
@@ -92,6 +111,7 @@ async function scheduleDailyImport() {
     // 执行导入任务
     try {
       console.log('\n开始执行导入任务...\n')
+      backupDatabase()
       await runImportScript()
       console.log('\n导入任务完成!')
     } catch (error: any) {

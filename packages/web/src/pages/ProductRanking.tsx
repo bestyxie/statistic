@@ -9,11 +9,13 @@ export default function ProductRanking() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState(searchParams.get('shop') || '')
+  const [searchText, setSearchText] = useState(searchParams.get('search') || '')
   const [ranking, setRanking] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const pageSize = 20
   const page = parseInt(searchParams.get('page') || '1')
+  const search = searchParams.get('search') || ''
   const setPage = (p: number) => setSearchParams((prev) => { prev.set('page', String(p)); return prev })
 
   // 多选
@@ -24,13 +26,13 @@ export default function ProductRanking() {
 
   useEffect(() => {
     setLoading(true)
-    api.getProductRanking(7, selectedShop || undefined, page, pageSize)
+    api.getProductRanking(7, selectedShop || undefined, page, pageSize, search || undefined)
       .then((res) => {
         setRanking(res.items)
         setTotal(res.total)
       })
       .finally(() => setLoading(false))
-  }, [selectedShop, page])
+  }, [selectedShop, page, search])
 
   const handleShopChange = (v: string) => {
     setSelectedShop(v)
@@ -38,6 +40,15 @@ export default function ProductRanking() {
     setSearchParams((prev) => {
       prev.delete('page')
       if (v) prev.set('shop', v); else prev.delete('shop')
+      return prev
+    })
+  }
+
+  const handleSearch = () => {
+    setSelectedIds(new Set())
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (searchText) prev.set('search', searchText); else prev.delete('search')
       return prev
     })
   }
@@ -71,7 +82,7 @@ export default function ProductRanking() {
       setSelectedIds(new Set())
       // 重新加载当前页
       setLoading(true)
-      api.getProductRanking(7, selectedShop || undefined, page, pageSize)
+      api.getProductRanking(7, selectedShop || undefined, page, pageSize, search || undefined)
         .then((r) => { setRanking(r.items); setTotal(r.total) })
         .finally(() => setLoading(false))
     } catch (err: any) {
@@ -103,6 +114,20 @@ export default function ProductRanking() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
+          <div className="flex items-center gap-1">
+            <input
+              type="text"
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
+              placeholder="搜索描述..."
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+            />
+            <button onClick={handleSearch} className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">搜索</button>
+            {search && (
+              <button onClick={() => { setSearchText(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="px-2 py-2 text-gray-400 hover:text-gray-600 text-sm">清除</button>
+            )}
+          </div>
           <button onClick={() => navigate('/products')} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">返回商品管理</button>
         </div>
       </div>

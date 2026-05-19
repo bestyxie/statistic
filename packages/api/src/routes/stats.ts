@@ -189,6 +189,7 @@ stats.get('/product-ranking', async (c) => {
   const db = c.env.DB
   const days = parseInt(c.req.query('days') || '7')
   const shopId = c.req.query('shop_id')
+  const search = c.req.query('search')
   const limit = parseInt(c.req.query('limit') || '20')
   const page = parseInt(c.req.query('page') || '1')
   const offset = (page - 1) * limit
@@ -200,10 +201,15 @@ stats.get('/product-ranking', async (c) => {
     conditions.push('ps.shop_id = ?')
     params.push(shopId)
   }
+  if (search) {
+    conditions.push('p.description LIKE ?')
+    params.push(`%${search}%`)
+  }
   const where = conditions.join(' AND ')
 
+  const joinProducts = search ? ' JOIN products p ON ps.product_id = p.id' : ''
   const totalRes = await db.prepare(
-    `SELECT COUNT(DISTINCT ps.product_id) as total FROM daily_product_stats ps WHERE ${where}`
+    `SELECT COUNT(DISTINCT ps.product_id) as total FROM daily_product_stats ps${joinProducts} WHERE ${where}`
   ).bind(...params).first<{ total: number }>()
 
   const txShopFilter = shopId ? ' AND shop_id = ?' : ''

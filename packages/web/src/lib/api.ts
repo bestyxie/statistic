@@ -99,8 +99,8 @@ export const api = {
     request<any>(`/stats/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
   getTopProducts: (start: string, end: string, shopId?: string) =>
     request<any>(`/stats/top-products?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
-  getProductRanking: (days?: number, shopId?: string, page?: number, limit?: number) =>
-    request<{ items: any[]; total: number; page: number; limit: number }>(`/stats/product-ranking?days=${days || 7}${shopId ? `&shop_id=${shopId}` : ''}&page=${page || 1}&limit=${limit || 20}`),
+  getProductRanking: (days?: number, shopId?: string, page?: number, limit?: number, search?: string) =>
+    request<{ items: any[]; total: number; page: number; limit: number }>(`/stats/product-ranking?days=${days || 7}${shopId ? `&shop_id=${shopId}` : ''}&page=${page || 1}&limit=${limit || 20}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
   importData: (data: ExternalData, shopId: string, date: string) =>
     request<{ message: string; imported_products: number; total_visitors: number }>('/stats/import', { method: 'POST', body: JSON.stringify({ data, shop_id: shopId, date }) }),
   getProductStats: (productId: string, start?: string, end?: string) =>

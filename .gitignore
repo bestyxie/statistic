@@ -26,6 +26,9 @@ dist-ssr
 # Wrangler
 .wrangler/
 
+# Database backups
+packages/api/backups/
+
 # Environment variables
 .env
 .env.local
@@ -33,3 +36,4 @@ dist-ssr
 
 # Encrypted test data
 encrypted.txt
+.gstack/
