@@ -17,8 +17,8 @@ import {
   queryVisitorRecordByUid,
 } from './query-best-selling'
 
-const API_BASE = 'http://localhost:3001/api'
-const SHOP_ID = 'eee675ce-2a83-4413-96b2-155c2c0385a4'
+const API_BASE = process.env.API_BASE || 'http://localhost:3001/api'
+const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
 
 interface VisitorItem {
   uid: string
@@ -47,6 +47,8 @@ export async function importByVisitors(shopId?: string) {
   console.log('正在登录...')
   const username = process.env.ADMIN_USER || 'admin'
   const password = process.env.ADMIN_PASS || 'admin123'
+
+  console.log(`API_BASE: ${API_BASE}`)
 
   const loginRes = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
