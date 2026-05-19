@@ -1,7 +1,7 @@
 import CryptoJS from 'crypto-js'
 import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor } from '@statistic/shared'
 
-const API_BASE = '/api'
+const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
 
 // 全局导航回调，用于处理 401 跳转
