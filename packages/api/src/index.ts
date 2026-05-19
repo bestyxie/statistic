@@ -16,6 +16,12 @@ const app = new Hono<{ Bindings: Bindings }>().basePath('/api')
 
 app.use('*', cors())
 
+// Global error handler
+app.onError((err, c) => {
+  console.error(err)
+  return c.json({ error: err.message, stack: err.stack?.slice(0, 200) }, 500)
+})
+
 // Auth routes (public)
 app.route('/auth', authRoutes)
 
