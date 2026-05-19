@@ -1,3 +1,17 @@
+-- 先清空所有表数据（按依赖关系反序）
+DELETE FROM product_visitor_relations;
+DELETE FROM transactions;
+DELETE FROM refunds;
+DELETE FROM purchase_records;
+DELETE FROM product_suppliers;
+DELETE FROM daily_product_stats;
+DELETE FROM daily_shop_stats;
+DELETE FROM products;
+DELETE FROM visitors;
+DELETE FROM suppliers;
+DELETE FROM shops;
+DELETE FROM admin_users;
+
 -- admin_users
 INSERT OR IGNORE INTO admin_users VALUES('19770373-07b7-4b83-becc-23b0d84c81cb','admin','240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9','2026-05-11 08:29:09');
 
