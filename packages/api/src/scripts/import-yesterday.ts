@@ -4,12 +4,13 @@
  * 用法: npx tsx src/scripts/import-yesterday.ts
  */
 import { queryBestSelling, queryProductVisitors } from './query-best-selling'
+import { getBeijingYesterday } from './date-utils'
 
 const API_BASE = 'http://localhost:3001/api'
 const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
 
 async function main() {
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const yesterday = getBeijingYesterday()
   console.log(`\n=== 自动导入商品数据 ===`)
   console.log(`日期: ${yesterday}`)
   console.log(`店铺: ${SHOP_ID}\n`)

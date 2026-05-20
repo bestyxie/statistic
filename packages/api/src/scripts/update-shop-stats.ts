@@ -1,11 +1,12 @@
 #!/usr/bin/env npx tsx
 import { queryCustomerViewByCondition } from './query-best-selling'
+import { getBeijingYesterday } from './date-utils'
 
 const API_BASE = 'http://localhost:3001/api'
 const SHOP_ID = 'eee675ce-2a83-4413-96b2-155c2c0385a4'
 
 async function main() {
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const yesterday = getBeijingYesterday()
   const r = await queryCustomerViewByCondition({ pageIndex: 10, searchDay: 1, pageSize: 30 })
   const storeVisitorNum = r?.data?.vroVO?.storeVisitorNum ?? r?.data?.vroList?.length ?? 0
   console.log(`昨日 (${yesterday}) 店铺总访客: ${storeVisitorNum}`)

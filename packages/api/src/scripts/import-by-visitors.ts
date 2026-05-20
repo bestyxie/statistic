@@ -16,6 +16,7 @@ import {
   queryCustomerViewByCondition,
   queryVisitorRecordByUid,
 } from './query-best-selling'
+import { getBeijingYesterday } from './date-utils'
 
 const API_BASE = process.env.API_BASE || 'http://localhost:3001/api'
 const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
@@ -36,7 +37,7 @@ interface ProductRecord {
 }
 
 export async function importByVisitors(shopId?: string) {
-  const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+  const yesterday = getBeijingYesterday()
   const effectiveShopId = shopId || process.env.SHOP_ID || SHOP_ID
 
   console.log(`\n=== 通过访客列表导入数据 ===`)
