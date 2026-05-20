@@ -7,7 +7,6 @@ import Shops from './pages/Shops'
 import Products from './pages/Products'
 import DataEntry from './pages/DataEntry'
 import Stats from './pages/Stats'
-import ProductDetail from './pages/ProductDetail'
 import Visitors from './pages/Visitors'
 import Transactions from './pages/Transactions'
 import Suppliers from './pages/Suppliers'
@@ -78,7 +77,6 @@ function AppContent() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/shops" element={<Shops />} />
         <Route path="/products" element={<Products />} />
-        <Route path="/products/:id" element={<ProductDetail />} />
         <Route path="/product-ranking" element={<ProductRanking />} />
         <Route path="/visitors" element={<Visitors />} />
         <Route path="/transactions" element={<Transactions />} />

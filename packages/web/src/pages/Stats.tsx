@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import HoverPopup from '../components/HoverPopup'
+import ProductDetailDrawer from '../components/ProductDetailDrawer'
 import type { Shop } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 
@@ -9,6 +10,7 @@ export default function Stats() {
   const navigate = useNavigate()
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState('')
+  const [drawerId, setDrawerId] = useState<string | null>(null)
   const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
   const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
   const [loading, setLoading] = useState(false)
@@ -65,6 +67,7 @@ export default function Stats() {
   })
 
   return (
+    <>
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-800">数据查询</h1>
 
@@ -202,7 +205,7 @@ export default function Stats() {
                     <td className="py-3 px-3 text-right font-medium">{p.total_views}</td>
                     <td className="py-3 px-3 text-right font-medium">{p.total_viewers}</td>
                     <td className="py-3 px-3 text-right">
-                      <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
+                      <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
                     </td>
                   </tr>
                 ))}
@@ -276,5 +279,8 @@ export default function Stats() {
         )}
       </div>
     </div>
+
+    <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+    </>
   )
 }

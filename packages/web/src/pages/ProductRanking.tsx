@@ -2,12 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import HoverPopup from '../components/HoverPopup'
+import ProductDetailDrawer from '../components/ProductDetailDrawer'
 import type { Shop } from '@statistic/shared'
 
 export default function ProductRanking() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [shops, setShops] = useState<Shop[]>([])
+  const [drawerId, setDrawerId] = useState<string | null>(null)
   const [selectedShop, setSelectedShop] = useState(searchParams.get('shop') || '')
   const [searchText, setSearchText] = useState(searchParams.get('search') || '')
   const [ranking, setRanking] = useState<any[]>([])
@@ -95,6 +97,7 @@ export default function ProductRanking() {
   const rankBase = (page - 1) * pageSize
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-800">7日访问量排行榜</h1>
@@ -197,7 +200,7 @@ export default function ProductRanking() {
                     <td className="py-3 px-5 text-right font-bold text-green-600">{p.total_viewers}</td>
                     <td className="py-3 px-5 text-right font-bold text-orange-600">{p.total_tx_count}</td>
                     <td className="py-3 px-5 text-right">
-                      <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
+                      <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
                     </td>
                   </tr>
                 )
@@ -263,5 +266,8 @@ export default function ProductRanking() {
         </div>
       )}
     </div>
+
+    <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+    </>
   )
 }

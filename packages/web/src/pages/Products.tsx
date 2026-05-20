@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import ProductDetailDrawer from '../components/ProductDetailDrawer'
 import type { Product, Shop } from '@statistic/shared'
 
 export default function Products() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
+  const [drawerId, setDrawerId] = useState<string | null>(null)
   const [shops, setShops] = useState<Shop[]>([])
   const selectedShop = searchParams.get('shop') || ''
   const setSelectedShop = (v: string) => setSearchParams((p) => { p.delete('page'); if (v) p.set('shop', v); else p.delete('shop'); return p })
@@ -581,7 +583,7 @@ export default function Products() {
                       </td>
                       <td className="py-3 px-5 text-right">
                         <button onClick={() => handleEdit(p)} className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
-                        <button onClick={() => navigate(`/products/${p.id}`)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
+                        <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
                         <button onClick={() => { setTxProduct(p); setTxForm({ price: p.price || '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' }); setShowTxForm(true) }} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
                         <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700">删除</button>
                       </td>
@@ -651,6 +653,8 @@ export default function Products() {
           </>
         )}
       </div>
+
+      <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
     </div>
   )
 }
