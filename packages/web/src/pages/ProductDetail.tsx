@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
+import VisitorProductsModal from '../components/VisitorProductsModal'
 import type { Product, Visitor } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -22,6 +23,7 @@ export default function ProductDetail() {
   const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
   const [loading, setLoading] = useState(true)
   const [visitorModal, setVisitorModal] = useState<{ open: boolean; date: string; visitors: VisitorWithDate[]; loading: boolean }>({ open: false, date: '', visitors: [], loading: false })
+  const [visitorProductsModal, setVisitorProductsModal] = useState<{ visitor: VisitorWithDate | null }>({ visitor: null })
 
   const fetchData = async () => {
     if (!id) return
@@ -46,6 +48,7 @@ export default function ProductDetail() {
   const fetchVisitors = async (date: string) => {
     if (!id) return
     setVisitorModal({ open: true, date, visitors: [], loading: true })
+    setVisitorProductsModal({ visitor: null })
     try {
       const visitors = await api.getProductVisitors(id, date)
       setVisitorModal({ open: true, date, visitors: visitors as VisitorWithDate[], loading: false })
@@ -192,11 +195,11 @@ export default function ProductDetail() {
 
           {/* Visitor modal */}
           {visitorModal.open && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setVisitorModal({ ...visitorModal, open: false })}>
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }}>
               <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
                   <h3 className="text-lg font-semibold text-gray-800">{visitorModal.date} 访客列表</h3>
-                  <button onClick={() => setVisitorModal({ ...visitorModal, open: false })} className="text-gray-400 hover:text-gray-600">
+                  <button onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }} className="text-gray-400 hover:text-gray-600">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                     </svg>
@@ -223,6 +226,12 @@ export default function ProductDetail() {
                               {v.city_name ? `${v.city_name} · ` : ''}{v.description || ''}
                             </p>
                           </div>
+                          <button
+                            onClick={() => setVisitorProductsModal({ visitor: v })}
+                            className="text-blue-600 hover:text-blue-800 text-sm shrink-0"
+                          >
+                            查看商品
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -231,6 +240,12 @@ export default function ProductDetail() {
               </div>
             </div>
           )}
+
+          {/* 访客商品弹窗 */}
+          <VisitorProductsModal
+            visitor={visitorProductsModal.visitor}
+            onClose={() => setVisitorProductsModal({ visitor: null })}
+          />
         </>
       ) : (
         <p className="text-center text-gray-400 py-12">商品不存在</p>

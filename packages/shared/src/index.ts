@@ -103,6 +103,18 @@ export interface ProductVisitorRelation {
   created_at: string
 }
 
+/** 访客浏览的商品记录（getVisitorProducts API 返回） */
+export interface VisitorProduct {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  price: string
+  description: string
+  date: string
+  visit_count: number
+}
+
 /** 成交记录（对应 transactions 表） */
 export interface Transaction {
   id: string
