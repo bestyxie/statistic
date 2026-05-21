@@ -11,6 +11,7 @@
     "db:init:remote": "wrangler d1 execute statistic-db --remote --file=../../schema.sql",
     "import:yesterday": "tsx src/scripts/import-yesterday.ts",
     "import:visitors": "tsx src/scripts/import-by-visitors.ts",
+    "import:visitors:today": "tsx src/scripts/import-by-visitors.ts --today",
     "schedule": "tsx src/scripts/schedule-import.ts",
     "typecheck": "tsc --noEmit"
   },

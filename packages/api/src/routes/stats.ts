@@ -269,7 +269,20 @@ stats.get('/product/:id', async (c) => {
     tx_count: txMap.get(s.date) || 0,
   }))
 
-  return c.json({ product, stats: mergedStats })
+  // 填充空缺日期
+  const statsMap = new Map<string, any>(mergedStats.map((s) => [s.date, s]))
+  const startDate = params[0]
+  const endDate = params[1]
+  const filledStats: any[] = []
+  const d = new Date(startDate + 'T00:00:00Z')
+  const endD = new Date(endDate + 'T00:00:00Z')
+  while (d <= endD) {
+    const dateStr = d.toISOString().slice(0, 10)
+    filledStats.push(statsMap.get(dateStr) || { date: dateStr, view_count: 0, viewer_count: 0, tx_count: 0 })
+    d.setDate(d.getDate() + 1)
+  }
+
+  return c.json({ product, stats: filledStats })
 })
 
 // --- Import/update shop daily stats ---

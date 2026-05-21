@@ -60,6 +60,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
   const totalViews = stats.reduce((sum, s) => sum + s.view_count, 0)
   const totalViewers = stats.reduce((sum, s) => sum + s.viewer_count, 0)
   const totalTx = stats.reduce((sum, s) => sum + (s.tx_count || 0), 0)
+  const statsWithData = stats.filter((s) => s.view_count > 0 || s.viewer_count > 0 || (s.tx_count || 0) > 0)
 
   const fetchVisitors = async (date: string) => {
     if (!productId) return
@@ -189,7 +190,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
               </div>
 
               {/* Daily data table */}
-              {stats.length > 0 && (
+              {statsWithData.length > 0 && (
                 <div className="bg-white rounded-lg border border-gray-200 p-5">
                   <h2 className="text-lg font-semibold text-gray-800 mb-4">每日明细</h2>
                   <div className="overflow-x-auto">
@@ -204,7 +205,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
                         </tr>
                       </thead>
                       <tbody>
-                        {[...stats].reverse().map((s) => (
+                        {[...statsWithData].reverse().map((s) => (
                           <tr key={s.date} className="border-b border-gray-100 hover:bg-gray-50">
                             <td className="py-2 px-3 text-gray-800">{s.date}</td>
                             <td className="py-2 px-3 text-right font-medium">{s.view_count}</td>
