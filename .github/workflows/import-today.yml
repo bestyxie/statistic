@@ -1,0 +1,34 @@
+name: Import Today
+
+on:
+  schedule:
+    # UTC 09:00 = 北京时间 17:00
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    name: Import today data
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Run import
+        working-directory: packages/api
+        env:
+          API_BASE: https://statistic-api.gabbyxie714.workers.dev/api
+          ADMIN_USER: ${{ secrets.ADMIN_USER }}
+          ADMIN_PASS: ${{ secrets.ADMIN_PASS }}
+          SHOP_ID: ${{ secrets.SHOP_ID }}
+        run: pnpm exec tsx src/scripts/import-by-visitors.ts --today

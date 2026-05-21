@@ -16,7 +16,7 @@ import {
   queryCustomerViewByCondition,
   queryVisitorRecordByUid,
 } from './query-best-selling'
-import { getBeijingYesterday } from './date-utils'
+import { getBeijingYesterday, getBeijingToday } from './date-utils'
 
 const API_BASE = process.env.API_BASE || 'http://localhost:3001/api'
 const SHOP_ID = process.env.SHOP_ID || 'eee675ce-2a83-4413-96b2-155c2c0385a4'
@@ -36,12 +36,12 @@ interface ProductRecord {
   visitorTime: number | null
 }
 
-export async function importByVisitors(shopId?: string) {
-  const yesterday = getBeijingYesterday()
+export async function importByVisitors(shopId?: string, searchDay: number = 1) {
+  const date = searchDay === 0 ? getBeijingToday() : getBeijingYesterday()
   const effectiveShopId = shopId || process.env.SHOP_ID || SHOP_ID
 
   console.log(`\n=== 通过访客列表导入数据 ===`)
-  console.log(`日期: ${yesterday}`)
+  console.log(`日期: ${date}`)
   console.log(`店铺: ${effectiveShopId}\n`)
 
   // 1. 登录
@@ -70,7 +70,7 @@ export async function importByVisitors(shopId?: string) {
   console.log('正在获取访客列表...')
   const result = await queryCustomerViewByCondition({
     pageIndex: 10,
-    searchDay: 1,
+    searchDay,
     pageSize: 30,
   })
 
@@ -101,7 +101,7 @@ export async function importByVisitors(shopId?: string) {
     try {
       const recordResult = await queryVisitorRecordByUid({
         visitorUid: uid,
-        searchDay: 1,
+        searchDay,
       })
 
       const records: ProductRecord[] = recordResult?.data?.vroList ?? []
@@ -140,7 +140,7 @@ export async function importByVisitors(shopId?: string) {
         },
         body: JSON.stringify({
           shop_id: effectiveShopId,
-          date: yesterday,
+          date: date,
           visitor: {
             uid,
             nick_name: visitor.nick_name,
@@ -192,7 +192,7 @@ export async function importByVisitors(shopId?: string) {
         body: JSON.stringify({
           shop_id: effectiveShopId,
           product_sku: code,
-          date: yesterday,
+          date: date,
         }),
       })
     } catch {
@@ -207,9 +207,14 @@ export async function importByVisitors(shopId?: string) {
 }
 
 // 直接运行脚本（支持手动导入）
+// 用法:
+//   npx tsx src/scripts/import-by-visitors.ts           # 导入昨日数据
+//   npx tsx src/scripts/import-by-visitors.ts --today   # 导入今日数据
 async function main() {
+  const args = process.argv.slice(2)
+  const searchDay = args.includes('--today') ? 0 : 1
   try {
-    await importByVisitors()
+    await importByVisitors(undefined, searchDay)
   } catch (error: any) {
     console.error('执行失败:', error.message)
     process.exit(1)
