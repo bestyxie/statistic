@@ -56,7 +56,7 @@ export async function importByVisitors(shopId?: string, searchDay: number = 1) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  const loginData = await loginRes.json()
+  const loginData = await loginRes.json() as { token?: string; error?: string }
 
   if (!loginData.token) {
     console.log('登录失败:', loginData.error)
@@ -150,7 +150,7 @@ export async function importByVisitors(shopId?: string, searchDay: number = 1) {
         }),
       })
 
-      const importData = await importRes.json()
+      const importData = await importRes.json() as { message?: string; error?: string }
 
       if (importData.message) {
         totalRelations += productVisits.length
@@ -172,7 +172,7 @@ export async function importByVisitors(shopId?: string, searchDay: number = 1) {
     },
     body: JSON.stringify({
       shop_id: effectiveShopId,
-      date: yesterday,
+      date: date,
       visitor_count: storeVisitorNum || allVisitors.length,
     }),
   })

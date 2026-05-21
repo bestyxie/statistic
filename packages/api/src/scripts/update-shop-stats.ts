@@ -17,7 +17,7 @@ async function main() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: process.env.ADMIN_USER || 'admin', password: process.env.ADMIN_PASS || 'admin123' }),
   })
-  const { token } = await loginRes.json()
+  const { token } = await loginRes.json() as { token?: string }
 
   const res = await fetch(`${API_BASE}/stats/import-shop-stats`, {
     method: 'POST',

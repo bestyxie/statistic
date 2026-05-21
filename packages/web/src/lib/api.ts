@@ -104,7 +104,7 @@ export const api = {
   importData: (data: ExternalData, shopId: string, date: string) =>
     request<{ message: string; imported_products: number; total_visitors: number }>('/stats/import', { method: 'POST', body: JSON.stringify({ data, shop_id: shopId, date }) }),
   getProductStats: (productId: string, start?: string, end?: string) =>
-    request<{ product: Product; stats: { date: string; view_count: number; viewer_count: number }[] }>(`/stats/product/${productId}${start || end ? `?start=${start || ''}&end=${end || ''}` : ''}`),
+    request<{ product: Product; stats: { date: string; view_count: number; viewer_count: number; tx_count: number }[] }>(`/stats/product/${productId}${start || end ? `?start=${start || ''}&end=${end || ''}` : ''}`),
 
   // Visitors
   getProductVisitors: (productId: string, date?: string) =>

@@ -47,7 +47,7 @@ async function main() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  const loginData = await loginRes.json()
+  const loginData = await loginRes.json() as { token?: string; error?: string }
 
   if (!loginData.token) {
     console.log('登录失败:', loginData.error)
@@ -72,7 +72,7 @@ async function main() {
       date: yesterday,
     }),
   })
-  const importData = await importRes.json()
+  const importData = await importRes.json() as { message?: string; error?: string; imported_products?: number; total_visitors?: number }
 
   if (importRes.ok || importData.message) {
     console.log(`\n导入成功!`)
@@ -110,7 +110,7 @@ async function main() {
           visitors,
         }),
       })
-      const visitorData = await visitorRes.json()
+      const visitorData = await visitorRes.json() as { message?: string; error?: string }
 
       if (visitorData.message) {
         totalVisitorRecords += visitors.length

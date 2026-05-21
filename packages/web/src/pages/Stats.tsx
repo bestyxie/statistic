@@ -241,7 +241,7 @@ export default function Stats() {
       {/* Transaction list link */}
       <div className="bg-white rounded-lg border border-gray-200 p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">成交明细</h2>
+          <h2 className="text-lg font-semibold text-gray-800">成交明细 <span className="text-sm font-normal text-gray-500">(共 {txTotal} 条)</span></h2>
           <button onClick={() => navigate('/transactions')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">查看全部 →</button>
         </div>
         {txList.length > 0 ? (

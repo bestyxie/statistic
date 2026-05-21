@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { PurchaseRecord } from '@statistic/shared'
 import type { ProductSupplierWithInfo, PurchaseWithProduct } from '../../lib/supplierApi'
 
 interface Props {

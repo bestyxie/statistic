@@ -149,7 +149,7 @@ function extractFieldsFromJson(json: any): CurlParseResult['data'] {
   }
 }
 
-suppliers.post('/parse-curl', async (c): Promise<CurlParseResult> => {
+suppliers.post('/parse-curl', async (c) => {
   const { curl } = await c.req.json()
   if (!curl || typeof curl !== 'string') {
     return c.json({ success: false, error: '请提供 cURL 命令' })

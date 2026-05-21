@@ -11,6 +11,7 @@ export type ProductSupplierWithInfo = ProductSupplier & {
 }
 
 export type PurchaseWithProduct = PurchaseRecord & {
+  product_supplier_id: string
   product_name: string
   product_image: string
   product_description: string

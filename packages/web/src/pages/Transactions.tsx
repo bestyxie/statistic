@@ -202,20 +202,19 @@ export default function Transactions() {
 
           {/* 分页 */}
           {total > limit && (() => {
-            const tp = Math.ceil(total / limit)
             const pages: (number | '...')[] = []
-            if (tp <= 7) {
-              for (let i = 1; i <= tp; i++) pages.push(i)
+            if (totalPages <= 7) {
+              for (let i = 1; i <= totalPages; i++) pages.push(i)
             } else {
               pages.push(1)
               if (page > 3) pages.push('...')
-              for (let i = Math.max(2, page - 1); i <= Math.min(tp - 1, page + 1); i++) pages.push(i)
-              if (page < tp - 2) pages.push('...')
-              pages.push(tp)
+              for (let i = Math.max(2, page - 1); i <= Math.min(totalPages - 1, page + 1); i++) pages.push(i)
+              if (page < totalPages - 2) pages.push('...')
+              pages.push(totalPages)
             }
             return (
               <div className="flex items-center justify-between px-4 py-3 mt-4">
-                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{tp} 页</span>
+                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{totalPages} 页</span>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
                   {pages.map((p, i) =>
@@ -225,10 +224,10 @@ export default function Transactions() {
                       <button key={p} onClick={() => setPage(p)} className={`px-3 py-1 text-sm rounded-md border ${p === page ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
                     )
                   )}
-                  <button onClick={() => setPage(page + 1)} disabled={page >= tp} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
+                  <button onClick={() => setPage(page + 1)} disabled={page >= totalPages} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
                   <span className="mx-2 text-gray-400">|</span>
                   <span className="text-sm text-gray-500">跳至</span>
-                  <input type="number" min={1} max={tp} className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center" onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt((e.target as HTMLInputElement).value); if (v >= 1 && v <= tp) setPage(v) } }} />
+                  <input type="number" min={1} max={totalPages} className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center" onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt((e.target as HTMLInputElement).value); if (v >= 1 && v <= totalPages) setPage(v) } }} />
                   <span className="text-sm text-gray-500">页</span>
                 </div>
               </div>

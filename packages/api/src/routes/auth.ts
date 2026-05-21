@@ -19,7 +19,7 @@ auth.post('/login', async (c) => {
     return c.json({ error: '用户名或密码错误' }, 401)
   }
 
-  const payload = { sub: user.id, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }
+  const payload = { sub: user.id as string, exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60 }
   const token = await signJWT(payload, c.env.JWT_SECRET)
 
   return c.json({ token, user: { id: user.id, username: user.username } })

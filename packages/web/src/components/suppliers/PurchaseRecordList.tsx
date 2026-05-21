@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import type { PurchaseRecord } from '@statistic/shared'
 import type { ProductSupplierWithInfo, PurchaseWithProduct } from '../../lib/supplierApi'
 import PurchaseRecordForm from './PurchaseRecordForm'
 import HoverPopup from '../HoverPopup'

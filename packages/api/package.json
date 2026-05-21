@@ -11,7 +11,8 @@
     "db:init:remote": "wrangler d1 execute statistic-db --remote --file=../../schema.sql",
     "import:yesterday": "tsx src/scripts/import-yesterday.ts",
     "import:visitors": "tsx src/scripts/import-by-visitors.ts",
-    "schedule": "tsx src/scripts/schedule-import.ts"
+    "schedule": "tsx src/scripts/schedule-import.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@hono/node-server": "^2.0.2",
@@ -22,8 +23,10 @@
     "@cloudflare/workers-types": "^4.20260511.1",
     "@statistic/shared": "workspace:*",
     "@types/crypto-js": "^4.2.2",
+    "@types/node": "^24.12.3",
     "sql.js": "^1.14.1",
     "tsx": "^4.21.0",
+    "typescript": "~6.0.2",
     "wrangler": "^4.90.0"
   }
 }
