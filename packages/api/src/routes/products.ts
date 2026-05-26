@@ -66,9 +66,18 @@ products.get('/', async (c) => {
 
 products.post('/', async (c) => {
   const { shop_id, name, image_url, description, sku, price } = await c.req.json()
-  const id = crypto.randomUUID()
   const db = c.env.DB
   const finalPrice = await getPriceWithFallback(description || '', price, sku)
+  // 检查是否已存在相同 shop_id + sku 的商品
+  const existing = await db.prepare('SELECT id FROM products WHERE shop_id = ? AND sku = ?')
+    .bind(shop_id, sku || '').first<{ id: string }>()
+  if (existing) {
+    // 已存在则更新并返回已有 ID
+    await db.prepare('UPDATE products SET name = ?, image_url = ?, description = ?, price = ?, updated_at = datetime("now") WHERE id = ?')
+      .bind(name, image_url || '', description || '', finalPrice, existing.id).run()
+    return c.json({ id: existing.id, shop_id, name, image_url, description, sku, price: finalPrice })
+  }
+  const id = crypto.randomUUID()
   await db.prepare('INSERT INTO products (id, shop_id, name, image_url, description, sku, price) VALUES (?, ?, ?, ?, ?, ?, ?)')
     .bind(id, shop_id, name, image_url || '', description || '', sku || '', finalPrice).run()
   return c.json({ id, shop_id, name, image_url, description, sku, price: finalPrice })
