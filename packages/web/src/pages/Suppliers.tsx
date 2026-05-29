@@ -15,7 +15,7 @@ export default function Suppliers() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">供应商管理</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">供应商管理</h1>
       </div>
 
       <div className="border-b border-gray-200">

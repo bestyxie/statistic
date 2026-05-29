@@ -99,9 +99,9 @@ export default function ProductRanking() {
   return (
     <>
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">7日访问量排行榜</h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">7日访问量排行榜</h1>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
           {selectedIds.size > 0 && (
             <button onClick={handleRefresh} disabled={refreshing} className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm disabled:opacity-50">
               {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
@@ -117,18 +117,18 @@ export default function ProductRanking() {
               <option key={s.id} value={s.id}>{s.name}</option>
             ))}
           </select>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-1 sm:flex-none">
             <input
               type="text"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleSearch() }}
               placeholder="搜索描述..."
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-44"
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-44"
             />
-            <button onClick={handleSearch} className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">搜索</button>
+            <button onClick={handleSearch} className="px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm shrink-0">搜索</button>
             {search && (
-              <button onClick={() => { setSearchText(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="px-2 py-2 text-gray-400 hover:text-gray-600 text-sm">清除</button>
+              <button onClick={() => { setSearchText(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="px-2 py-2 text-gray-400 hover:text-gray-600 text-sm shrink-0">清除</button>
             )}
           </div>
           <button onClick={() => navigate('/products')} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">返回商品管理</button>
@@ -141,6 +141,7 @@ export default function ProductRanking() {
         <div className="text-center py-12 text-gray-500">暂无数据</div>
       ) : (
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
@@ -207,6 +208,7 @@ export default function ProductRanking() {
               })}
             </tbody>
           </table>
+          </div>
           {total > pageSize && (() => {
             const totalPages = Math.ceil(total / pageSize)
             const pages: (number | '...')[] = []
@@ -220,8 +222,8 @@ export default function ProductRanking() {
               pages.push(totalPages)
             }
             return (
-              <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200">
-                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{totalPages} 页</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-5 py-3 border-t border-gray-200 gap-2">
+                <span className="text-xs sm:text-sm text-gray-500">共 {total} 条，第 {page}/{totalPages} 页</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
@@ -244,13 +246,13 @@ export default function ProductRanking() {
                     disabled={page >= totalPages}
                     className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >下一页</button>
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span className="text-sm text-gray-500">跳至</span>
+                  <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                  <span className="hidden sm:inline text-sm text-gray-500">跳至</span>
                   <input
                     type="number"
                     min={1}
                     max={totalPages}
-                    className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
+                    className="hidden sm:block w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const v = parseInt((e.target as HTMLInputElement).value)
@@ -258,7 +260,7 @@ export default function ProductRanking() {
                       }
                     }}
                   />
-                  <span className="text-sm text-gray-500">页</span>
+                  <span className="hidden sm:inline text-sm text-gray-500">页</span>
                 </div>
               </div>
             )

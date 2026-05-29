@@ -76,9 +76,9 @@ export default function DataEntry() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">数据录入</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">数据录入</h1>
 
-      <div className="bg-white rounded-lg border border-gray-200 p-5 space-y-4">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5 space-y-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-800 mb-1">粘贴数据</h2>
           <p className="text-sm text-gray-500">将客户提供的数据文本粘贴到下方，选择店铺和日期后解析导入</p>
@@ -142,9 +142,9 @@ export default function DataEntry() {
       )}
 
       {preview.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">数据预览</h2>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800">数据预览</h2>
             <div className="text-sm text-gray-500">
               共 <span className="font-medium text-gray-800">{preview.length}</span> 个商品，
               总访客 <span className="font-medium text-gray-800">{totalVisitors}</span>

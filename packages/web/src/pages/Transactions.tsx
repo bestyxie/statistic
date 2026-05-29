@@ -76,9 +76,9 @@ export default function Transactions() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold text-gray-900">成交明细</h1>
-        <div className="flex items-center gap-4 text-sm text-gray-500">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">成交明细</h1>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-500">
           <span>共 {total} 笔</span>
           <span>合计 {totalQty} 件</span>
           {totalRefundCount > 0 && (
@@ -89,8 +89,8 @@ export default function Transactions() {
       </div>
 
       {/* 筛选 */}
-      <div className="flex gap-2 mb-6">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 mb-4 sm:mb-6">
+        <div className="relative flex-1 min-w-[140px]">
           <input
             type="text"
             placeholder="搜索商品描述..."
@@ -135,6 +135,7 @@ export default function Transactions() {
       ) : (
         <>
           <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -198,6 +199,7 @@ export default function Transactions() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* 分页 */}
@@ -213,8 +215,8 @@ export default function Transactions() {
               pages.push(totalPages)
             }
             return (
-              <div className="flex items-center justify-between px-4 py-3 mt-4">
-                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{totalPages} 页</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-4 py-3 mt-4 gap-2">
+                <span className="text-xs sm:text-sm text-gray-500">共 {total} 条，第 {page}/{totalPages} 页</span>
                 <div className="flex items-center gap-1">
                   <button onClick={() => setPage(page - 1)} disabled={page <= 1} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
                   {pages.map((p, i) =>
@@ -225,10 +227,10 @@ export default function Transactions() {
                     )
                   )}
                   <button onClick={() => setPage(page + 1)} disabled={page >= totalPages} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span className="text-sm text-gray-500">跳至</span>
-                  <input type="number" min={1} max={totalPages} className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center" onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt((e.target as HTMLInputElement).value); if (v >= 1 && v <= totalPages) setPage(v) } }} />
-                  <span className="text-sm text-gray-500">页</span>
+                  <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                  <span className="hidden sm:inline text-sm text-gray-500">跳至</span>
+                  <input type="number" min={1} max={totalPages} className="hidden sm:block w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center" onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt((e.target as HTMLInputElement).value); if (v >= 1 && v <= totalPages) setPage(v) } }} />
+                  <span className="hidden sm:inline text-sm text-gray-500">页</span>
                 </div>
               </div>
             )
@@ -238,9 +240,9 @@ export default function Transactions() {
 
       {/* 退款弹窗 */}
       {refundModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setRefundModal(null)}>
-          <div className="bg-white rounded-lg max-w-md w-full p-6" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-semibold mb-4">录入退款</h3>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setRefundModal(null)}>
+          <div className="bg-white rounded-lg max-w-md w-full p-4 sm:p-6" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">录入退款</h3>
             <div className="mb-4 p-3 bg-gray-50 rounded-md">
               <p className="text-sm text-gray-700">原成交：<span className="font-medium max-w-[280px] truncate inline-block" title={refundModal.description || refundModal.product_name}>{refundModal.description || refundModal.product_name}</span></p>
               <p className="text-sm text-gray-600 mt-1">¥{refundModal.price} x {refundModal.quantity}</p>
@@ -251,8 +253,8 @@ export default function Transactions() {
                 </p>
               )}
             </div>
-            <form onSubmit={handleRefund} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <form onSubmit={handleRefund} className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">退款价</label>
                   <input type="text" value={refundForm.price} onChange={(e) => setRefundForm({ ...refundForm, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />

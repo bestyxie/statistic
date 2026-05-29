@@ -2,15 +2,31 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Layout from './components/Layout'
 import Login from './pages/Login'
-import Dashboard from './pages/Dashboard'
-import Shops from './pages/Shops'
-import Products from './pages/Products'
-import DataEntry from './pages/DataEntry'
-import Stats from './pages/Stats'
-import Visitors from './pages/Visitors'
-import Transactions from './pages/Transactions'
-import Suppliers from './pages/Suppliers'
-import ProductRanking from './pages/ProductRanking'
+import ResponsivePage from './components/ResponsivePage'
+
+// Desktop pages
+import DesktopDashboard from './pages/dashboard/DesktopDashboard'
+import DesktopShops from './pages/shops/DesktopShops'
+import DesktopVisitors from './pages/visitors/DesktopVisitors'
+import DesktopTransactions from './pages/transactions/DesktopTransactions'
+import DesktopRanking from './pages/rankings/DesktopRanking'
+import DesktopStats from './pages/stats/DesktopStats'
+import DesktopDataEntry from './pages/data-entry/DesktopDataEntry'
+import DesktopSuppliers from './pages/suppliers/DesktopSuppliers'
+// Products desktop still uses original component during migration
+import DesktopProducts from './pages/Products'
+
+// Mobile pages
+import MobileDashboard from './pages/dashboard/MobileDashboard'
+import MobileShops from './pages/shops/MobileShops'
+import MobileVisitors from './pages/visitors/MobileVisitors'
+import MobileTransactions from './pages/transactions/MobileTransactions'
+import MobileRanking from './pages/rankings/MobileRanking'
+import MobileStats from './pages/stats/MobileStats'
+import MobileDataEntry from './pages/data-entry/MobileDataEntry'
+import MobileSuppliers from './pages/suppliers/MobileSuppliers'
+import MobileProducts from './pages/products/MobileProducts'
+
 import { setNavigateToLogin } from './lib/api'
 
 function AppContent() {
@@ -18,7 +34,6 @@ function AppContent() {
   const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem('token'))
   const [checking, setChecking] = useState(true)
 
-  // 设置全局导航回调
   useEffect(() => {
     setNavigateToLogin(() => {
       setIsLoggedIn(false)
@@ -26,7 +41,6 @@ function AppContent() {
     })
   }, [navigate])
 
-  // 监听 localStorage token 变化
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'token' && !e.newValue) {
@@ -34,7 +48,6 @@ function AppContent() {
       }
     }
 
-    // 监听同页面的 localStorage 变化
     const checkToken = () => {
       const token = localStorage.getItem('token')
       if (!token && isLoggedIn) {
@@ -44,8 +57,6 @@ function AppContent() {
     }
 
     window.addEventListener('storage', handleStorageChange)
-
-    // 使用轮询检查 token（同页面内修改 localStorage 不会触发 storage 事件）
     const tokenCheckInterval = setInterval(checkToken, 1000)
 
     return () => {
@@ -74,15 +85,15 @@ function AppContent() {
   return (
     <Layout onLogout={() => { localStorage.removeItem('token'); setIsLoggedIn(false) }}>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/shops" element={<Shops />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/product-ranking" element={<ProductRanking />} />
-        <Route path="/visitors" element={<Visitors />} />
-        <Route path="/transactions" element={<Transactions />} />
-        <Route path="/suppliers" element={<Suppliers />} />
-        <Route path="/data-entry" element={<DataEntry />} />
-        <Route path="/stats" element={<Stats />} />
+        <Route path="/" element={<ResponsivePage desktop={<DesktopDashboard />} mobile={<MobileDashboard />} />} />
+        <Route path="/shops" element={<ResponsivePage desktop={<DesktopShops />} mobile={<MobileShops />} />} />
+        <Route path="/products" element={<ResponsivePage desktop={<DesktopProducts />} mobile={<MobileProducts />} />} />
+        <Route path="/product-ranking" element={<ResponsivePage desktop={<DesktopRanking />} mobile={<MobileRanking />} />} />
+        <Route path="/visitors" element={<ResponsivePage desktop={<DesktopVisitors />} mobile={<MobileVisitors />} />} />
+        <Route path="/transactions" element={<ResponsivePage desktop={<DesktopTransactions />} mobile={<MobileTransactions />} />} />
+        <Route path="/suppliers" element={<ResponsivePage desktop={<DesktopSuppliers />} mobile={<MobileSuppliers />} />} />
+        <Route path="/data-entry" element={<ResponsivePage desktop={<DesktopDataEntry />} mobile={<MobileDataEntry />} />} />
+        <Route path="/stats" element={<ResponsivePage desktop={<DesktopStats />} mobile={<MobileStats />} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

@@ -55,6 +55,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
       {purchases.length === 0 ? (
         <p className="text-center py-8 text-gray-400 text-sm">暂无拿货记录</p>
       ) : (
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
@@ -95,6 +96,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )

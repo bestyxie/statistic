@@ -31,7 +31,7 @@ export default function PurchaseRecordForm({ supplierProducts, purchase, onSubmi
   return (
     <div className="p-5 border-b border-gray-200 bg-gray-50">
       <h4 className="font-medium text-sm mb-3">{purchase ? '编辑拿货' : '添加拿货'}</h4>
-      <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-3">
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-500 mb-1">选择商品</label>
           <select

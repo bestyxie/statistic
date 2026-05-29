@@ -1,67 +1,15 @@
-import { useState, useEffect } from 'react'
-import { api } from '../lib/api'
-import type { Shop } from '@statistic/shared'
+import { useShops } from '../../hooks/useShops'
 
-export default function Shops() {
-  const [shops, setShops] = useState<Shop[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState<Shop | null>(null)
-  const [showForm, setShowForm] = useState(false)
-  const [form, setForm] = useState({ name: '', platform: '' })
-  const [error, setError] = useState('')
-
-  const load = () => {
-    setLoading(true)
-    api.getShops().then(setShops).finally(() => setLoading(false))
-  }
-
-  useEffect(() => { load() }, [])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    try {
-      if (editing) {
-        await api.updateShop(editing.id, form.name, form.platform)
-      } else {
-        await api.createShop(form.name, form.platform)
-      }
-      setShowForm(false)
-      setEditing(null)
-      setForm({ name: '', platform: '' })
-      load()
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
-
-  const handleEdit = (shop: Shop) => {
-    setEditing(shop)
-    setForm({ name: shop.name, platform: shop.platform })
-    setShowForm(true)
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定删除此店铺？关联的商品和统计数据也会被删除。')) return
-    try {
-      await api.deleteShop(id)
-      load()
-    } catch (err: any) {
-      alert(err.message)
-    }
-  }
-
-  const cancelForm = () => {
-    setShowForm(false)
-    setEditing(null)
-    setForm({ name: '', platform: '' })
-    setError('')
-  }
+export default function DesktopShops() {
+  const {
+    shops, loading, showForm, form, error, editing,
+    setForm, setShowForm, handleSubmit, handleEdit, handleDelete, cancelForm,
+  } = useShops()
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">店铺管理</h1>
+        <h1 className="text-2xl font-bold text-gray-800">店铺管理</h1>
         {!showForm && (
           <button
             onClick={() => setShowForm(true)}
@@ -123,7 +71,6 @@ export default function Shops() {
         ) : shops.length === 0 ? (
           <p className="text-center py-12 text-gray-400">暂无店铺，请点击上方按钮添加</p>
         ) : (
-          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
@@ -147,7 +94,6 @@ export default function Shops() {
               ))}
             </tbody>
           </table>
-          </div>
         )}
       </div>
     </div>

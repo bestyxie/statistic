@@ -47,14 +47,14 @@ export default function Visitors() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">访客列表</h1>
-        <span className="text-sm text-gray-500">共 {total} 位访客</span>
+      <div className="flex items-center justify-between mb-4 sm:mb-6 flex-wrap gap-2">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900">访客列表</h1>
+        <span className="text-xs sm:text-sm text-gray-500">共 {total} 位访客</span>
       </div>
 
       {/* 搜索 */}
-      <div className="flex gap-2 mb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-wrap gap-2 mb-4">
+        <div className="relative flex-1 min-w-[140px]">
           <input
             type="text"
             placeholder="搜索昵称、描述、城市..."
@@ -150,8 +150,8 @@ export default function Visitors() {
               pages.push(tp)
             }
             return (
-              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200">
-                <span className="text-sm text-gray-500">共 {total} 条，第 {page}/{tp} 页</span>
+              <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-4 py-3 border-t border-gray-200 gap-2">
+                <span className="text-xs sm:text-sm text-gray-500">共 {total} 条，第 {page}/{tp} 页</span>
                 <div className="flex items-center gap-1">
                   <button
                     onClick={() => setPage(page - 1)}
@@ -174,13 +174,13 @@ export default function Visitors() {
                     disabled={page >= tp}
                     className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >下一页</button>
-                  <span className="mx-2 text-gray-400">|</span>
-                  <span className="text-sm text-gray-500">跳至</span>
+                  <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                  <span className="hidden sm:inline text-sm text-gray-500">跳至</span>
                   <input
                     type="number"
                     min={1}
                     max={tp}
-                    className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
+                    className="hidden sm:block w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const v = parseInt((e.target as HTMLInputElement).value)
@@ -188,7 +188,7 @@ export default function Visitors() {
                       }
                     }}
                   />
-                  <span className="text-sm text-gray-500">页</span>
+                  <span className="hidden sm:inline text-sm text-gray-500">页</span>
                 </div>
               </div>
             )

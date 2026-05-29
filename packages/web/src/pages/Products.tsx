@@ -190,16 +190,16 @@ export default function Products() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-gray-800">商品管理</h1>
-        <div className="flex gap-2">
-          <div className="relative">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">商品管理</h1>
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
             <input
               type="text"
               placeholder="搜索商品描述..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && doSearch()}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-40 pr-7"
+              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-full sm:w-40 pr-7"
             />
             {searchInput && (
               <button type="button" onClick={() => { setSearchInput(''); setSearchParams((prev) => { prev.delete('search'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
@@ -246,18 +246,18 @@ export default function Products() {
 
       {/* 弹窗表单 */}
       {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-semibold mb-4">{editing ? '编辑商品' : '添加商品'}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{editing ? '编辑商品' : '添加商品'}</h2>
 
             {/* 编辑模式：显示商品图片和描述 */}
             {editing && (
-              <div className="flex gap-4 mb-4 p-3 bg-gray-50 rounded-lg">
+              <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4 p-3 bg-gray-50 rounded-lg">
                 <div className="flex-shrink-0">
                   {editing.image_url ? (
-                    <img src={editing.image_url} alt="商品图片" className="w-24 h-24 rounded object-cover bg-gray-100" />
+                    <img src={editing.image_url} alt="商品图片" className="w-16 h-16 sm:w-24 sm:h-24 rounded object-cover bg-gray-100" />
                   ) : (
-                    <div className="w-24 h-24 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
+                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -322,7 +322,7 @@ export default function Products() {
                   )}
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
                   <input
@@ -360,9 +360,9 @@ export default function Products() {
 
       {/* 成交录入弹窗 */}
       {showTxForm && txProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-md w-full">
-            <h2 className="text-lg font-semibold mb-4">录入成交 — {txProduct.description?.slice(0, 30) || txProduct.sku}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">录入成交 — {txProduct.description?.slice(0, 30) || txProduct.sku}</h2>
             <form onSubmit={async (e) => {
               e.preventDefault()
               try {
@@ -384,7 +384,7 @@ export default function Products() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">成交价</label>
                 <input type="text" value={txForm.price} onChange={(e) => setTxForm({ ...txForm, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
                   <input type="number" min={1} value={txForm.quantity} onChange={(e) => setTxForm({ ...txForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -409,14 +409,14 @@ export default function Products() {
 
       {/* 商品成交记录弹窗 */}
       {showProductTx && productTxProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setShowProductTx(false)}>
-          <div className="bg-white rounded-lg border border-gray-200 p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold max-w-[400px] truncate" title={productTxProduct.description || productTxProduct.sku}>成交记录 — {productTxProduct.description || productTxProduct.sku}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setShowProductTx(false)}>
+          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-3 sm:mb-4">
+              <h2 className="text-sm sm:text-lg font-semibold max-w-[250px] sm:max-w-[400px] truncate" title={productTxProduct.description || productTxProduct.sku}>成交记录 — {productTxProduct.description || productTxProduct.sku}</h2>
               <button onClick={() => setShowProductTx(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
             </div>
 
-            <div className="flex items-center gap-4 mb-4 text-sm text-gray-600">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
               <span>共 {productTxList.length} 条成交记录</span>
               <span>总数量: {productTxList.reduce((sum, tx) => sum + (tx.quantity || 0), 0)}</span>
               <span className="text-red-600">已退: {productTxList.reduce((sum, tx) => sum + (tx.refund_quantity || 0), 0)}</span>
@@ -605,8 +605,8 @@ export default function Products() {
                 pages.push(totalPages)
               }
               return (
-                <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200">
-                  <span className="text-sm text-gray-500">
+                <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-5 py-3 border-t border-gray-200 gap-2">
+                  <span className="text-xs sm:text-sm text-gray-500">
                     共 {total} 条，第 {page}/{totalPages} 页
                   </span>
                   <div className="flex items-center gap-1">
@@ -631,13 +631,13 @@ export default function Products() {
                       disabled={page >= totalPages}
                       className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
                     >下一页</button>
-                    <span className="mx-2 text-gray-400">|</span>
-                    <span className="text-sm text-gray-500">跳至</span>
+                    <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                    <span className="hidden sm:inline text-sm text-gray-500">跳至</span>
                     <input
                       type="number"
                       min={1}
                       max={totalPages}
-                      className="w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
+                      className="hidden sm:block w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           const v = parseInt((e.target as HTMLInputElement).value)
@@ -645,7 +645,7 @@ export default function Products() {
                         }
                       }}
                     />
-                    <span className="text-sm text-gray-500">页</span>
+                    <span className="hidden sm:inline text-sm text-gray-500">页</span>
                   </div>
                 </div>
               )

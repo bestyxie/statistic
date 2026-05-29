@@ -1,1 +1,17 @@
 @import "tailwindcss";
+
+/* Mobile touch enhancements */
+@media (max-width: 767px) {
+  html, body {
+    overflow-x: hidden;
+  }
+
+  button, a, select, input[type="checkbox"] {
+    min-height: 36px;
+  }
+
+  button, a, nav, th {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}

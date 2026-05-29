@@ -69,11 +69,11 @@ export default function Stats() {
   return (
     <>
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-800">数据查询</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">数据查询</h1>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <div className="flex flex-wrap gap-4 items-end">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
             <input
@@ -116,10 +116,10 @@ export default function Stats() {
       </div>
 
       {/* Shop visitor trend chart */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">店铺访客趋势</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">店铺访客趋势</h2>
         {shopTrend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
             <LineChart data={shopTrend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -150,10 +150,10 @@ export default function Stats() {
       </div>
 
       {/* Product views trend chart */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">商品浏览趋势</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">商品浏览趋势</h2>
         {productChartData.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
             <LineChart data={productChartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -170,8 +170,8 @@ export default function Stats() {
       </div>
 
       {/* Top products table */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">热门商品排行</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">热门商品排行</h2>
         {topProducts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -218,10 +218,10 @@ export default function Stats() {
       </div>
 
       {/* Transaction trend */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">成交趋势</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">成交趋势</h2>
         {txTrend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
             <BarChart data={txTrend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -239,9 +239,9 @@ export default function Stats() {
       </div>
 
       {/* Transaction list link */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-800">成交明细 <span className="text-sm font-normal text-gray-500">(共 {txTotal} 条)</span></h2>
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800">成交明细 <span className="text-xs sm:text-sm font-normal text-gray-500">(共 {txTotal} 条)</span></h2>
           <button onClick={() => navigate('/transactions')} className="text-blue-600 hover:text-blue-800 text-sm font-medium">查看全部 →</button>
         </div>
         {txList.length > 0 ? (

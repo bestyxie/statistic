@@ -27,9 +27,9 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
   if (!visitor) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <img
               src={visitor.icon_url || ''}
@@ -54,6 +54,7 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
           ) : products.length === 0 ? (
             <p className="text-center text-gray-400 py-12">暂无浏览记录</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-gray-50 sticky top-0">
                 <tr className="border-b border-gray-200">
@@ -88,6 +89,7 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

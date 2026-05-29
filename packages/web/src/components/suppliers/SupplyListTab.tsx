@@ -162,13 +162,13 @@ export default function SupplyListTab() {
   return (
     <div className="space-y-4">
       {/* 搜索栏 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[200px]">
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
+        <div className="flex flex-wrap gap-2 sm:gap-3 items-end">
+          <div className="flex-1 min-w-[140px]">
             <label className="block text-xs text-gray-500 mb-1">搜索</label>
             <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="供应商 / 商品编号 / 商品描述" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <div className="w-48">
+          <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按供应商筛选</label>
             <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">全部供应商</option>
@@ -258,7 +258,7 @@ export default function SupplyListTab() {
           <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[80vh] flex flex-col">
             <h3 className="text-lg font-semibold mb-4">cURL 录入商品</h3>
             <div className="space-y-3 flex-1 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">店铺</label>
                   <select value={curlShopId} onChange={(e) => setCurlShopId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -283,7 +283,7 @@ export default function SupplyListTab() {
               {curlParsed && (
                 <div className="bg-gray-50 rounded-lg p-3 space-y-3">
                   <p className="text-xs text-green-600 font-medium">解析成功，确认后将创建商品并关联供应商：</p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <label className="block text-xs text-gray-500 mb-1">商品描述</label>
                       <input type="text" value={curlParsed.description} onChange={(e) => setCurlParsed({ ...curlParsed, description: e.target.value })} className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -361,6 +361,7 @@ export default function SupplyListTab() {
         ) : links.length === 0 ? (
           <p className="text-center py-12 text-gray-400 text-sm">暂无供货关联</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50">
@@ -399,6 +400,7 @@ export default function SupplyListTab() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
     </div>

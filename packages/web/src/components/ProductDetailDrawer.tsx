@@ -89,9 +89,9 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Drawer */}
-      <div className="absolute inset-y-0 right-0 w-[90vw] max-w-[1200px] bg-gray-50 shadow-xl overflow-hidden flex flex-col">
+      <div className="absolute inset-y-0 right-0 sm:w-[90vw] sm:max-w-[1200px] w-full bg-gray-50 shadow-xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white shrink-0">
           <h1 className="text-xl font-bold text-gray-800">商品统计</h1>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
@@ -101,29 +101,29 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6">
           {loading && !product ? (
             <p className="text-gray-400 text-center py-12">加载中...</p>
           ) : product ? (
             <>
               {/* Product info */}
-              <div className="bg-white rounded-lg border border-gray-200 p-5">
-                <div className="flex items-center gap-4">
+              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                <div className="flex items-start gap-3 sm:gap-4">
                   {product.image_url ? (
-                    <img src={product.image_url} alt="" className="w-16 h-16 rounded-lg object-cover bg-gray-100" />
+                    <img src={product.image_url} alt="" className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover bg-gray-100 shrink-0" />
                   ) : (
-                    <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无图</div>
                   )}
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-800">{product.description || product.name}</h2>
+                  <div className="min-w-0">
+                    <h2 className="text-sm sm:text-lg font-semibold text-gray-800 break-all">{product.description || product.name}</h2>
                     {product.sku && <p className="text-sm text-gray-500 font-mono">SKU: {product.sku}</p>}
                   </div>
                 </div>
               </div>
 
               {/* Filters */}
-              <div className="bg-white rounded-lg border border-gray-200 p-5">
-                <div className="flex flex-wrap gap-4 items-end">
+              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
                     <input
@@ -153,30 +153,30 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
               </div>
 
               {/* Summary */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="bg-white rounded-lg border border-gray-200 p-5">
-                  <p className="text-sm text-gray-500">总浏览次数</p>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">{totalViews.toLocaleString()}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm text-gray-500">总浏览次数</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-1">{totalViews.toLocaleString()}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-5">
-                  <p className="text-sm text-gray-500">总访客数</p>
-                  <p className="text-2xl font-bold text-gray-800 mt-1">{totalViewers.toLocaleString()}</p>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm text-gray-500">总访客数</p>
+                  <p className="text-xl sm:text-2xl font-bold text-gray-800 mt-1">{totalViewers.toLocaleString()}</p>
                 </div>
-                <div className="bg-white rounded-lg border border-gray-200 p-5">
-                  <p className="text-sm text-gray-500">总成交数</p>
-                  <p className="text-2xl font-bold text-orange-600 mt-1">{totalTx.toLocaleString()}</p>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                  <p className="text-xs sm:text-sm text-gray-500">总成交数</p>
+                  <p className="text-xl sm:text-2xl font-bold text-orange-600 mt-1">{totalTx.toLocaleString()}</p>
                 </div>
               </div>
 
               {/* Trend chart */}
-              <div className="bg-white rounded-lg border border-gray-200 p-5">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4">每日趋势</h2>
+              <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">每日趋势</h2>
                 {stats.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
                     <LineChart data={stats}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="date" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} />
+                      <YAxis width={32} tick={{ fontSize: 12 }} />
                       <Tooltip />
                       <Legend />
                       <Line type="monotone" dataKey="view_count" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} name="浏览次数" />
@@ -191,8 +191,8 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
 
               {/* Daily data table */}
               {statsWithData.length > 0 && (
-                <div className="bg-white rounded-lg border border-gray-200 p-5">
-                  <h2 className="text-lg font-semibold text-gray-800 mb-4">每日明细</h2>
+                <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+                  <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">每日明细</h2>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -229,9 +229,9 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
 
               {/* Visitor modal */}
               {visitorModal.open && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4" onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }}>
-                  <div className="bg-white rounded-lg max-w-lg w-full max-h-[80vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4" onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }}>
+                  <div className="bg-white rounded-lg max-w-lg w-full max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
                       <h3 className="text-lg font-semibold text-gray-800">{visitorModal.date} 访客列表</h3>
                       <button onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }} className="text-gray-400 hover:text-gray-600">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
@@ -239,7 +239,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
                         </svg>
                       </button>
                     </div>
-                    <div className="p-5 overflow-y-auto max-h-[60vh]">
+                    <div className="p-3 sm:p-5 overflow-y-auto max-h-[60vh]">
                       {visitorModal.loading ? (
                         <p className="text-center text-gray-400 py-8">加载中...</p>
                       ) : visitorModal.visitors.length === 0 ? (

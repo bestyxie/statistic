@@ -34,8 +34,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-800">仪表盘</h1>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-800">仪表盘</h1>
         <select
           value={selectedShop}
           onChange={(e) => setSelectedShop(e.target.value)}
@@ -49,48 +49,48 @@ export default function Dashboard() {
       </div>
 
       {/* Summary cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-7 gap-4">
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">今日访客</p>
-          <p className="text-3xl font-bold text-gray-800 mt-1">{data.today}</p>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">今日访客</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{data.today}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">昨日访客</p>
-          <p className="text-3xl font-bold text-gray-800 mt-1">{data.yesterday}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">昨日访客</p>
+          <p className="text-2xl sm:text-3xl font-bold text-gray-800 mt-1">{data.yesterday}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">日环比</p>
-          <p className={`text-3xl font-bold mt-1 ${Number(changePercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">日环比</p>
+          <p className={`text-2xl sm:text-3xl font-bold mt-1 ${Number(changePercent) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {changePercent === '-' ? '-' : `${Number(changePercent) >= 0 ? '+' : ''}${changePercent}%`}
           </p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">今日成交</p>
-          <p className="text-3xl font-bold text-orange-600 mt-1">{(data as any).todayTxCount || 0}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">今日成交</p>
+          <p className="text-2xl sm:text-3xl font-bold text-orange-600 mt-1">{(data as any).todayTxCount || 0}</p>
           <p className="text-xs text-gray-400 mt-1">金额 ¥{((data as any).todayTxAmount || 0).toFixed(0)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">昨日成交</p>
-          <p className="text-3xl font-bold text-orange-600 mt-1">{(data as any).yesterdayTxCount || 0}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">昨日成交</p>
+          <p className="text-2xl sm:text-3xl font-bold text-orange-600 mt-1">{(data as any).yesterdayTxCount || 0}</p>
           <p className="text-xs text-gray-400 mt-1">金额 ¥{((data as any).yesterdayTxAmount || 0).toFixed(0)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">今日退款</p>
-          <p className="text-3xl font-bold text-red-500 mt-1">{refundData?.todayRefundCount || 0}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">今日退款</p>
+          <p className="text-2xl sm:text-3xl font-bold text-red-500 mt-1">{refundData?.todayRefundCount || 0}</p>
           <p className="text-xs text-gray-400 mt-1">金额 ¥{(refundData?.todayRefundAmount || 0).toFixed(0)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-5">
-          <p className="text-sm text-gray-500">昨日退款</p>
-          <p className="text-3xl font-bold text-red-500 mt-1">{refundData?.yesterdayRefundCount || 0}</p>
+        <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+          <p className="text-xs sm:text-sm text-gray-500">昨日退款</p>
+          <p className="text-2xl sm:text-3xl font-bold text-red-500 mt-1">{refundData?.yesterdayRefundCount || 0}</p>
           <p className="text-xs text-gray-400 mt-1">金额 ¥{(refundData?.yesterdayRefundAmount || 0).toFixed(0)}</p>
         </div>
       </div>
 
       {/* 7-day trend */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">近7天访客趋势</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">近7天访客趋势</h2>
         {data.trend.length > 0 ? (
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={250} className="sm:!h-[300px]">
             <LineChart data={data.trend}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="date" tick={{ fontSize: 12 }} />
@@ -105,8 +105,8 @@ export default function Dashboard() {
       </div>
 
       {/* Top 10 products */}
-      <div className="bg-white rounded-lg border border-gray-200 p-5">
-        <h2 className="text-lg font-semibold text-gray-800 mb-4">热门商品 TOP 10</h2>
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 sm:mb-4">热门商品 TOP 10</h2>
         {data.topProducts.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
