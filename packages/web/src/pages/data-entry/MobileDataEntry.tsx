@@ -1,6 +1,7 @@
 import { useDataEntry } from '../../hooks/useDataEntry'
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileCard from '../../components/mobile/MobileCard'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 
 export default function MobileDataEntry() {
   const {
@@ -8,6 +9,8 @@ export default function MobileDataEntry() {
     encryptedText, setEncryptedText, loading, error, success,
     preview, totalVisitors, handleParse, handleImport, reset,
   } = useDataEntry()
+
+  const { show: showImage } = useImagePreview()
 
   return (
     <div className="space-y-4">
@@ -82,9 +85,9 @@ export default function MobileDataEntry() {
             {preview.map((item) => (
               <div key={item.id} className="flex items-center gap-2 py-2 border-b border-gray-100 last:border-0">
                 {item.picUrl ? (
-                  <img src={item.picUrl} alt="" className="w-10 h-10 rounded object-cover bg-gray-100 shrink-0" />
+                  <img src={item.picUrl} alt="" className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer" onClick={() => showImage(item.picUrl!)} />
                 ) : (
-                  <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无图</div>
+                  <div className="w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无图</div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-800 truncate">{item.description || item.code}</p>

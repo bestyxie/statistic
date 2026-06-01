@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Agentation } from 'agentation'
+import { ImagePreviewProvider } from './mobile/MobileImagePreview'
 
 interface LayoutProps {
   onLogout: () => void
@@ -97,7 +98,9 @@ export default function Layout({ onLogout, children }: LayoutProps) {
       </nav>
 
       <main className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6">
-        {children}
+        <ImagePreviewProvider>
+          {children}
+        </ImagePreviewProvider>
       </main>
 
       <Agentation />

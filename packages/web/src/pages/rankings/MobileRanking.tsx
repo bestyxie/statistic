@@ -3,6 +3,7 @@ import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
 import MobilePagination from '../../components/mobile/MobilePagination'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
@@ -17,6 +18,7 @@ export default function MobileRanking() {
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
+  const { show: showImage } = useImagePreview()
 
   return (
     <div className="space-y-4">
@@ -91,9 +93,9 @@ export default function MobileRanking() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         {p.image_url ? (
-                          <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100 shrink-0" />
+                          <img src={p.image_url} alt="" className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer" onClick={() => showImage(p.image_url!)} />
                         ) : (
-                          <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无</div>
+                          <div className="w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无</div>
                         )}
                         <p className="text-sm font-medium text-gray-800 truncate">{p.description || p.name}</p>
                       </div>

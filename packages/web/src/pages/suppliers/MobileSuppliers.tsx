@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import { supplierApi, type ProductSupplierWithInfo } from '../../lib/supplierApi'
 import type { Supplier } from '@statistic/shared'
@@ -51,6 +52,7 @@ function MobileSupplyList() {
   }
 
   const loadSuppliers = () => supplierApi.getSuppliers().then(setSuppliers)
+  const { show: showImage } = useImagePreview()
 
   useState(() => { loadSuppliers(); loadLinks() })
 
@@ -118,9 +120,9 @@ function MobileSupplyList() {
             <MobileCard key={l.id}>
               <div className="flex items-center gap-2">
                 {l.product_image ? (
-                  <img src={l.product_image} alt="" className="w-10 h-10 rounded object-cover bg-gray-100 shrink-0" />
+                  <img src={l.product_image} alt="" className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer" onClick={() => showImage(l.product_image!)} />
                 ) : (
-                  <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无</div>
+                  <div className="w-14 h-14 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无</div>
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-gray-800 truncate">{l.product_description || l.product_name}</p>

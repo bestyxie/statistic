@@ -1,10 +1,13 @@
 import { useDashboard } from '../../hooks/useDashboard'
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileCard from '../../components/mobile/MobileCard'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
 export default function MobileDashboard() {
   const { data, shops, selectedShop, setSelectedShop, refundData, loading, changePercent } = useDashboard()
+
+  const { show: showImage } = useImagePreview()
 
   if (loading || !data) {
     return <div className="text-center py-12 text-gray-400 text-sm">加载中...</div>
@@ -83,7 +86,7 @@ export default function MobileDashboard() {
               <div key={i} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-b-0">
                 <span className="text-xs font-medium text-gray-400 w-5 shrink-0 text-center">{i + 1}</span>
                 {p.image_url && (
-                  <img src={p.image_url} alt="" className="w-9 h-9 rounded object-cover bg-gray-100 shrink-0" />
+                  <img src={p.image_url} alt="" className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer" onClick={() => showImage(p.image_url!)} />
                 )}
                 <span className="text-sm text-gray-800 truncate flex-1 min-w-0">{p.name}</span>
                 <span className="text-xs text-gray-500 shrink-0">{p.total_views}次</span>

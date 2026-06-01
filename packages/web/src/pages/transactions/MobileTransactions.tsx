@@ -2,6 +2,7 @@ import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import MobilePagination from '../../components/mobile/MobilePagination'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { useTransactions } from '../../hooks/useTransactions'
 
 export default function MobileTransactions() {
@@ -34,6 +35,8 @@ export default function MobileTransactions() {
   } = useTransactions()
 
   const filterSummary = [search && `搜索: ${search}`, start && `从 ${start}`, end && `至 ${end}`].filter(Boolean).join(' · ') || undefined
+
+  const { show: showImage } = useImagePreview()
 
   return (
     <div>
@@ -99,10 +102,11 @@ export default function MobileTransactions() {
                     <img
                       src={tx.image_url}
                       alt=""
-                      className="w-10 h-10 rounded object-cover bg-gray-100 shrink-0"
+                      className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer"
+                      onClick={() => showImage(tx.image_url!)}
                     />
                   ) : (
-                    <div className="w-10 h-10 rounded bg-gray-100 shrink-0" />
+                    <div className="w-14 h-14 rounded bg-gray-100 shrink-0" />
                   )}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">

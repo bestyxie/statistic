@@ -1,13 +1,13 @@
-import { useState } from 'react'
 import { useProducts } from '../../hooks/useProducts'
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
 import MobilePagination from '../../components/mobile/MobilePagination'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 
 export default function MobileProducts() {
-  const [previewImage, setPreviewImage] = useState<string | null>(null)
+  const { show: showImage } = useImagePreview()
   const {
     products,
     shops,
@@ -190,7 +190,7 @@ export default function MobileProducts() {
                     src={p.image_url}
                     alt=""
                     className="w-16 h-16 rounded object-cover bg-gray-100 shrink-0 cursor-pointer"
-                    onClick={() => setPreviewImage(p.image_url!)}
+                    onClick={() => showImage(p.image_url!)}
                   />
                 ) : (
                   <div className="w-16 h-16 rounded bg-gray-100 shrink-0 flex items-center justify-center text-gray-300 text-xs">
@@ -664,27 +664,6 @@ export default function MobileProducts() {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Image preview */}
-      {previewImage && (
-        <div
-          className="fixed inset-0 z-[70] bg-black/80 flex items-center justify-center"
-          onClick={() => setPreviewImage(null)}
-        >
-          <img
-            src={previewImage}
-            alt=""
-            className="max-w-[90vw] max-h-[85vh] object-contain rounded"
-            onClick={(e) => e.stopPropagation()}
-          />
-          <button
-            onClick={() => setPreviewImage(null)}
-            className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/20 text-white text-lg"
-          >
-            &times;
-          </button>
         </div>
       )}
 

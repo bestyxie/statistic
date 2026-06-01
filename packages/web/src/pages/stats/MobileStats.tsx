@@ -1,6 +1,7 @@
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
+import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 import { useStats } from '../../hooks/useStats'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
@@ -26,6 +27,8 @@ export default function MobileStats() {
     txTotal,
     handleQuery,
   } = useStats()
+
+  const { show: showImage } = useImagePreview()
 
   return (
     <div className="space-y-4">
@@ -136,7 +139,7 @@ export default function MobileStats() {
               <div key={i} className="flex items-center gap-3 py-2 border-b border-gray-100 last:border-b-0">
                 <span className="text-xs font-medium text-gray-400 w-5 shrink-0 text-center">{i + 1}</span>
                 {p.image_url && (
-                  <img src={p.image_url} alt="" className="w-9 h-9 rounded object-cover bg-gray-100 shrink-0" />
+                  <img src={p.image_url} alt="" className="w-14 h-14 rounded object-cover bg-gray-100 shrink-0 cursor-pointer" onClick={() => showImage(p.image_url!)} />
                 )}
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-gray-800 truncate">{p.description || p.name}</p>
