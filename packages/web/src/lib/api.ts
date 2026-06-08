@@ -83,7 +83,7 @@ export const api = {
   // Products
   getProducts: (shopId?: string, page?: number, pageSize?: number, date?: string, search?: string, sortBy?: string, sortOrder?: string) =>
     request<{ items: Product[]; total: number; page: number; page_size: number }>(`/products?${shopId ? `shop_id=${shopId}&` : ''}page=${page || 1}&page_size=${pageSize || 30}${date ? `&date=${date}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}${sortBy ? `&sort_by=${sortBy}` : ''}${sortOrder ? `&sort_order=${sortOrder}` : ''}`),
-  createProduct: (data: { shop_id: string; name: string; image_url?: string; sku?: string; price?: string }) =>
+  createProduct: (data: { shop_id: string; name: string; image_url?: string; description?: string; sku?: string; price?: string }) =>
     request<Product>('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; image_url?: string; description?: string; sku?: string; price?: string }) =>
     request<{ message: string }>(`/products/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

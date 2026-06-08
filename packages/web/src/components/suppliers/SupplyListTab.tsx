@@ -135,6 +135,7 @@ export default function SupplyListTab() {
       shop_id: curlShopId,
       name: curlParsed.description || '未命名商品',
       image_url: curlParsed.image_url,
+      description: curlParsed.description || '',
       sku: curlParsed.product_code,
       price: curlParsed.price,
     })

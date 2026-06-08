@@ -251,9 +251,12 @@ suppliers.post('/link', async (c) => {
   const { product_id, supplier_id, price, note } = await c.req.json()
   const id = crypto.randomUUID()
   const db = c.env.DB
-  await db.prepare('INSERT INTO product_suppliers (id, product_id, supplier_id, price, note) VALUES (?, ?, ?, ?, ?)')
-    .bind(id, product_id, supplier_id, price || '', note || '').run()
-  return c.json({ id, product_id, supplier_id, price, note })
+  const result = await db.prepare(`
+    INSERT INTO product_suppliers (id, product_id, supplier_id, price, note) VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(product_id, supplier_id) DO UPDATE SET price = excluded.price, note = excluded.note, updated_at = datetime('now')
+    RETURNING id, product_id, supplier_id, price, note
+  `).bind(id, product_id, supplier_id, price || '', note || '').first()
+  return c.json(result)
 })
 
 suppliers.put('/link/:id', async (c) => {

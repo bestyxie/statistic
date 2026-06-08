@@ -42,6 +42,10 @@ export interface DashboardData {
   yesterday: number
   trend: { date: string; visitors: number }[]
   topProducts: TopProduct[]
+  todayTxCount: number
+  todayTxAmount: number
+  yesterdayTxCount: number
+  yesterdayTxAmount: number
 }
 
 export interface TopProduct {
