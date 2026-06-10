@@ -35,18 +35,37 @@ suppliers.get('/', async (c) => {
 
 suppliers.post('/', async (c) => {
   const { wechat_nickname, wechat_id, remark } = await c.req.json()
-  const id = crypto.randomUUID()
   const db = c.env.DB
+
+  const wechatId = wechat_id || ''
+  if (wechatId) {
+    const existing = await db.prepare('SELECT id FROM suppliers WHERE wechat_id = ?').bind(wechatId).first()
+    if (existing) {
+      return c.json({ error: '该微信号已存在，请使用其他微信号' }, 400)
+    }
+  }
+
+  const id = crypto.randomUUID()
   await db.prepare('INSERT INTO suppliers (id, wechat_nickname, wechat_id, remark) VALUES (?, ?, ?, ?)')
-    .bind(id, wechat_nickname, wechat_id || '', remark || '').run()
-  return c.json({ id, wechat_nickname, wechat_id, remark })
+    .bind(id, wechat_nickname, wechatId, remark || '').run()
+  return c.json({ id, wechat_nickname, wechat_id: wechatId, remark })
 })
 
 suppliers.put('/:id', async (c) => {
   const { wechat_nickname, wechat_id, remark } = await c.req.json()
   const db = c.env.DB
+  const supplierId = c.req.param('id')
+
+  const wechatId = wechat_id || ''
+  if (wechatId) {
+    const existing = await db.prepare('SELECT id FROM suppliers WHERE wechat_id = ? AND id != ?').bind(wechatId, supplierId).first()
+    if (existing) {
+      return c.json({ error: '该微信号已存在，请使用其他微信号' }, 400)
+    }
+  }
+
   await db.prepare('UPDATE suppliers SET wechat_nickname = ?, wechat_id = ?, remark = ?, updated_at = datetime("now") WHERE id = ?')
-    .bind(wechat_nickname, wechat_id || '', remark || '', c.req.param('id')).run()
+    .bind(wechat_nickname, wechatId, remark || '', supplierId).run()
   return c.json({ message: '更新成功' })
 })
 

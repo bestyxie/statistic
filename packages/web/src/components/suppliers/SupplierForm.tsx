@@ -50,7 +50,7 @@ export default function SupplierForm({ supplier, onSubmit, onCancel }: Props) {
             <input
               type="text"
               value={form.wechat_id}
-              onChange={(e) => setForm({ ...form, wechat_id: e.target.value })}
+              onChange={(e) => { setForm({ ...form, wechat_id: e.target.value }); setError('') }}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="微信号 / wxid"
             />
