@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import ProductDetailDrawer from '../components/ProductDetailDrawer'
+import ProductFormModal from './products/ProductFormModal'
+import TransactionFormModal from './products/TransactionFormModal'
+import TransactionListModal from './products/TransactionListModal'
+import ProductSuppliersModal from './products/ProductSuppliersModal'
+import AddSupplierModal from './products/AddSupplierModal'
 import type { Product, Shop } from '@statistic/shared'
 
 export default function Products() {
@@ -22,22 +27,17 @@ export default function Products() {
   const sortBy = searchParams.get('sort_by') || 'created_at'
   const sortOrder = searchParams.get('sort_order') || 'desc'
   const [loading, setLoading] = useState(true)
-  const [showForm, setShowForm] = useState(false)
-  const [editing, setEditing] = useState<Product | null>(null)
-  const [showFullDesc, setShowFullDesc] = useState(false)
-  const [showTxForm, setShowTxForm] = useState(false)
-  const [txProduct, setTxProduct] = useState<Product | null>(null)
-  const [txForm, setTxForm] = useState({ price: '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' })
-  const [form, setForm] = useState({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
-  const [error, setError] = useState('')
   const [total, setTotal] = useState(0)
   const pageSize = 30
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [refreshing, setRefreshing] = useState(false)
-  const [showProductTx, setShowProductTx] = useState(false)
-  const [productTxProduct, setProductTxProduct] = useState<Product | null>(null)
-  const [productTxList, setProductTxList] = useState<any[]>([])
-  const [productTxLoading, setProductTxLoading] = useState(false)
+
+  // modal triggers: null = hidden, value = shown
+  const [formTarget, setFormTarget] = useState<Product | null | 'new'>(null)
+  const [txProduct, setTxProduct] = useState<Product | null>(null)
+  const [txListProduct, setTxListProduct] = useState<Product | null>(null)
+  const [suppliersProduct, setSuppliersProduct] = useState<Product | null>(null)
+  const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -111,64 +111,6 @@ export default function Products() {
     return sortOrder === 'asc' ? ' ↑' : ' ↓'
   }
 
-  const loadProductTransactions = async (productId: string) => {
-    setProductTxLoading(true)
-    try {
-      const res = await api.getTransactions({ product_id: productId, limit: 50 })
-      setProductTxList(res.items || [])
-    } catch (err: any) {
-      console.error('加载成交记录失败:', err)
-      setProductTxList([])
-    } finally {
-      setProductTxLoading(false)
-    }
-  }
-
-  useEffect(() => { api.getShops().then(setShops) }, [])
-  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder])
-
-  // sync URL search back to input when URL changes
-  useEffect(() => { setSearchInput(search) }, [search])
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    try {
-      if (editing) {
-        // 编辑模式下保留原始描述和图片 URL
-        await api.updateProduct(editing.id, {
-          name: form.name,
-          image_url: editing.image_url,
-          description: editing.description,
-          sku: form.sku,
-          price: form.price
-        })
-      } else {
-        await api.createProduct(form)
-      }
-      setShowForm(false)
-      setEditing(null)
-      setShowFullDesc(false)
-      setForm({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
-      load()
-    } catch (err: any) {
-      setError(err.message)
-    }
-  }
-
-  const handleEdit = (product: Product) => {
-    setEditing(product)
-    setShowFullDesc(false)
-    setForm({
-      shop_id: product.shop_id,
-      name: product.name,
-      image_url: product.image_url,
-      sku: product.sku,
-      price: product.price,
-    })
-    setShowForm(true)
-  }
-
   const handleDelete = async (id: string) => {
     if (!confirm('确定删除此商品？关联的统计数据也会被删除。')) return
     try {
@@ -179,13 +121,9 @@ export default function Products() {
     }
   }
 
-  const cancelForm = () => {
-    setShowForm(false)
-    setEditing(null)
-    setShowFullDesc(false)
-    setForm({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
-    setError('')
-  }
+  useEffect(() => { api.getShops().then(setShops) }, [])
+  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder])
+  useEffect(() => { setSearchInput(search) }, [search])
 
   return (
     <div className="space-y-6">
@@ -227,9 +165,9 @@ export default function Products() {
               <button type="button" onClick={() => setVisitDate('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
             )}
           </div>
-          {!showForm && (
+          {formTarget === null && (
             <button
-              onClick={() => setShowForm(true)}
+              onClick={() => setFormTarget('new')}
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
             >
               添加商品
@@ -244,260 +182,16 @@ export default function Products() {
         </div>
       </div>
 
-      {/* 弹窗表单 */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{editing ? '编辑商品' : '添加商品'}</h2>
-
-            {/* 编辑模式：显示商品图片和描述 */}
-            {editing && (
-              <div className="flex gap-3 sm:gap-4 mb-3 sm:mb-4 p-3 bg-gray-50 rounded-lg">
-                <div className="flex-shrink-0">
-                  {editing.image_url ? (
-                    <img src={editing.image_url} alt="商品图片" className="w-16 h-16 sm:w-24 sm:h-24 rounded object-cover bg-gray-100" />
-                  ) : (
-                    <div className="w-16 h-16 sm:w-24 sm:h-24 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className="text-xs text-gray-500">描述</p>
-                    {editing.description && editing.description.length > 100 && (
-                      <button
-                        type="button"
-                        onClick={() => setShowFullDesc(!showFullDesc)}
-                        className="text-xs text-blue-600 hover:text-blue-800"
-                      >
-                        {showFullDesc ? '收起' : '显示全部'}
-                      </button>
-                    )}
-                  </div>
-                  <p className={`text-sm text-gray-700 ${showFullDesc ? '' : 'line-clamp-4'} overflow-y-auto`}>
-                    {editing.description || '暂无描述'}
-                  </p>
-                </div>
-              </div>
-            )}
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!editing && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">所属店铺</label>
-                  <select
-                    value={form.shop_id}
-                    onChange={(e) => setForm({ ...form, shop_id: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">请选择店铺</option>
-                    {shops.map((s) => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">商品名称</label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="商品名称"
-                />
-              </div>
-              {!editing && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">图片 URL</label>
-                  <input
-                    type="url"
-                    value={form.image_url}
-                    onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  {form.image_url && (
-                    <img src={form.image_url} alt="预览" className="mt-2 w-20 h-20 rounded object-cover bg-gray-100" />
-                  )}
-                </div>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                  <input
-                    type="text"
-                    value={form.sku}
-                    onChange={(e) => setForm({ ...form, sku: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="可选"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">价格</label>
-                  <input
-                    type="text"
-                    value={form.price}
-                    onChange={(e) => setForm({ ...form, price: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="可选"
-                  />
-                </div>
-              </div>
-              {error && <p className="text-red-500 text-sm">{error}</p>}
-              <div className="flex gap-2 pt-2">
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">
-                  {editing ? '保存' : '添加'}
-                </button>
-                <button type="button" onClick={cancelForm} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-                  取消
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 成交录入弹窗 */}
-      {showTxForm && txProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">录入成交 — {txProduct.description?.slice(0, 30) || txProduct.sku}</h2>
-            <form onSubmit={async (e) => {
-              e.preventDefault()
-              try {
-                await api.createTransaction({
-                  product_id: txProduct.id,
-                  shop_id: txProduct.shop_id,
-                  price: txForm.price,
-                  quantity: parseInt(txForm.quantity) || 1,
-                  date: txForm.date,
-                  note: txForm.note,
-                })
-                setShowTxForm(false)
-                setTxProduct(null)
-              } catch (err: any) {
-                alert(err.message)
-              }
-            }} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">成交价</label>
-                <input type="text" value={txForm.price} onChange={(e) => setTxForm({ ...txForm, price: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">数量</label>
-                  <input type="number" min={1} value={txForm.quantity} onChange={(e) => setTxForm({ ...txForm, quantity: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">日期</label>
-                  <input type="date" value={txForm.date} onChange={(e) => setTxForm({ ...txForm, date: e.target.value })} required className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
-                <input type="text" value={txForm.note} onChange={(e) => setTxForm({ ...txForm, note: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="可选" />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm">确认成交</button>
-                <button type="button" onClick={() => { setShowTxForm(false); setTxProduct(null) }} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">取消</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* 商品成交记录弹窗 */}
-      {showProductTx && productTxProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={() => setShowProductTx(false)}>
-          <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-3 sm:mb-4">
-              <h2 className="text-sm sm:text-lg font-semibold max-w-[250px] sm:max-w-[400px] truncate" title={productTxProduct.description || productTxProduct.sku}>成交记录 — {productTxProduct.description || productTxProduct.sku}</h2>
-              <button onClick={() => setShowProductTx(false)} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-3 sm:mb-4 text-xs sm:text-sm text-gray-600">
-              <span>共 {productTxList.length} 条成交记录</span>
-              <span>总数量: {productTxList.reduce((sum, tx) => sum + (tx.quantity || 0), 0)}</span>
-              <span className="text-red-600">已退: {productTxList.reduce((sum, tx) => sum + (tx.refund_quantity || 0), 0)}</span>
-              <span className="text-orange-600 font-medium">
-                总金额: ¥{productTxList.reduce((sum, tx) => sum + parseFloat(tx.price || '0') * (tx.quantity || 0), 0).toFixed(0)}
-              </span>
-            </div>
-
-            <div className="flex-1 overflow-auto">
-              {productTxLoading ? (
-                <div className="text-center py-12 text-gray-400">加载中...</div>
-              ) : productTxList.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">暂无成交记录</div>
-              ) : (
-                <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
-                    <tr className="border-b border-gray-200">
-                      <th className="text-left py-3 px-4 text-gray-500 font-medium">日期</th>
-                      <th className="text-left py-3 px-4 text-gray-500 font-medium">商品</th>
-                      <th className="text-right py-3 px-4 text-gray-500 font-medium">成交价</th>
-                      <th className="text-right py-3 px-4 text-gray-500 font-medium">数量</th>
-                      <th className="text-right py-3 px-4 text-gray-500 font-medium">金额</th>
-                      <th className="text-left py-3 px-4 text-gray-500 font-medium">备注</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {productTxList.map((tx) => {
-                      const hasRefund = (tx.refund_count || 0) > 0
-                      const refundQuantity = tx.refund_quantity || 0
-                      const remainingQuantity = tx.quantity - refundQuantity
-                      const isFullyRefunded = remainingQuantity <= 0
-
-                      return (
-                        <tr key={tx.id} className={`hover:bg-gray-50 ${isFullyRefunded ? 'bg-red-50/50' : ''}`}>
-                          <td className="py-3 px-4 text-gray-600">{tx.date}</td>
-                          <td className="py-3 px-4">
-                            <div className="flex items-center gap-2">
-                              {tx.image_url && <img src={tx.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100" />}
-                              <div className="flex items-center gap-2">
-                                <span className={`text-gray-800 max-w-[150px] truncate block ${isFullyRefunded ? 'line-through text-gray-400' : ''}`} title={tx.description || tx.product_name}>{tx.description || tx.product_name}</span>
-                                {hasRefund && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                    已退{refundQuantity}件
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="py-3 px-4 text-right font-medium">¥{tx.price}</td>
-                          <td className="py-3 px-4 text-right">
-                            <span className={isFullyRefunded ? 'text-gray-400 line-through' : ''}>{tx.quantity}</span>
-                            {hasRefund && (
-                              <span className="text-xs text-red-600 ml-1">
-                                (剩{remainingQuantity})
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-3 px-4 text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
-                          <td className="py-3 px-4 text-gray-500 max-w-[100px] truncate" title={tx.note}>{tx.note || '-'}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              )}
-            </div>
-
-            <div className="flex gap-2 pt-4 border-t border-gray-200 mt-4">
-              <button
-                onClick={() => navigate(`/transactions?product_id=${productTxProduct.id}`)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
-              >
-                查看完整成交明细
-              </button>
-              <button onClick={() => setShowProductTx(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">
-                关闭
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ProductFormModal
+        product={formTarget}
+        shops={shops}
+        onClose={() => setFormTarget(null)}
+        onSaved={() => { setFormTarget(null); load() }}
+      />
+      <TransactionFormModal product={txProduct} onClose={() => setTxProduct(null)} />
+      <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
+      <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
+      <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
@@ -575,7 +269,7 @@ export default function Products() {
                       <td className="py-3 px-5 text-right font-medium">{(p as any).yesterday_visitors || 0}</td>
                       <td className="py-3 px-5 text-right">
                         <button
-                          onClick={() => { setProductTxProduct(p); loadProductTransactions(p.id); setShowProductTx(true) }}
+                          onClick={() => setTxListProduct(p)}
                           className={`font-medium cursor-pointer hover:underline ${(p as any).transaction_count > 0 ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400 hover:text-gray-500'}`}
                         >
                           {(p as any).transaction_count || 0}
@@ -583,11 +277,13 @@ export default function Products() {
                       </td>
                       <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
-                        <button onClick={() => { setTxProduct(p); setTxForm({ price: p.price || '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' }); setShowTxForm(true) }} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
+                        <button onClick={() => setTxProduct(p)} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
                         <div className="relative inline-block group/other">
                           <button className="text-gray-500 hover:text-gray-700 pb-2">更多 ▾</button>
-                          <div className="hidden group-hover/other:flex absolute right-0 top-full bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[64px] flex-col">
-                            <button onClick={() => handleEdit(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
+                          <div className="hidden group-hover/other:flex absolute right-0 top-full bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[80px] flex-col">
+                            <button onClick={() => setSuppliersProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">供应商</button>
+                            <button onClick={() => setAddSupplierProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">添加供应商</button>
+                            <button onClick={() => setFormTarget(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
                             <button onClick={() => handleDelete(p.id)} className="text-left px-3 py-1.5 text-sm text-red-500 hover:bg-gray-50 whitespace-nowrap">删除</button>
                           </div>
                         </div>

@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
-import type { Product, Shop } from '@statistic/shared'
+import { supplierApi, type ProductSupplierWithInfo } from '../lib/supplierApi'
+import type { Product, Shop, Supplier } from '@statistic/shared'
 
 export function useProducts() {
   const navigate = useNavigate()
@@ -78,6 +79,14 @@ export function useProducts() {
   const [productTxProduct, setProductTxProduct] = useState<Product | null>(null)
   const [productTxList, setProductTxList] = useState<any[]>([])
   const [productTxLoading, setProductTxLoading] = useState(false)
+  const [showProductSuppliers, setShowProductSuppliers] = useState(false)
+  const [psProduct, setPsProduct] = useState<Product | null>(null)
+  const [psList, setPsList] = useState<ProductSupplierWithInfo[]>([])
+  const [psLoading, setPsLoading] = useState(false)
+  const [showAddSupplier, setShowAddSupplier] = useState(false)
+  const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
+  const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([])
+  const [addSupplierForm, setAddSupplierForm] = useState({ supplier_id: '', price: '', note: '' })
 
   // Data loading
   const load = useCallback(() => {
@@ -286,6 +295,49 @@ export function useProducts() {
     }
   }
 
+  // Product suppliers
+  const openProductSuppliers = useCallback(async (product: Product) => {
+    setPsProduct(product)
+    setPsLoading(true)
+    setShowProductSuppliers(true)
+    try {
+      const list = await supplierApi.getAllProducts({ product_id: product.id })
+      setPsList(list)
+    } catch { setPsList([]) }
+    finally { setPsLoading(false) }
+  }, [])
+
+  const unlinkSupplier = async (linkId: string) => {
+    await supplierApi.unlinkProduct(linkId)
+    if (psProduct) openProductSuppliers(psProduct)
+  }
+
+  // Add supplier
+  const openAddSupplier = useCallback(async (product: Product) => {
+    setAddSupplierProduct(product)
+    setAddSupplierForm({ supplier_id: '', price: product.price || '', note: '' })
+    setShowAddSupplier(true)
+    if (allSuppliers.length === 0) {
+      try { setAllSuppliers(await supplierApi.getSuppliers()) } catch { /* ignore */ }
+    }
+  }, [allSuppliers.length])
+
+  const handleAddSupplier = async () => {
+    if (!addSupplierProduct || !addSupplierForm.supplier_id) return
+    try {
+      await supplierApi.linkProduct({
+        product_id: addSupplierProduct.id,
+        supplier_id: addSupplierForm.supplier_id,
+        price: addSupplierForm.price,
+        note: addSupplierForm.note,
+      })
+      setShowAddSupplier(false)
+      setAddSupplierProduct(null)
+    } catch (err: any) {
+      alert(err.message || '添加失败')
+    }
+  }
+
   // Effects
   useEffect(() => {
     api.getShops().then(setShops)
@@ -366,6 +418,22 @@ export function useProducts() {
     // Drawer
     drawerId,
     setDrawerId,
+    // Suppliers
+    showProductSuppliers,
+    setShowProductSuppliers,
+    psProduct,
+    psList,
+    psLoading,
+    openProductSuppliers,
+    unlinkSupplier,
+    showAddSupplier,
+    setShowAddSupplier,
+    addSupplierProduct,
+    allSuppliers,
+    addSupplierForm,
+    setAddSupplierForm,
+    openAddSupplier,
+    handleAddSupplier,
     // Reload
     load,
   }

@@ -66,6 +66,22 @@ export default function MobileProducts() {
     // Drawer
     drawerId,
     setDrawerId,
+    // Suppliers
+    showProductSuppliers,
+    setShowProductSuppliers,
+    psProduct,
+    psList,
+    psLoading,
+    openProductSuppliers,
+    unlinkSupplier,
+    showAddSupplier,
+    setShowAddSupplier,
+    addSupplierProduct,
+    allSuppliers,
+    addSupplierForm,
+    setAddSupplierForm,
+    openAddSupplier,
+    handleAddSupplier,
     // Navigation
     navigate,
   } = useProducts()
@@ -235,12 +251,6 @@ export default function MobileProducts() {
               {/* Actions */}
               <MobileCardActions>
                 <button
-                  onClick={() => handleEdit(p)}
-                  className="text-blue-600 text-sm"
-                >
-                  编辑
-                </button>
-                <button
                   onClick={() => setDrawerId(p.id)}
                   className="text-green-600 text-sm"
                 >
@@ -251,6 +261,24 @@ export default function MobileProducts() {
                   className="text-orange-600 text-sm"
                 >
                   成交
+                </button>
+                <button
+                  onClick={() => openProductSuppliers(p)}
+                  className="text-purple-600 text-sm"
+                >
+                  供应商
+                </button>
+                <button
+                  onClick={() => openAddSupplier(p)}
+                  className="text-purple-600 text-sm"
+                >
+                  添加供应商
+                </button>
+                <button
+                  onClick={() => handleEdit(p)}
+                  className="text-blue-600 text-sm"
+                >
+                  编辑
                 </button>
                 <button
                   onClick={() => handleDelete(p.id)}
@@ -662,6 +690,112 @@ export default function MobileProducts() {
               >
                 关闭
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Product suppliers modal */}
+      {showProductSuppliers && psProduct && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowProductSuppliers(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-lg w-full p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold truncate">
+                供应商 — {psProduct.description || psProduct.sku}
+              </h2>
+              <button
+                onClick={() => setShowProductSuppliers(false)}
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none shrink-0"
+              >
+                &times;
+              </button>
+            </div>
+            {psLoading ? (
+              <div className="text-center py-8 text-gray-400">加载中...</div>
+            ) : psList.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">暂无关联供应商</div>
+            ) : (
+              <div className="space-y-2">
+                {psList.map((ps) => (
+                  <div key={ps.id} className="flex items-center justify-between rounded-lg border border-gray-200 p-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm text-gray-800 font-medium">{ps.supplier_name}</p>
+                      <div className="flex gap-2 mt-0.5 text-xs text-gray-500">
+                        <span>{ps.price || '-'}</span>
+                        {ps.note && <span>· {ps.note}</span>}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => unlinkSupplier(ps.id)}
+                      className="text-red-500 hover:text-red-700 text-sm shrink-0 ml-2"
+                    >
+                      移除
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Add supplier modal */}
+      {showAddSupplier && addSupplierProduct && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowAddSupplier(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-md w-full p-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-base font-semibold mb-3">
+              添加供应商 — {(addSupplierProduct.description || addSupplierProduct.sku).slice(0, 30)}
+            </h2>
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">选择供应商</label>
+                <select
+                  value={addSupplierForm.supplier_id}
+                  onChange={(e) => setAddSupplierForm({ ...addSupplierForm, supplier_id: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">请选择供应商</option>
+                  {allSuppliers.map((s) => (
+                    <option key={s.id} value={s.id}>{s.wechat_nickname}{s.remark ? ` (${s.remark})` : ''}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">供货价</label>
+                <input
+                  type="text"
+                  value={addSupplierForm.price}
+                  onChange={(e) => setAddSupplierForm({ ...addSupplierForm, price: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="可选"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">备注</label>
+                <input
+                  type="text"
+                  value={addSupplierForm.note}
+                  onChange={(e) => setAddSupplierForm({ ...addSupplierForm, note: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="可选"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <button onClick={handleAddSupplier} className="px-4 py-2 bg-purple-600 text-white rounded-md text-sm">确认添加</button>
+                <button onClick={() => setShowAddSupplier(false)} className="px-4 py-2 border border-gray-300 rounded-md text-sm">取消</button>
+              </div>
             </div>
           </div>
         </div>

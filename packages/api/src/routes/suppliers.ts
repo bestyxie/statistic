@@ -213,6 +213,7 @@ suppliers.get('/all-products', async (c) => {
   const db = c.env.DB
   const search = c.req.query('search')?.trim() || ''
   const supplierId = c.req.query('supplier_id') || ''
+  const productId = c.req.query('product_id') || ''
 
   let sql = `
     SELECT ps.*, p.name AS product_name, p.image_url AS product_image,
@@ -228,6 +229,11 @@ suppliers.get('/all-products', async (c) => {
   if (supplierId) {
     sql += ' AND ps.supplier_id = ?'
     params.push(supplierId)
+  }
+
+  if (productId) {
+    sql += ' AND ps.product_id = ?'
+    params.push(productId)
   }
 
   if (search) {
