@@ -581,11 +581,16 @@ export default function Products() {
                           {(p as any).transaction_count || 0}
                         </button>
                       </td>
-                      <td className="py-3 px-5 text-right">
-                        <button onClick={() => handleEdit(p)} className="text-blue-600 hover:text-blue-800 mr-3">编辑</button>
+                      <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
                         <button onClick={() => { setTxProduct(p); setTxForm({ price: p.price || '', quantity: '1', date: new Date().toISOString().slice(0, 10), note: '' }); setShowTxForm(true) }} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
-                        <button onClick={() => handleDelete(p.id)} className="text-red-500 hover:text-red-700">删除</button>
+                        <div className="relative inline-block group/other">
+                          <button className="text-gray-500 hover:text-gray-700 pb-2">更多 ▾</button>
+                          <div className="hidden group-hover/other:flex absolute right-0 top-full bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[64px] flex-col">
+                            <button onClick={() => handleEdit(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
+                            <button onClick={() => handleDelete(p.id)} className="text-left px-3 py-1.5 text-sm text-red-500 hover:bg-gray-50 whitespace-nowrap">删除</button>
+                          </div>
+                        </div>
                       </td>
                     </tr>
                   ))}
