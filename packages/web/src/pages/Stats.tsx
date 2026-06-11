@@ -34,7 +34,20 @@ export default function Stats() {
       setShopTrend(trendRes.shopTrend || [])
       setProductTrend(trendRes.productTrend || [])
       setTopProducts(topRes || [])
-      setTxTrend(txTrendRes || [])
+      const rawTxTrend = txTrendRes || []
+      // Pad with zero-count dates for continuous trend
+      const txPadded: any[] = []
+      const cur = new Date(start)
+      const last = new Date(end)
+      if (start && end) {
+        const txMap = new Map(rawTxTrend.map((d: any) => [d.date, d]))
+        while (cur <= last) {
+          const ds = cur.toISOString().slice(0, 10)
+          txPadded.push(txMap.get(ds) || { date: ds, tx_count: 0, tx_amount: 0 })
+          cur.setDate(cur.getDate() + 1)
+        }
+      }
+      setTxTrend(txPadded.length > 0 ? txPadded : rawTxTrend)
       setTxList(txListRes.items || [])
       setTxTotal(txListRes.total || 0)
     } catch (err: any) {

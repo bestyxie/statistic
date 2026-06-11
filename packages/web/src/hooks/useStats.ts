@@ -86,6 +86,21 @@ export function useStats(): UseStatsReturn {
     d.visitors = shopVisitorMap[d.date] || 0
   })
 
+  // Pad txTrend with zero-count dates to show continuous trend
+  const txTrendPadded = (() => {
+    if (!start || !end) return txTrend
+    const map = new Map(txTrend.map((d: Record<string, any>) => [d.date, d]))
+    const result: Record<string, any>[] = []
+    const cur = new Date(start)
+    const last = new Date(end)
+    while (cur <= last) {
+      const ds = cur.toISOString().slice(0, 10)
+      result.push(map.get(ds) || { date: ds, tx_count: 0, tx_amount: 0 })
+      cur.setDate(cur.getDate() + 1)
+    }
+    return result
+  })()
+
   return {
     navigate,
     shops,
@@ -101,7 +116,7 @@ export function useStats(): UseStatsReturn {
     shopTrend,
     productChartData,
     topProducts,
-    txTrend,
+    txTrend: txTrendPadded,
     txList,
     txTotal,
     handleQuery,
