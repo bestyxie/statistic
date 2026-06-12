@@ -373,10 +373,9 @@ export function useProducts() {
   // Label sync with pause support
   const runLabelSync = async () => {
     setSyncingLabels(true)
-    setSyncProgress('导入标签...')
+    setSyncProgress('同步中...')
     abortSyncRef.current = false
     try {
-      await api.importLabels()
       let synced = 0
       while (!abortSyncRef.current) {
         const res = await api.syncProductLabels(5)
@@ -389,13 +388,22 @@ export function useProducts() {
       } else {
         setSyncProgress(`完成，共同步 ${synced} 个商品`)
       }
-      // 刷新 label 列表
       api.getLabels().then(setLabels).catch(() => {})
       load()
     } catch (err: any) {
       setSyncProgress(`同步失败: ${err.message}`)
     } finally {
       setSyncingLabels(false)
+    }
+  }
+
+  const handleImportLabels = async () => {
+    try {
+      const res = await api.importLabels()
+      alert(`导入成功，共 ${res.imported} 个标签`)
+      api.getLabels().then(setLabels).catch(() => {})
+    } catch (err: any) {
+      alert(`导入失败: ${err.message}`)
     }
   }
 
@@ -439,6 +447,7 @@ export function useProducts() {
     syncProgress,
     runLabelSync,
     pauseLabelSync,
+    handleImportLabels,
     // Selection
     selectedIds,
     toggleSelect,

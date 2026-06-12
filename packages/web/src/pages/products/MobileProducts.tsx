@@ -89,6 +89,7 @@ export default function MobileProducts() {
     syncingLabels,
     syncProgress,
     runLabelSync,
+    handleImportLabels,
     pauseLabelSync,
     // Navigation
     navigate,
@@ -110,6 +111,9 @@ export default function MobileProducts() {
         title="商品管理"
         actions={
           <div className="flex gap-2">
+            <button onClick={handleImportLabels} className="px-3 py-1.5 bg-teal-600 text-white rounded-md text-sm">
+              导入标签
+            </button>
             {syncingLabels ? (
               <button onClick={pauseLabelSync} className="px-3 py-1.5 bg-yellow-600 text-white rounded-md text-sm">
                 暂停

@@ -134,10 +134,9 @@ export default function Products() {
 
   const runLabelSync = async () => {
     setSyncingLabels(true)
-    setSyncProgress('导入标签...')
+    setSyncProgress('同步中...')
     abortSyncRef.current = false
     try {
-      await api.importLabels()
       let synced = 0
       while (!abortSyncRef.current) {
         const res = await api.syncProductLabels(5)
@@ -156,6 +155,16 @@ export default function Products() {
       setSyncProgress(`同步失败: ${err.message}`)
     } finally {
       setSyncingLabels(false)
+    }
+  }
+
+  const handleImportLabels = async () => {
+    try {
+      const res = await api.importLabels()
+      alert(`导入成功，共 ${res.imported} 个标签`)
+      api.getLabels().then(setLabels).catch(() => {})
+    } catch (err: any) {
+      alert(`导入失败: ${err.message}`)
     }
   }
 
@@ -209,6 +218,9 @@ export default function Products() {
               <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
             ))}
           </select>
+          <button onClick={handleImportLabels} className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm">
+            导入标签
+          </button>
           {syncingLabels ? (
             <button onClick={() => { abortSyncRef.current = true }} className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-sm">
               暂停 {syncProgress}
