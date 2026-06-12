@@ -155,4 +155,8 @@ export const api = {
     request<{ message: string; imported: number }>('/labels/import', { method: 'POST' }),
   syncProductLabels: (batchSize?: number) =>
     request<{ synced: number; total: number; remaining: number }>(`/labels/sync-products${batchSize ? `?batch_size=${batchSize}` : ''}`, { method: 'POST' }),
+  getProductLabels: (productId: string) =>
+    request<{ label_id: string; label_name: string }[]>(`/labels/product/${productId}`),
+  setProductLabels: (productId: string, labelIds: string[]) =>
+    request<{ message: string }>(`/labels/product/${productId}`, { method: 'PUT', body: JSON.stringify({ label_ids: labelIds }) }),
 }

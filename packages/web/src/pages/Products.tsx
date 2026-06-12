@@ -7,6 +7,7 @@ import TransactionFormModal from './products/TransactionFormModal'
 import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
+import SetLabelModal from './products/SetLabelModal'
 import type { Product, Shop, ProductLabel } from '@statistic/shared'
 
 export default function Products() {
@@ -57,6 +58,7 @@ export default function Products() {
   const [txListProduct, setTxListProduct] = useState<Product | null>(null)
   const [suppliersProduct, setSuppliersProduct] = useState<Product | null>(null)
   const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
+  const [labelProduct, setLabelProduct] = useState<Product | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -275,6 +277,7 @@ export default function Products() {
       <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
+      <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
@@ -366,6 +369,7 @@ export default function Products() {
                           <div className="hidden group-hover/other:flex absolute right-0 top-full bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[80px] flex-col">
                             <button onClick={() => setSuppliersProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">供应商</button>
                             <button onClick={() => setAddSupplierProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">添加供应商</button>
+                            <button onClick={() => setLabelProduct(p)} className="text-left px-3 py-1.5 text-sm text-teal-600 hover:bg-gray-50 whitespace-nowrap">设置标签</button>
                             <button onClick={() => setFormTarget(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
                             <button onClick={() => handleDelete(p.id)} className="text-left px-3 py-1.5 text-sm text-red-500 hover:bg-gray-50 whitespace-nowrap">删除</button>
                           </div>

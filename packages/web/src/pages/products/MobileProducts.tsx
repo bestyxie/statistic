@@ -5,6 +5,7 @@ import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCar
 import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
+import SetLabelModal from './SetLabelModal'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -93,6 +94,9 @@ export default function MobileProducts() {
     runLabelSync,
     handleImportLabels,
     pauseLabelSync,
+    // Set label modal
+    labelProduct,
+    setLabelProduct,
     // Navigation
     navigate,
   } = useProducts()
@@ -316,6 +320,12 @@ export default function MobileProducts() {
                   className="text-purple-600 text-sm"
                 >
                   添加供应商
+                </button>
+                <button
+                  onClick={() => setLabelProduct(p)}
+                  className="text-teal-600 text-sm"
+                >
+                  设置标签
                 </button>
                 <button
                   onClick={() => handleEdit(p)}
@@ -849,6 +859,7 @@ export default function MobileProducts() {
         productId={drawerId}
         onClose={() => setDrawerId(null)}
       />
+      <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
     </div>
   )
 }

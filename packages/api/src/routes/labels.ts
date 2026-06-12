@@ -91,4 +91,36 @@ labels.post('/sync-products', async (c) => {
   return c.json({ synced, total, remaining: remainRes?.cnt || 0, attempted: products.results.map((p) => p.sku) })
 })
 
+// 获取某商品的标签
+labels.get('/product/:productId', async (c) => {
+  const db = c.env.DB
+  const productId = c.req.param('productId')
+  const result = await db.prepare(
+    `SELECT pl.label_id, pl.label_name FROM product_label_relations plr
+     JOIN product_labels pl ON plr.label_id = pl.label_id
+     WHERE plr.product_id = ? AND plr.label_id != '__NONE__'`
+  ).bind(productId).all()
+  return c.json(result.results)
+})
+
+// 设置某商品的标签（全量替换）
+labels.put('/product/:productId', async (c) => {
+  const db = c.env.DB
+  const productId = c.req.param('productId')
+  const { label_ids } = await c.req.json<{ label_ids: string[] }>()
+
+  // 删除旧的关联（排除哨兵）
+  await db.prepare("DELETE FROM product_label_relations WHERE product_id = ? AND label_id != '__NONE__'")
+    .bind(productId).run()
+
+  // 插入新关联
+  for (const labelId of (label_ids || [])) {
+    await db.prepare(
+      'INSERT OR IGNORE INTO product_label_relations (id, product_id, label_id) VALUES (?, ?, ?)'
+    ).bind(crypto.randomUUID(), productId, labelId).run()
+  }
+
+  return c.json({ message: '更新成功' })
+})
+
 export default labels

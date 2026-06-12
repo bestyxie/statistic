@@ -105,6 +105,7 @@ export function useProducts() {
   const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
   const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([])
   const [addSupplierForm, setAddSupplierForm] = useState({ supplier_id: '', price: '', note: '' })
+  const [labelProduct, setLabelProduct] = useState<Product | null>(null)
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [syncingLabels, setSyncingLabels] = useState(false)
   const [syncProgress, setSyncProgress] = useState('')
@@ -460,6 +461,9 @@ export function useProducts() {
     runLabelSync,
     pauseLabelSync,
     handleImportLabels,
+    // Set label modal
+    labelProduct,
+    setLabelProduct,
     // Selection
     selectedIds,
     toggleSelect,
