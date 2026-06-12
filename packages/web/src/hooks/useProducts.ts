@@ -379,7 +379,7 @@ export function useProducts() {
       await api.importLabels()
       let synced = 0
       while (!abortSyncRef.current) {
-        const res = await api.syncProductLabels(20)
+        const res = await api.syncProductLabels(5)
         synced += res.synced
         setSyncProgress(`同步中 ${synced}/${synced + res.remaining}`)
         if (res.remaining === 0 || res.stalled) break

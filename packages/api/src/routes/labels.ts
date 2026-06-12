@@ -17,7 +17,7 @@ const labels = new Hono<{ Bindings: Env }>()
 // 获取所有 label
 labels.get('/', async (c) => {
   const db = c.env.DB
-  const result = await db.prepare('SELECT * FROM product_labels ORDER BY sort ASC').all()
+  const result = await db.prepare("SELECT * FROM product_labels WHERE label_id != '__NONE__' ORDER BY sort ASC").all()
   return c.json(result.results)
 })
 
@@ -54,10 +54,10 @@ labels.post('/import', async (c) => {
   return c.json({ message: '导入成功', imported })
 })
 
-// 分批同步商品 label（每批 batch_size 个，默认 20）
+// 分批同步商品 label（每批 batch_size 个，默认 5）
 labels.post('/sync-products', async (c) => {
   const db = c.env.DB
-  const batchSize = Math.min(Math.max(parseInt(c.req.query('batch_size') || '20'), 1), 50)
+  const batchSize = Math.min(Math.max(parseInt(c.req.query('batch_size') || '5'), 1), 20)
 
   // 统计总数和未关联数
   const totalRes = await db

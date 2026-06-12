@@ -23,23 +23,46 @@ interface LabelResult {
 export async function syncProductLabel(db: D1Database, productId: string, sku: string): Promise<void> {
   if (!sku) return
 
-  // 已有关联则跳过
+  // 已有真实 label 关联（排除哨兵）则跳过
   const existing = await db
-    .prepare('SELECT id FROM product_label_relations WHERE product_id = ? LIMIT 1')
+    .prepare("SELECT id FROM product_label_relations WHERE product_id = ? AND label_id != '__NONE__' LIMIT 1")
     .bind(productId)
     .first()
   if (existing) return
 
-  // 调用外部 API
+  // 有哨兵记录且未超过 7 天 → 跳过，不重复查询
+  const sentinel = await db
+    .prepare("SELECT created_at FROM product_label_relations WHERE product_id = ? AND label_id = '__NONE__' LIMIT 1")
+    .bind(productId)
+    .first<{ created_at: string }>()
+  if (sentinel) {
+    const age = Date.now() - new Date(sentinel.created_at + 'Z').getTime()
+    if (age < 86400000) return
+    // 超过 7 天，清除哨兵重新查询
+    await db.prepare("DELETE FROM product_label_relations WHERE product_id = ? AND label_id = '__NONE__'")
+      .bind(productId).run()
+  }
+
+  // 调用外部 API（5 秒超时）
   let labels: LabelResult[]
   try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 5000)
     const resp = await fetch(LABEL_API, {
       method: 'POST',
       headers: LABEL_API_HEADERS,
       body: JSON.stringify({ code: sku }),
+      signal: controller.signal,
     })
+    clearTimeout(timer)
     const json = await resp.json<{ data: LabelResult[]; success: boolean }>()
-    if (!json?.success || !json.data?.length) return
+    if (!json?.success || !json.data?.length) {
+      // 外部确认无 label，标记哨兵记录避免重复查询
+      await db.prepare(
+        "INSERT OR IGNORE INTO product_label_relations (id, product_id, label_id) VALUES (?, ?, '__NONE__')"
+      ).bind(crypto.randomUUID(), productId).run()
+      return
+    }
     labels = json.data
   } catch {
     return
