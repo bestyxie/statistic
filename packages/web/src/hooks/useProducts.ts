@@ -1,8 +1,8 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import { supplierApi, type ProductSupplierWithInfo } from '../lib/supplierApi'
-import type { Product, Shop, Supplier } from '@statistic/shared'
+import type { Product, Shop, Supplier, ProductLabel } from '@statistic/shared'
 
 export function useProducts() {
   const navigate = useNavigate()
@@ -50,6 +50,15 @@ export function useProducts() {
   const sortBy = searchParams.get('sort_by') || 'created_at'
   const sortOrder = searchParams.get('sort_order') || 'desc'
 
+  const labelId = searchParams.get('label') || ''
+  const setLabelId = (v: string) =>
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (v) prev.set('label', v)
+      else prev.delete('label')
+      return prev
+    })
+
   // UI state
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -87,6 +96,10 @@ export function useProducts() {
   const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
   const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([])
   const [addSupplierForm, setAddSupplierForm] = useState({ supplier_id: '', price: '', note: '' })
+  const [labels, setLabels] = useState<ProductLabel[]>([])
+  const [syncingLabels, setSyncingLabels] = useState(false)
+  const [syncProgress, setSyncProgress] = useState('')
+  const abortSyncRef = useRef(false)
 
   // Data loading
   const load = useCallback(() => {
@@ -100,13 +113,14 @@ export function useProducts() {
         search || undefined,
         sortBy,
         sortOrder,
+        labelId || undefined,
       )
       .then((res) => {
         setProducts(res.items)
         setTotal(res.total)
       })
       .finally(() => setLoading(false))
-  }, [selectedShop, page, visitDate, search, sortBy, sortOrder])
+  }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId])
 
   // Selection
   const toggleSelect = (id: string) => {
@@ -351,6 +365,44 @@ export function useProducts() {
     setSearchInput(search)
   }, [search])
 
+  // Load labels once
+  useEffect(() => {
+    api.getLabels().then(setLabels).catch(() => {})
+  }, [])
+
+  // Label sync with pause support
+  const runLabelSync = async () => {
+    setSyncingLabels(true)
+    setSyncProgress('导入标签...')
+    abortSyncRef.current = false
+    try {
+      await api.importLabels()
+      let synced = 0
+      while (!abortSyncRef.current) {
+        const res = await api.syncProductLabels(20)
+        synced += res.synced
+        setSyncProgress(`同步中 ${synced}/${synced + res.remaining}`)
+        if (res.remaining === 0 || res.stalled) break
+      }
+      if (abortSyncRef.current) {
+        setSyncProgress(`已暂停 (${synced} 已同步)`)
+      } else {
+        setSyncProgress(`完成，共同步 ${synced} 个商品`)
+      }
+      // 刷新 label 列表
+      api.getLabels().then(setLabels).catch(() => {})
+      load()
+    } catch (err: any) {
+      setSyncProgress(`同步失败: ${err.message}`)
+    } finally {
+      setSyncingLabels(false)
+    }
+  }
+
+  const pauseLabelSync = () => {
+    abortSyncRef.current = true
+  }
+
   // Derived
   const totalPages = Math.ceil(total / pageSize)
 
@@ -379,6 +431,14 @@ export function useProducts() {
     sortOrder,
     toggleSort,
     getSortIcon,
+    // Label filter
+    labelId,
+    setLabelId,
+    labels,
+    syncingLabels,
+    syncProgress,
+    runLabelSync,
+    pauseLabelSync,
     // Selection
     selectedIds,
     toggleSelect,

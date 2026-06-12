@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
+import { syncProductLabel } from '../utils/label'
 
 type Env = { DB: D1Database }
 
@@ -51,6 +52,9 @@ stats.post('/import', async (c) => {
     await db.prepare(
       'INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(product_id, date) DO UPDATE SET view_count = ?, viewer_count = ?'
     ).bind(crypto.randomUUID(), product!.id, shop_id, date, item.productVisitorNum || 0, item.productVisitorNum || 0, item.productVisitorNum || 0, item.productVisitorNum || 0).run()
+
+    // 同步商品 label
+    syncProductLabel(db, (product as { id: string }).id, item.code).catch(() => {})
   }
 
   return c.json({ message: '数据导入成功', imported_products: parsed.data.vroList.length, total_visitors: totalVisitors })
@@ -457,6 +461,8 @@ stats.post('/import-by-visitor', async (c) => {
 
       if (newProduct) {
         productId = newProduct.id
+        // 同步商品 label
+        syncProductLabel(db, productId, pv.code).catch(() => {})
       }
     }
 

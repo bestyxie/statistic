@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'
-import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor } from '@statistic/shared'
+import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel } from '@statistic/shared'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
@@ -81,8 +81,8 @@ export const api = {
     request<{ message: string }>(`/shops/${id}`, { method: 'DELETE' }),
 
   // Products
-  getProducts: (shopId?: string, page?: number, pageSize?: number, date?: string, search?: string, sortBy?: string, sortOrder?: string) =>
-    request<{ items: Product[]; total: number; page: number; page_size: number }>(`/products?${shopId ? `shop_id=${shopId}&` : ''}page=${page || 1}&page_size=${pageSize || 30}${date ? `&date=${date}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}${sortBy ? `&sort_by=${sortBy}` : ''}${sortOrder ? `&sort_order=${sortOrder}` : ''}`),
+  getProducts: (shopId?: string, page?: number, pageSize?: number, date?: string, search?: string, sortBy?: string, sortOrder?: string, labelId?: string) =>
+    request<{ items: Product[]; total: number; page: number; page_size: number }>(`/products?${shopId ? `shop_id=${shopId}&` : ''}page=${page || 1}&page_size=${pageSize || 30}${date ? `&date=${date}` : ''}${search ? `&search=${encodeURIComponent(search)}` : ''}${sortBy ? `&sort_by=${sortBy}` : ''}${sortOrder ? `&sort_order=${sortOrder}` : ''}${labelId ? `&label_id=${labelId}` : ''}`),
   createProduct: (data: { shop_id: string; name: string; image_url?: string; description?: string; sku?: string; price?: string }) =>
     request<Product>('/products', { method: 'POST', body: JSON.stringify(data) }),
   updateProduct: (id: string, data: { name: string; image_url?: string; description?: string; sku?: string; price?: string }) =>
@@ -147,4 +147,12 @@ export const api = {
   },
   deleteRefund: (id: string) =>
     request<{ message: string }>(`/stats/refunds/${id}`, { method: 'DELETE' }),
+
+  // Labels
+  getLabels: () =>
+    request<ProductLabel[]>('/labels'),
+  importLabels: () =>
+    request<{ message: string; imported: number }>('/labels/import', { method: 'POST' }),
+  syncProductLabels: (batchSize?: number) =>
+    request<{ synced: number; total: number; remaining: number }>(`/labels/sync-products${batchSize ? `?batch_size=${batchSize}` : ''}`, { method: 'POST' }),
 }

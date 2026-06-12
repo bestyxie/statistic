@@ -146,3 +146,25 @@ CREATE TABLE purchase_records (
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (product_supplier_id) REFERENCES product_suppliers(id) ON DELETE CASCADE
 );
+
+-- Label 定义（从 yxcapp.cn 导入）
+CREATE TABLE product_labels (
+  label_id TEXT PRIMARY KEY,
+  label_name TEXT NOT NULL,
+  sort INTEGER DEFAULT 0,
+  uid TEXT DEFAULT '',
+  product_count INTEGER DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now'))
+);
+
+-- 商品-Label 关联（多对多）
+CREATE TABLE product_label_relations (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  label_id TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+  FOREIGN KEY (label_id) REFERENCES product_labels(label_id) ON DELETE CASCADE,
+  UNIQUE(product_id, label_id)
+);

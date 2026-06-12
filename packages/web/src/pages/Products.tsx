@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import ProductDetailDrawer from '../components/ProductDetailDrawer'
@@ -7,7 +7,7 @@ import TransactionFormModal from './products/TransactionFormModal'
 import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
-import type { Product, Shop } from '@statistic/shared'
+import type { Product, Shop, ProductLabel } from '@statistic/shared'
 
 export default function Products() {
   const navigate = useNavigate()
@@ -31,6 +31,12 @@ export default function Products() {
   const pageSize = 30
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [refreshing, setRefreshing] = useState(false)
+  const labelId = searchParams.get('label') || ''
+  const setLabelId = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('label', v); else prev.delete('label'); return prev })
+  const [labels, setLabels] = useState<ProductLabel[]>([])
+  const [syncingLabels, setSyncingLabels] = useState(false)
+  const [syncProgress, setSyncProgress] = useState('')
+  const abortSyncRef = useRef(false)
 
   // modal triggers: null = hidden, value = shown
   const [formTarget, setFormTarget] = useState<Product | null | 'new'>(null)
@@ -41,7 +47,7 @@ export default function Products() {
 
   const load = () => {
     setLoading(true)
-    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined, sortBy, sortOrder).then((res) => {
+    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined, sortBy, sortOrder, labelId || undefined).then((res) => {
       setProducts(res.items)
       setTotal(res.total)
     }).finally(() => setLoading(false))
@@ -122,8 +128,36 @@ export default function Products() {
   }
 
   useEffect(() => { api.getShops().then(setShops) }, [])
-  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder])
+  useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
+  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId])
   useEffect(() => { setSearchInput(search) }, [search])
+
+  const runLabelSync = async () => {
+    setSyncingLabels(true)
+    setSyncProgress('导入标签...')
+    abortSyncRef.current = false
+    try {
+      await api.importLabels()
+      let synced = 0
+      while (!abortSyncRef.current) {
+        const res = await api.syncProductLabels(20)
+        synced += res.synced
+        setSyncProgress(`同步中 ${synced}/${synced + res.remaining}`)
+        if (res.remaining === 0 || res.stalled) break
+      }
+      if (abortSyncRef.current) {
+        setSyncProgress(`已暂停 (${synced} 已同步)`)
+      } else {
+        setSyncProgress(`完成，共同步 ${synced} 个商品`)
+      }
+      api.getLabels().then(setLabels).catch(() => {})
+      load()
+    } catch (err: any) {
+      setSyncProgress(`同步失败: ${err.message}`)
+    } finally {
+      setSyncingLabels(false)
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -165,6 +199,29 @@ export default function Products() {
               <button type="button" onClick={() => setVisitDate('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
             )}
           </div>
+          <select
+            value={labelId}
+            onChange={(e) => setLabelId(e.target.value)}
+            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">全部标签</option>
+            {labels.map((l) => (
+              <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
+            ))}
+          </select>
+          {syncingLabels ? (
+            <button onClick={() => { abortSyncRef.current = true }} className="px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-sm">
+              暂停 {syncProgress}
+            </button>
+          ) : syncProgress ? (
+            <button onClick={runLabelSync} className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+              继续同步 {syncProgress}
+            </button>
+          ) : (
+            <button onClick={runLabelSync} className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm">
+              同步标签
+            </button>
+          )}
           {formTarget === null && (
             <button
               onClick={() => setFormTarget('new')}

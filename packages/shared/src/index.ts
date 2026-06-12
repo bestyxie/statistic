@@ -242,3 +242,14 @@ export interface ApiResponse<T = unknown> {
   error?: string
   data?: T
 }
+
+/** Label 定义（从 yxcapp.cn 导入） */
+export interface ProductLabel {
+  label_id: string
+  label_name: string
+  sort: number
+  uid: string
+  product_count: number
+  created_at: string
+  updated_at: string
+}

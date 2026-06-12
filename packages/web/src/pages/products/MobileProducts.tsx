@@ -82,6 +82,14 @@ export default function MobileProducts() {
     setAddSupplierForm,
     openAddSupplier,
     handleAddSupplier,
+    // Label filter
+    labelId,
+    setLabelId,
+    labels,
+    syncingLabels,
+    syncProgress,
+    runLabelSync,
+    pauseLabelSync,
     // Navigation
     navigate,
   } = useProducts()
@@ -90,6 +98,7 @@ export default function MobileProducts() {
     searchInput && `搜索: ${searchInput}`,
     selectedShop && shops.find((s) => s.id === selectedShop)?.name,
     visitDate && visitDate.slice(5),
+    labelId && labels.find((l) => l.label_id === labelId)?.label_name,
   ]
     .filter(Boolean)
     .join(' · ') || undefined
@@ -101,6 +110,19 @@ export default function MobileProducts() {
         title="商品管理"
         actions={
           <div className="flex gap-2">
+            {syncingLabels ? (
+              <button onClick={pauseLabelSync} className="px-3 py-1.5 bg-yellow-600 text-white rounded-md text-sm">
+                暂停
+              </button>
+            ) : syncProgress ? (
+              <button onClick={runLabelSync} className="px-3 py-1.5 bg-green-600 text-white rounded-md text-sm">
+                继续同步
+              </button>
+            ) : (
+              <button onClick={runLabelSync} className="px-3 py-1.5 bg-purple-600 text-white rounded-md text-sm">
+                同步标签
+              </button>
+            )}
             <button
               onClick={() => navigate('/product-ranking')}
               className="px-3 py-1.5 border border-blue-600 text-blue-600 rounded-md text-sm"
@@ -148,6 +170,16 @@ export default function MobileProducts() {
           onChange={(e) => setVisitDate(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
+        <select
+          value={labelId}
+          onChange={(e) => setLabelId(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">全部标签</option>
+          {labels.map((l) => (
+            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
+          ))}
+        </select>
         <button
           onClick={doSearch}
           className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"

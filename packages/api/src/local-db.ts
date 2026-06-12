@@ -276,6 +276,34 @@ export class LocalD1 {
       }
     }
 
+    // Migrate: create product_labels and product_label_relations if missing
+    const labelTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='product_labels'")
+    if (labelTable.length === 0) {
+      this.db.run(`
+        CREATE TABLE product_labels (
+          label_id TEXT PRIMARY KEY,
+          label_name TEXT NOT NULL,
+          sort INTEGER DEFAULT 0,
+          uid TEXT DEFAULT '',
+          product_count INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT (datetime('now')),
+          updated_at TEXT DEFAULT (datetime('now'))
+        )
+      `)
+      this.db.run(`
+        CREATE TABLE product_label_relations (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          label_id TEXT NOT NULL,
+          created_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+          FOREIGN KEY (label_id) REFERENCES product_labels(label_id) ON DELETE CASCADE,
+          UNIQUE(product_id, label_id)
+        )
+      `)
+      this.dirty = true
+    }
+
     // Auto-save every 5 seconds if dirty
     setInterval(() => { if (this.dirty) this.save() }, 5000)
   }

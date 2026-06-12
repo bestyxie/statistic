@@ -14,6 +14,7 @@ products.get('/', async (c) => {
   const page = Math.max(1, parseInt(c.req.query('page') || '1'))
   const pageSize = Math.max(1, parseInt(c.req.query('page_size') || '30'))
   const offset = (page - 1) * pageSize
+  const labelId = c.req.query('label_id')
   const db = c.env.DB
 
   const statsDate = dateFilter || new Date(Date.now() - 86400000).toISOString().slice(0, 10)
@@ -32,6 +33,10 @@ products.get('/', async (c) => {
   if (search) {
     conditions.push('p.description LIKE ?')
     countParams.push(`%${search}%`)
+  }
+  if (labelId) {
+    conditions.push('p.id IN (SELECT product_id FROM product_label_relations WHERE label_id = ?)')
+    countParams.push(labelId)
   }
 
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''

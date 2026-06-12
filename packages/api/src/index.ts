@@ -6,6 +6,7 @@ import shopRoutes from './routes/shops'
 import productRoutes from './routes/products'
 import statsRoutes from './routes/stats'
 import supplierRoutes from './routes/suppliers'
+import labelRoutes from './routes/labels'
 
 type Bindings = {
   DB: D1Database
@@ -49,5 +50,6 @@ app.route('/shops', shopRoutes)
 app.route('/products', productRoutes)
 app.route('/stats', statsRoutes)
 app.route('/suppliers', supplierRoutes)
+app.route('/labels', labelRoutes)
 
 export default app
