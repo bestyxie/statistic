@@ -88,7 +88,7 @@ labels.post('/sync-products', async (c) => {
      WHERE p.sku != '' AND p.id NOT IN (SELECT DISTINCT product_id FROM product_label_relations)`
   ).first<{ cnt: number }>()
 
-  return c.json({ synced, total, remaining: remainRes?.cnt || 0 })
+  return c.json({ synced, total, remaining: remainRes?.cnt || 0, attempted: products.results.map((p) => p.sku) })
 })
 
 export default labels

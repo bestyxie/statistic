@@ -32,7 +32,20 @@ export default function Products() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [refreshing, setRefreshing] = useState(false)
   const labelId = searchParams.get('label') || ''
-  const setLabelId = (v: string) => setSearchParams((prev) => { prev.delete('page'); if (v) prev.set('label', v); else prev.delete('label'); return prev })
+  const setLabelId = (v: string) => setSearchParams((prev) => { prev.delete('page'); prev.delete('no_label'); if (v) prev.set('label', v); else prev.delete('label'); return prev })
+  const noLabel = searchParams.get('no_label') === '1'
+  const setNoLabel = (v: boolean) => setSearchParams((prev) => { prev.delete('page'); prev.delete('label'); if (v) prev.set('no_label', '1'); else prev.delete('no_label'); return prev })
+
+  // 统一处理：标签选择器变化
+  const handleLabelFilterChange = (value: string) => {
+    if (value === '__NO_LABEL__') {
+      setNoLabel(true)
+    } else {
+      setNoLabel(false)
+      setLabelId(value)
+    }
+  }
+  const labelFilterValue = noLabel ? '__NO_LABEL__' : labelId
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [syncingLabels, setSyncingLabels] = useState(false)
   const [syncProgress, setSyncProgress] = useState('')
@@ -47,7 +60,7 @@ export default function Products() {
 
   const load = () => {
     setLoading(true)
-    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined, sortBy, sortOrder, labelId || undefined).then((res) => {
+    api.getProducts(selectedShop || undefined, page, pageSize, visitDate || undefined, search || undefined, sortBy, sortOrder, labelId || undefined, noLabel || undefined).then((res) => {
       setProducts(res.items)
       setTotal(res.total)
     }).finally(() => setLoading(false))
@@ -129,7 +142,7 @@ export default function Products() {
 
   useEffect(() => { api.getShops().then(setShops) }, [])
   useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
-  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId])
+  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId, noLabel])
   useEffect(() => { setSearchInput(search) }, [search])
 
   const runLabelSync = async () => {
@@ -209,11 +222,12 @@ export default function Products() {
             )}
           </div>
           <select
-            value={labelId}
-            onChange={(e) => setLabelId(e.target.value)}
+            value={labelFilterValue}
+            onChange={(e) => handleLabelFilterChange(e.target.value)}
             className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">全部标签</option>
+            <option value="__NO_LABEL__">无标签</option>
             {labels.map((l) => (
               <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
             ))}

@@ -85,6 +85,8 @@ export default function MobileProducts() {
     // Label filter
     labelId,
     setLabelId,
+    noLabel,
+    setNoLabel,
     labels,
     syncingLabels,
     syncProgress,
@@ -100,6 +102,7 @@ export default function MobileProducts() {
     selectedShop && shops.find((s) => s.id === selectedShop)?.name,
     visitDate && visitDate.slice(5),
     labelId && labels.find((l) => l.label_id === labelId)?.label_name,
+    noLabel && '无标签',
   ]
     .filter(Boolean)
     .join(' · ') || undefined
@@ -175,11 +178,15 @@ export default function MobileProducts() {
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
         <select
-          value={labelId}
-          onChange={(e) => setLabelId(e.target.value)}
+          value={noLabel ? '__NO_LABEL__' : labelId}
+          onChange={(e) => {
+            if (e.target.value === '__NO_LABEL__') { setNoLabel(true); setLabelId('') }
+            else { setNoLabel(false); setLabelId(e.target.value) }
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         >
           <option value="">全部标签</option>
+          <option value="__NO_LABEL__">无标签</option>
           {labels.map((l) => (
             <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
           ))}

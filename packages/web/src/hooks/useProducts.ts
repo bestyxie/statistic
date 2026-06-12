@@ -59,6 +59,15 @@ export function useProducts() {
       return prev
     })
 
+  const noLabel = searchParams.get('no_label') === '1'
+  const setNoLabel = (v: boolean) =>
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (v) prev.set('no_label', '1')
+      else prev.delete('no_label')
+      return prev
+    })
+
   // UI state
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
@@ -114,13 +123,14 @@ export function useProducts() {
         sortBy,
         sortOrder,
         labelId || undefined,
+        noLabel || undefined,
       )
       .then((res) => {
         setProducts(res.items)
         setTotal(res.total)
       })
       .finally(() => setLoading(false))
-  }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId])
+  }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId, noLabel])
 
   // Selection
   const toggleSelect = (id: string) => {
@@ -442,6 +452,8 @@ export function useProducts() {
     // Label filter
     labelId,
     setLabelId,
+    noLabel,
+    setNoLabel,
     labels,
     syncingLabels,
     syncProgress,

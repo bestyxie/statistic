@@ -38,6 +38,9 @@ products.get('/', async (c) => {
     conditions.push('p.id IN (SELECT product_id FROM product_label_relations WHERE label_id = ?)')
     countParams.push(labelId)
   }
+  if (c.req.query('no_label') === '1') {
+    conditions.push("p.id NOT IN (SELECT product_id FROM product_label_relations WHERE label_id != '__NONE__')")
+  }
 
   const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : ''
 
