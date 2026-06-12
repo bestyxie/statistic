@@ -88,10 +88,7 @@ labels.post('/sync-products', async (c) => {
      WHERE p.sku != '' AND p.id NOT IN (SELECT DISTINCT product_id FROM product_label_relations)`
   ).first<{ cnt: number }>()
 
-  // 本批有商品但无任何同步成功 → 说明剩余商品都没有标签，标记 stalled 让前端终止
-  const stalled = products.results.length > 0 && synced === 0
-
-  return c.json({ synced, total, remaining: remainRes?.cnt || 0, stalled })
+  return c.json({ synced, total, remaining: remainRes?.cnt || 0 })
 })
 
 export default labels

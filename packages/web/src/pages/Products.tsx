@@ -142,7 +142,7 @@ export default function Products() {
         const res = await api.syncProductLabels(5)
         synced += res.synced
         setSyncProgress(`同步中 ${synced}/${synced + res.remaining}`)
-        if (res.remaining === 0 || res.stalled) break
+        if (res.remaining === 0) break
       }
       if (abortSyncRef.current) {
         setSyncProgress(`已暂停 (${synced} 已同步)`)
