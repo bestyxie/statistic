@@ -159,4 +159,6 @@ export const api = {
     request<{ label_id: string; label_name: string }[]>(`/labels/product/${productId}`),
   setProductLabels: (productId: string, labelIds: string[]) =>
     request<{ message: string }>(`/labels/product/${productId}`, { method: 'PUT', body: JSON.stringify({ label_ids: labelIds }) }),
+  testLabelSku: (sku: string) =>
+    request<unknown>('/labels/test-sku', { method: 'POST', body: JSON.stringify({ sku }) }),
 }

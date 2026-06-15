@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import { syncProductLabel } from '../utils/label'
+import { syncProductLabel, LABEL_API, LABEL_API_HEADERS } from '../utils/label'
 
 type Env = { DB: D1Database }
 
@@ -65,28 +65,43 @@ labels.post('/sync-products', async (c) => {
     .first<{ total: number }>()
   const total = totalRes?.total || 0
 
-  // 取一批没有 label 关联的商品
+  // 取一批没有真实 label 的商品（哨兵记录超过 1 天也算）
+  const oneDayAgo = new Date(Date.now() - 86400000).toISOString().slice(0, 19).replace('T', ' ')
   const products = await db.prepare(
     `SELECT p.id, p.sku FROM products p
-     WHERE p.sku != '' AND p.id NOT IN (SELECT DISTINCT product_id FROM product_label_relations)
+     WHERE p.sku != ''
+       AND p.id NOT IN (
+         SELECT product_id FROM product_label_relations WHERE label_id != '__NONE__'
+       )
+       AND p.id NOT IN (
+         SELECT product_id FROM product_label_relations
+         WHERE label_id = '__NONE__' AND created_at > ?
+       )
      LIMIT ?`
-  ).bind(batchSize).all<{ id: string; sku: string }>()
+  ).bind(oneDayAgo, batchSize).all<{ id: string; sku: string }>()
 
   let synced = 0
   for (const p of products.results) {
     await syncProductLabel(db, p.id, p.sku)
-    // 检查是否关联成功
+    // 检查是否关联成功（含哨兵）
     const linked = await db
       .prepare('SELECT id FROM product_label_relations WHERE product_id = ? LIMIT 1')
       .bind(p.id).first()
     if (linked) synced++
   }
 
-  // 重新计算 remaining：还有多少无 label 关联的商品
+  // 重新计算 remaining：没有真实 label 且哨兵未过期的商品
   const remainRes = await db.prepare(
     `SELECT COUNT(*) as cnt FROM products p
-     WHERE p.sku != '' AND p.id NOT IN (SELECT DISTINCT product_id FROM product_label_relations)`
-  ).first<{ cnt: number }>()
+     WHERE p.sku != ''
+       AND p.id NOT IN (
+         SELECT product_id FROM product_label_relations WHERE label_id != '__NONE__'
+       )
+       AND p.id NOT IN (
+         SELECT product_id FROM product_label_relations
+         WHERE label_id = '__NONE__' AND created_at > ?
+       )`
+  ).bind(oneDayAgo).first<{ cnt: number }>()
 
   return c.json({ synced, total, remaining: remainRes?.cnt || 0, attempted: products.results.map((p) => p.sku) })
 })
@@ -121,6 +136,43 @@ labels.put('/product/:productId', async (c) => {
   }
 
   return c.json({ message: '更新成功' })
+})
+
+// 测试单个 SKU 调用外部 API（调试用）
+labels.post('/test-sku', async (c) => {
+  const { sku } = await c.req.json<{ sku: string }>()
+  if (!sku) return c.json({ error: '请提供 sku' }, 400)
+
+  const start = Date.now()
+  try {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), 10000)
+    const resp = await fetch(LABEL_API, {
+      method: 'POST',
+      headers: LABEL_API_HEADERS,
+      body: JSON.stringify({ code: sku }),
+      signal: controller.signal,
+    })
+    clearTimeout(timer)
+
+    const text = await resp.text()
+    let json: unknown = null
+    try { json = JSON.parse(text) } catch { /* 非 JSON 响应 */ }
+
+    return c.json({
+      sku,
+      http_status: resp.status,
+      duration_ms: Date.now() - start,
+      json,
+      raw_text_preview: typeof json !== 'object' ? text.slice(0, 500) : undefined,
+    })
+  } catch (err: any) {
+    return c.json({
+      sku,
+      error: err.message || String(err),
+      duration_ms: Date.now() - start,
+    })
+  }
 })
 
 export default labels

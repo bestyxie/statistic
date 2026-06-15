@@ -1,5 +1,5 @@
-const LABEL_API = 'https://yxcapp.cn/personProduct/findLabelByCode.action'
-const LABEL_API_HEADERS: Record<string, string> = {
+export const LABEL_API = 'https://yxcapp.cn/personProduct/findLabelByCode.action'
+export const LABEL_API_HEADERS: Record<string, string> = {
   'Accept': 'application/json, text/plain, */*',
   'Content-Type': 'application/json;charset=UTF-8',
   'Origin': 'https://pc.yxcapp.cn',
