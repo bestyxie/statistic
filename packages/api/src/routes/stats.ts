@@ -54,7 +54,7 @@ stats.post('/import', async (c) => {
     ).bind(crypto.randomUUID(), product!.id, shop_id, date, item.productVisitorNum || 0, item.productVisitorNum || 0, item.productVisitorNum || 0, item.productVisitorNum || 0).run()
 
     // 同步商品 label
-    syncProductLabel(db, (product as { id: string }).id, item.code).catch(() => {})
+    await syncProductLabel(db, (product as { id: string }).id, item.code).catch(() => {})
   }
 
   return c.json({ message: '数据导入成功', imported_products: parsed.data.vroList.length, total_visitors: totalVisitors })
@@ -462,7 +462,7 @@ stats.post('/import-by-visitor', async (c) => {
       if (newProduct) {
         productId = newProduct.id
         // 同步商品 label
-        syncProductLabel(db, productId, pv.code).catch(() => {})
+        await syncProductLabel(db, productId, pv.code).catch(() => {})
       }
     }
 
