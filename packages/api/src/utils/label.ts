@@ -56,15 +56,18 @@ export async function syncProductLabel(db: D1Database, productId: string, sku: s
     })
     clearTimeout(timer)
     const json = await resp.json<{ data: LabelResult[]; success: boolean }>()
+    console.log('[syncProductLabel] fetch ok', { sku, productId, respStatus: resp.status, success: json?.success, dataLen: json?.data?.length })
     if (!json?.success || !json.data?.length) {
       // 外部确认无 label，标记哨兵记录避免重复查询
       await db.prepare(
         "INSERT OR IGNORE INTO product_label_relations (id, product_id, label_id) VALUES (?, ?, '__NONE__')"
       ).bind(crypto.randomUUID(), productId).run()
+      console.log('[syncProductLabel] sentinel inserted for', productId)
       return
     }
     labels = json.data
-  } catch {
+  } catch (err) {
+    console.log('[syncProductLabel] fetch failed', { sku, productId, err: err instanceof Error ? err.message : String(err) })
     return
   }
 
