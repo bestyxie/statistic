@@ -8,10 +8,12 @@ import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
 import SetLabelModal from './products/SetLabelModal'
+import { useImagePreview } from '../components/mobile/MobileImagePreview'
 import type { Product, Shop, ProductLabel } from '@statistic/shared'
 
 export default function Products() {
   const navigate = useNavigate()
+  const { show: showImage } = useImagePreview()
   const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [drawerId, setDrawerId] = useState<string | null>(null)
@@ -331,7 +333,7 @@ export default function Products() {
                       <td className="py-3 px-5">
                         {p.image_url ? (
                           <div className="relative group">
-                            <img src={p.image_url} alt="" className="w-12 h-12 rounded object-cover bg-gray-100 cursor-pointer" />
+                            <img src={p.image_url} alt="" onClick={() => showImage(p.image_url!)} className="w-12 h-12 rounded object-cover bg-gray-100 cursor-pointer" />
                             <div className="hidden group-hover:block absolute z-50 top-0 left-14 w-48 h-48 bg-white rounded-lg shadow-xl border border-gray-200 p-1">
                               <img src={p.image_url} alt="" className="w-full h-full rounded object-cover" />
                             </div>
