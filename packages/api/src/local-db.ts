@@ -64,6 +64,8 @@ export class LocalD1 {
       }
     }
 
+    // 开启外键约束，与线上 Cloudflare D1 行为一致
+    this.db.run('PRAGMA foreign_keys = ON')
     // Migrate: add UNIQUE index if missing
     const indexes = this.db.exec("SELECT name FROM sqlite_master WHERE type='index' AND tbl_name='products' AND sql LIKE '%shop_id%sku%'")
     if (indexes.length === 0) {

@@ -17,3 +17,5 @@ CREATE TABLE IF NOT EXISTS product_label_relations (
   FOREIGN KEY (label_id) REFERENCES product_labels(label_id) ON DELETE CASCADE,
   UNIQUE(product_id, label_id)
 );
+
+INSERT OR IGNORE INTO product_labels (label_id, label_name) VALUES ('__NONE__', '');

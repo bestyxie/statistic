@@ -60,6 +60,9 @@ export async function syncProductLabel(db: D1Database, productId: string, sku: s
     if (!json?.success || !json.data?.length) {
       // 外部确认无 label，标记哨兵记录避免重复查询
       await db.prepare(
+        "INSERT OR IGNORE INTO product_labels (label_id, label_name) VALUES ('__NONE__', '')"
+      ).run()
+      await db.prepare(
         "INSERT OR IGNORE INTO product_label_relations (id, product_id, label_id) VALUES (?, ?, '__NONE__')"
       ).bind(crypto.randomUUID(), productId).run()
       console.log('[syncProductLabel] sentinel inserted for', productId)
