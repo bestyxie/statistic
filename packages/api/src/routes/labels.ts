@@ -57,7 +57,7 @@ labels.post('/import', async (c) => {
 // 分批同步商品 label（每批 batch_size 个，默认 5）
 labels.post('/sync-products', async (c) => {
   const db = c.env.DB
-  const batchSize = Math.min(Math.max(parseInt(c.req.query('batch_size') || '1'), 1), 20)
+  const batchSize = Math.min(Math.max(parseInt(c.req.query('batch_size') || '5'), 1), 20)
 
   // 统计总数和未关联数
   const totalRes = await db
