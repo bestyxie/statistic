@@ -53,7 +53,7 @@ export default function DesktopDashboard() {
                     <td className="py-3 px-2">
                       <div className="flex items-center gap-3">
                         {p.image_url && (<HoverPopup popup={<div className="w-48 h-48"><img src={p.image_url} alt="" className="w-full h-full rounded object-cover" /></div>}><img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" /></HoverPopup>)}
-                        <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.name}</div>}><span className="text-gray-800 truncate max-w-[200px] block">{p.name}</span></HoverPopup>
+                        <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.name}</div>}><span className="text-gray-800 truncate max-w-[200px] block">{p.name}</span></HoverPopup>
                       </div>
                     </td>
                     <td className="py-3 px-2 text-right font-medium">{p.total_views}</td>

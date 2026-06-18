@@ -80,7 +80,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
                     ) : (
                       <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>
                     )}
-                    <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.product_description || p.product_name || '-'}</div>}>
+                    <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.product_description || p.product_name || '-'}</div>}>
                       <span className="text-gray-800 text-xs max-w-[120px] truncate block">{p.product_description || p.product_name || '-'}</span>
                     </HoverPopup>
                   </div>

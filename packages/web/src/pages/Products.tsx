@@ -8,6 +8,7 @@ import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
 import SetLabelModal from './products/SetLabelModal'
+import HoverPopup from '../components/HoverPopup'
 import { useImagePreview } from '../components/mobile/MobileImagePreview'
 import type { Product, Shop, ProductLabel } from '@statistic/shared'
 
@@ -332,25 +333,21 @@ export default function Products() {
                       </td>
                       <td className="py-3 px-5">
                         {p.image_url ? (
-                          <div className="relative group">
+                          <HoverPopup popupClassName="w-48 h-48 p-1" popup={<img src={p.image_url} alt="" className="w-full h-full rounded object-cover" />}>
                             <img src={p.image_url} alt="" onClick={() => showImage(p.image_url!)} className="w-12 h-12 rounded object-cover bg-gray-100 cursor-pointer" />
-                            <div className="hidden group-hover:block absolute z-50 top-0 left-14 w-48 h-48 bg-white rounded-lg shadow-xl border border-gray-200 p-1">
-                              <img src={p.image_url} alt="" className="w-full h-full rounded object-cover" />
-                            </div>
-                          </div>
+                          </HoverPopup>
                         ) : (
                           <div className="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无图</div>
                         )}
                       </td>
                       <td className="py-3 px-5">
-                        <div className="relative group/desc">
-                          <p className="font-medium text-gray-800 max-w-xs truncate">{p.description || '-'}</p>
-                          {p.description && (
-                            <div className="hidden group-hover/desc:block absolute z-50 top-0 left-0 min-w-48 max-w-sm bg-white rounded-lg shadow-xl border border-gray-200 p-3 text-sm font-normal text-gray-700 whitespace-normal break-all select-text">
-                              {p.description}
-                            </div>
-                          )}
-                        </div>
+                        {p.description ? (
+                          <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description}</div>}>
+                            <span className="font-medium text-gray-800 max-w-xs truncate block">{p.description}</span>
+                          </HoverPopup>
+                        ) : (
+                          <span className="font-medium text-gray-800">-</span>
+                        )}
                       </td>
                       <td className="py-3 px-5 text-gray-600">{p.shop_name}</td>
                       <td className="py-3 px-5 text-gray-600">{p.price || '-'}</td>
@@ -366,16 +363,22 @@ export default function Products() {
                       <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
                         <button onClick={() => setTxProduct(p)} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
-                        <div className="relative inline-block group/other">
+                        <HoverPopup
+                          side="bottom-right"
+                          interactive
+                          popupClassName="py-1 min-w-[80px]"
+                          popup={
+                            <div className="flex flex-col">
+                              <button onClick={() => setSuppliersProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">供应商</button>
+                              <button onClick={() => setAddSupplierProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">添加供应商</button>
+                              <button onClick={() => setLabelProduct(p)} className="text-left px-3 py-1.5 text-sm text-teal-600 hover:bg-gray-50 whitespace-nowrap">设置标签</button>
+                              <button onClick={() => setFormTarget(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
+                              <button onClick={() => handleDelete(p.id)} className="text-left px-3 py-1.5 text-sm text-red-500 hover:bg-gray-50 whitespace-nowrap">删除</button>
+                            </div>
+                          }
+                        >
                           <button className="text-gray-500 hover:text-gray-700 pb-2">更多 ▾</button>
-                          <div className="hidden group-hover/other:flex absolute right-0 top-full bg-white rounded-lg shadow-xl border border-gray-200 py-1 z-50 min-w-[80px] flex-col">
-                            <button onClick={() => setSuppliersProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">供应商</button>
-                            <button onClick={() => setAddSupplierProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">添加供应商</button>
-                            <button onClick={() => setLabelProduct(p)} className="text-left px-3 py-1.5 text-sm text-teal-600 hover:bg-gray-50 whitespace-nowrap">设置标签</button>
-                            <button onClick={() => setFormTarget(p)} className="text-left px-3 py-1.5 text-sm text-blue-600 hover:bg-gray-50 whitespace-nowrap">编辑</button>
-                            <button onClick={() => handleDelete(p.id)} className="text-left px-3 py-1.5 text-sm text-red-500 hover:bg-gray-50 whitespace-nowrap">删除</button>
-                          </div>
-                        </div>
+                        </HoverPopup>
                       </td>
                     </tr>
                   ))}

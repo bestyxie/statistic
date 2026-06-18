@@ -129,7 +129,7 @@ export default function Dashboard() {
                             <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
                           </HoverPopup>
                         )}
-                        <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.name}</div>}>
+                        <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.name}</div>}>
                           <span className="text-gray-800 truncate max-w-[200px] block">{p.name}</span>
                         </HoverPopup>
                       </div>

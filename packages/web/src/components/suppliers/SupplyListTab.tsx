@@ -219,7 +219,7 @@ export default function SupplyListTab() {
                         <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs flex-shrink-0">无</div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
+                        <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
                           <p className="text-sm text-gray-800 truncate block">{p.description || p.name}</p>
                         </HoverPopup>
                         <p className="text-xs text-gray-400">{p.sku || '-'} · ¥{p.price || '-'}</p>
@@ -385,7 +385,7 @@ export default function SupplyListTab() {
                       ) : (
                         <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>
                       )}
-                      <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{l.product_description || l.product_name}</div>}>
+                      <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{l.product_description || l.product_name}</div>}>
                         <span className="text-gray-800 max-w-[160px] truncate block">{l.product_description || l.product_name}</span>
                       </HoverPopup>
                     </div>

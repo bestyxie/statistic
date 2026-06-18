@@ -96,7 +96,7 @@ export default function DesktopRanking() {
                               <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
                             </HoverPopup>
                           ) : (<div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>)}
-                          <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
+                          <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
                             <span className="font-medium text-gray-800 max-w-[200px] truncate block">{p.description || p.name}</span>
                           </HoverPopup>
                         </div>

@@ -78,7 +78,7 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
                       )}
                     </td>
                     <td className="py-2 px-4">
-                      <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name || '-'}</div>}>
+                      <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name || '-'}</div>}>
                         <span className="text-gray-800 max-w-[200px] truncate block">{p.description || p.name || '-'}</span>
                       </HoverPopup>
                     </td>

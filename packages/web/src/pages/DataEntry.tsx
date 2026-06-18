@@ -175,7 +175,7 @@ export default function DataEntry() {
                     </td>
                     <td className="py-2 px-3 font-mono text-gray-800">{item.code}</td>
                     <td className="py-2 px-3">
-                      <HoverPopup offset="left-0" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{item.description}</div>}>
+                      <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{item.description}</div>}>
                         <span className="text-gray-600 max-w-xs truncate block">{item.description}</span>
                       </HoverPopup>
                     </td>
