@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../../lib/api'
-import type { LabelTrendItem, ProductLabel } from '@statistic/shared'
+import type { LabelTrendItem, LabelTxTrendItem, ProductLabel } from '@statistic/shared'
 
 export type LabelMetric = 'visitor_count' | 'view_count'
+export type LabelTxMetric = 'tx_count' | 'tx_amount'
 
 export interface LabelChartSeries {
   label_id: string
@@ -28,6 +29,9 @@ interface UseLabelTrendReturn {
   metric: LabelMetric
   setMetric: (m: LabelMetric) => void
   chartData: LabelChartRow[]
+  txMetric: LabelTxMetric
+  setTxMetric: (m: LabelTxMetric) => void
+  txChartData: LabelChartRow[]
   series: LabelChartSeries[]
   loading: boolean
   error: string | null
@@ -57,7 +61,9 @@ export function useLabelTrend(): UseLabelTrendReturn {
   const [start, setStart] = useState(init.start)
   const [end, setEnd] = useState(init.end)
   const [metric, setMetric] = useState<LabelMetric>('visitor_count')
+  const [txMetric, setTxMetric] = useState<LabelTxMetric>('tx_count')
   const [items, setItems] = useState<LabelTrendItem[]>([])
+  const [txItems, setTxItems] = useState<LabelTxTrendItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -85,11 +91,12 @@ export function useLabelTrend(): UseLabelTrendReturn {
     }
   }, [])
 
-  // 选中标签 + 日期变化时拉趋势数据
+  // 选中标签 + 日期变化时同时拉访客趋势和成交趋势
   const labelKey = [...selectedIds].sort().join(',')
   useEffect(() => {
     if (selectedIds.size === 0 || !start || !end) {
       setItems([])
+      setTxItems([])
       setError(null)
       return
     }
@@ -98,16 +105,22 @@ export function useLabelTrend(): UseLabelTrendReturn {
     setLoading(true)
     setError(null)
 
-    api.getLabelTrend([...selectedIds], start, end)
-      .then((res) => {
+    const ids = [...selectedIds]
+    Promise.all([
+      api.getLabelTrend(ids, start, end),
+      api.getLabelTxTrend(ids, start, end),
+    ])
+      .then(([visitorRes, txRes]) => {
         if (cancelled) return
-        setItems(res.items || [])
+        setItems(visitorRes.items || [])
+        setTxItems(txRes.items || [])
       })
       .catch((err: unknown) => {
         if (cancelled) return
         const message = err instanceof Error ? err.message : '加载趋势失败'
         setError(message)
         setItems([])
+        setTxItems([])
       })
       .finally(() => {
         if (cancelled) return
@@ -147,6 +160,18 @@ export function useLabelTrend(): UseLabelTrendReturn {
     return [...byDate.values()].sort((a, b) => (a.date as string).localeCompare(b.date as string))
   }, [items, metric])
 
+  const txChartData = useMemo<LabelChartRow[]>(() => {
+    const byDate = new Map<string, LabelChartRow>()
+    for (const item of txItems) {
+      if (!byDate.has(item.date)) {
+        byDate.set(item.date, { date: item.date })
+      }
+      const row = byDate.get(item.date)!
+      row[item.label_id] = txMetric === 'tx_count' ? item.tx_count : item.tx_amount
+    }
+    return [...byDate.values()].sort((a, b) => (a.date as string).localeCompare(b.date as string))
+  }, [txItems, txMetric])
+
   return {
     labels,
     labelsLoading,
@@ -160,6 +185,9 @@ export function useLabelTrend(): UseLabelTrendReturn {
     metric,
     setMetric,
     chartData,
+    txMetric,
+    setTxMetric,
+    txChartData,
     series,
     loading,
     error,

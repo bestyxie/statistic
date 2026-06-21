@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelTrendItem } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
 import { syncProductLabel } from '../utils/label'
 
@@ -862,6 +862,81 @@ stats.get('/label-trend', async (c) => {
         label_name: meta.label_name,
         visitor_count: hit?.visitor_count ?? 0,
         view_count: hit?.view_count ?? 0,
+      })
+    }
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  return c.json({ items })
+})
+
+// --- Label daily transaction trend ---
+stats.get('/label-tx-trend', async (c) => {
+  const db = c.env.DB
+  const labelIdsRaw = c.req.query('label_ids') || ''
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const shopId = c.req.query('shop_id')
+
+  const labelIds = labelIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+  if (labelIds.length === 0 || !start || !end) {
+    return c.json({ items: [] })
+  }
+
+  const placeholders = labelIds.map(() => '?').join(',')
+  const conditions = [`pl.label_id IN (${placeholders})`, 't.date >= ?', 't.date <= ?']
+  const params: string[] = [...labelIds, start, end]
+  if (shopId) {
+    conditions.push('t.shop_id = ?')
+    params.push(shopId)
+  }
+  const where = conditions.join(' AND ')
+
+  const rows = await db.prepare(
+    `SELECT t.date, pl.label_id, pl.label_name, pl.sort,
+            COUNT(*) AS tx_count,
+            COALESCE(SUM(CAST(t.price AS REAL) * t.quantity), 0) AS tx_amount
+     FROM transactions t
+     JOIN product_label_relations plr ON t.product_id = plr.product_id
+     JOIN product_labels pl ON plr.label_id = pl.label_id
+     WHERE ${where}
+     GROUP BY t.date, pl.label_id
+     ORDER BY t.date, pl.sort`
+  ).bind(...params).all<{ date: string; label_id: string; label_name: string; sort: number; tx_count: number; tx_amount: number }>()
+
+  // 补齐每个 label × 每个日期的缺失行
+  const labelMeta = new Map<string, { label_name: string; sort: number }>()
+  for (const r of rows.results) {
+    if (!labelMeta.has(r.label_id)) {
+      labelMeta.set(r.label_id, { label_name: r.label_name, sort: r.sort })
+    }
+  }
+  for (const id of labelIds) {
+    if (!labelMeta.has(id)) labelMeta.set(id, { label_name: id, sort: Number.MAX_SAFE_INTEGER })
+  }
+  const orderedLabelIds = [...labelMeta.entries()]
+    .sort((a, b) => a[1].sort - b[1].sort)
+    .map(([id]) => id)
+
+  const indexed = new Map<string, { tx_count: number; tx_amount: number }>()
+  for (const r of rows.results) {
+    indexed.set(`${r.date}|${r.label_id}`, { tx_count: r.tx_count, tx_amount: r.tx_amount })
+  }
+
+  const items: LabelTxTrendItem[] = []
+  const cur = new Date(start + 'T00:00:00Z')
+  const endD = new Date(end + 'T00:00:00Z')
+  while (cur <= endD) {
+    const ds = cur.toISOString().slice(0, 10)
+    for (const id of orderedLabelIds) {
+      const meta = labelMeta.get(id)!
+      const hit = indexed.get(`${ds}|${id}`)
+      items.push({
+        date: ds,
+        label_id: id,
+        label_name: meta.label_name,
+        tx_count: hit?.tx_count ?? 0,
+        tx_amount: hit?.tx_amount ?? 0,
       })
     }
     cur.setDate(cur.getDate() + 1)

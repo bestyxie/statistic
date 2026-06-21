@@ -262,3 +262,12 @@ export interface LabelTrendItem {
   visitor_count: number
   view_count: number
 }
+
+/** Label 每日成交趋势（一条记录 = 某个 label 在某天的成交聚合） */
+export interface LabelTxTrendItem {
+  date: string
+  label_id: string
+  label_name: string
+  tx_count: number
+  tx_amount: number
+}

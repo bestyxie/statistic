@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'
-import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelTrendItem } from '@statistic/shared'
+import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
@@ -166,5 +166,9 @@ export const api = {
   getLabelTrend: (labelIds: string[], start: string, end: string, shopId?: string) =>
     request<{ items: LabelTrendItem[] }>(
       `/stats/label-trend?label_ids=${labelIds.join(',')}&start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`,
+    ),
+  getLabelTxTrend: (labelIds: string[], start: string, end: string, shopId?: string) =>
+    request<{ items: LabelTxTrendItem[] }>(
+      `/stats/label-tx-trend?label_ids=${labelIds.join(',')}&start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`,
     ),
 }
