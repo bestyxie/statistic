@@ -26,6 +26,8 @@ dist-ssr
 # Wrangler
 .wrangler/
 
+.pnpm-store/
+
 # Database backups
 packages/api/backups/
 
