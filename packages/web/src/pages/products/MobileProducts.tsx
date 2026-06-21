@@ -144,7 +144,7 @@ export default function MobileProducts() {
               onClick={() => navigate('/label-trend')}
               className="px-3 py-1.5 border border-blue-600 text-blue-600 rounded-md text-sm"
             >
-              Label趋势
+              品牌追踪
             </button>
             <button
               onClick={() => {

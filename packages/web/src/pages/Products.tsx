@@ -267,7 +267,7 @@ export default function Products() {
             </button>
           )}
           <button onClick={() => navigate('/product-ranking')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">7日排行榜</button>
-          <button onClick={() => navigate('/label-trend')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">Label 访客趋势</button>
+          <button onClick={() => navigate('/label-trend')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">品牌访客追踪</button>
         </div>
       </div>
 

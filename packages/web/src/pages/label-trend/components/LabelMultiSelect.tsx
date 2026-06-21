@@ -12,7 +12,7 @@ export default function LabelMultiSelect({
   labels,
   selectedIds,
   onChange,
-  placeholder = '请选择 Label',
+  placeholder = '请选择品牌',
 }: Props) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)

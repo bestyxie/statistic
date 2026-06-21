@@ -9,7 +9,6 @@ export default function DesktopLabelTrend() {
     labelsLoading,
     selectedIds,
     setSelectedIds,
-    clearLabels,
     start,
     setStart,
     end,
@@ -24,9 +23,9 @@ export default function DesktopLabelTrend() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Label 访客趋势</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-800">品牌访客追踪</h1>
 
-      {/* 顶部过滤栏：日期 + 指标切换 */}
+      {/* 顶部过滤栏：日期 + 指标 + 品牌多选 */}
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
         <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
           <div>
@@ -66,30 +65,17 @@ export default function DesktopLabelTrend() {
               ))}
             </div>
           </div>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              品牌 <span className="text-xs font-normal text-gray-500">已选 {selectedIds.size} / {labels.length}</span>
+            </label>
+            {labelsLoading ? (
+              <p className="text-sm text-gray-400 py-2">加载标签中...</p>
+            ) : (
+              <LabelMultiSelect labels={labels} selectedIds={selectedIds} onChange={setSelectedIds} />
+            )}
+          </div>
         </div>
-      </div>
-
-      {/* Label 多选 */}
-      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base sm:text-lg font-semibold text-gray-800">
-            选择 Label <span className="text-xs sm:text-sm font-normal text-gray-500">已选 {selectedIds.size} / {labels.length}</span>
-          </h2>
-          {selectedIds.size > 0 && (
-            <button
-              type="button"
-              onClick={clearLabels}
-              className="text-sm text-gray-500 hover:text-gray-700"
-            >
-              清空
-            </button>
-          )}
-        </div>
-        {labelsLoading ? (
-          <p className="text-sm text-gray-400 py-2">加载标签中...</p>
-        ) : (
-          <LabelMultiSelect labels={labels} selectedIds={selectedIds} onChange={setSelectedIds} />
-        )}
       </div>
 
       {/* 折线图 */}
@@ -100,7 +86,7 @@ export default function DesktopLabelTrend() {
         {error ? (
           <p className="text-center text-red-500 py-12 text-sm">{error}</p>
         ) : series.length === 0 ? (
-          <p className="text-center text-gray-400 py-12 text-sm">请至少选择一个 Label</p>
+          <p className="text-center text-gray-400 py-12 text-sm">请至少选择一个品牌</p>
         ) : chartData.length === 0 && !loading ? (
           <p className="text-center text-gray-400 py-12 text-sm">所选区间无数据</p>
         ) : (

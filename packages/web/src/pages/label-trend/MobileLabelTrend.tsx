@@ -27,7 +27,7 @@ export default function MobileLabelTrend() {
 
   return (
     <div className="space-y-4">
-      <MobilePageHeader title="Label 访客趋势" />
+      <MobilePageHeader title="品牌访客追踪" />
 
       <MobileFilter summary={`${start} ~ ${end} · ${metric === 'visitor_count' ? '访客数' : '访问量'}`}>
         <div>
@@ -72,7 +72,7 @@ export default function MobileLabelTrend() {
       <MobileCard>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-800">
-            选择 Label <span className="text-xs font-normal text-gray-500">已选 {selectedIds.size} / {labels.length}</span>
+            选择品牌 <span className="text-xs font-normal text-gray-500">已选 {selectedIds.size} / {labels.length}</span>
           </h2>
           {selectedIds.size > 0 && (
             <button
