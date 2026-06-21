@@ -11,7 +11,7 @@ async function main() {
   serve({
     fetch: (req) => {
       return app.fetch(req, {
-        DB: d1 as any,
+        DB: d1,
         JWT_SECRET: 'local-dev-secret',
       })
     },

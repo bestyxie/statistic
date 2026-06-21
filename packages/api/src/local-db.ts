@@ -5,9 +5,19 @@ import { fileURLToPath } from 'url'
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const DB_PATH = resolve(__dirname, '../.wrangler/state/v3/d1/statistic-db.sqlite')
-const SCHEMA_PATH = resolve(__dirname, '../../../../schema.sql')
+const SCHEMA_PATH = resolve(__dirname, '../../../schema.sql')
 
-class PreparedStatement {
+/**
+ * 构造测试用 D1：内存 SQLite，不落盘、不起 auto-save 定时器。
+ * 与 dev 模式的 LocalD1 行为一致（schema + 全部迁移），只是不持久化。
+ */
+export async function createInMemoryD1(): Promise<LocalD1> {
+  const d1 = new LocalD1(null)
+  await d1.init()
+  return d1
+}
+
+class PreparedStatement implements D1PreparedStatement {
   private stmt: Statement
 
   constructor(stmt: Statement) {
@@ -19,48 +29,83 @@ class PreparedStatement {
     return this
   }
 
-  async first<T = Record<string, unknown>>(): Promise<T | null> {
+  async first<T = Record<string, unknown>>(): Promise<T | null>
+  async first<T = unknown>(colName: string): Promise<T | null>
+  async first<T>(colName?: string): Promise<T | null> {
     if (this.stmt.step()) {
-      const row = this.stmt.getAsObject() as T
+      const row = this.stmt.getAsObject() as Record<string, unknown>
       this.stmt.free()
-      return row
+      if (colName !== undefined) return row[colName] as T
+      return row as T
     }
     this.stmt.free()
     return null
   }
 
-  async run() {
+  async run<T = Record<string, unknown>>(): Promise<D1Result<T>> {
     this.stmt.step()
     this.stmt.free()
-    return { success: true }
+    return { success: true, meta: emptyMeta(), results: [] }
   }
 
-  async all<T = Record<string, unknown>>() {
+  async all<T = Record<string, unknown>>(): Promise<D1Result<T>> {
     const results: T[] = []
     while (this.stmt.step()) {
       results.push(this.stmt.getAsObject() as T)
     }
     this.stmt.free()
-    return { results }
+    return { success: true, meta: emptyMeta(), results }
+  }
+
+  async raw<T = unknown[]>(options?: { columnNames?: false }): Promise<T[]>
+  async raw<T = unknown[]>(options: { columnNames: true }): Promise<[string[], ...T[]]>
+  async raw<T = unknown[]>(options?: { columnNames?: boolean }): Promise<T[] | [string[], ...T[]]> {
+    const rows: T[] = []
+    while (this.stmt.step()) {
+      rows.push(this.stmt.get() as T)
+    }
+    this.stmt.free()
+    if (options?.columnNames === true) {
+      throw new Error('raw with columnNames is not supported in LocalD1')
+    }
+    return rows
   }
 }
 
-export class LocalD1 {
+function emptyMeta(): D1Meta & Record<string, unknown> {
+  return {
+    duration: 0,
+    size_after: 0,
+    rows_read: 0,
+    rows_written: 0,
+    last_row_id: 0,
+    changed_db: false,
+    changes: 0,
+  }
+}
+
+export class LocalD1 implements D1Database {
   private db!: SqlJsDatabase
   private dirty = false
+  private readonly dbPath: string | null
+
+  constructor(dbPath: string | null = DB_PATH) {
+    this.dbPath = dbPath
+  }
 
   async init() {
     const SQL = await initSqlJs()
 
-    if (existsSync(DB_PATH)) {
-      const buffer = readFileSync(DB_PATH)
+    const hasFile = this.dbPath !== null && existsSync(this.dbPath)
+    if (hasFile) {
+      const buffer = readFileSync(this.dbPath!)
       this.db = new SQL.Database(new Uint8Array(buffer))
     } else {
       this.db = new SQL.Database()
       if (existsSync(SCHEMA_PATH)) {
         const schema = readFileSync(SCHEMA_PATH, 'utf-8')
         this.db.run(schema)
-        this.save()
+        if (this.dbPath) this.save()
       }
     }
 
@@ -306,27 +351,53 @@ export class LocalD1 {
       this.dirty = true
     }
 
-    // Auto-save every 5 seconds if dirty
-    setInterval(() => { if (this.dirty) this.save() }, 5000)
+    // Auto-save every 5 seconds if dirty（仅持久化模式）
+    if (this.dbPath) {
+      setInterval(() => { if (this.dirty) this.save() }, 5000)
+    }
   }
 
-  prepare(sql: string) {
+  prepare(sql: string): D1PreparedStatement {
     const stmt = this.db.prepare(sql)
     this.dirty = true
     return new PreparedStatement(stmt)
   }
 
-  dump(): Buffer {
+  async batch<T = unknown>(statements: D1PreparedStatement[]): Promise<D1Result<T>[]> {
+    const results: D1Result<T>[] = []
+    for (const stmt of statements) {
+      results.push(await stmt.run<T>())
+    }
+    return results
+  }
+
+  async exec(query: string): Promise<D1ExecResult> {
+    this.db.run(query)
+    return { count: 1, duration: 0 }
+  }
+
+  withSession(): D1DatabaseSession {
+    throw new Error('withSession not supported in LocalD1')
+  }
+
+  async dump(): Promise<ArrayBuffer> {
     const data = this.db.export()
-    return Buffer.from(data)
+    const buffer = new ArrayBuffer(data.byteLength)
+    new Uint8Array(buffer).set(data)
+    return buffer
+  }
+
+  exportSync(): Buffer {
+    return Buffer.from(this.db.export())
   }
 
   save() {
-    const dir = dirname(DB_PATH)
+    if (!this.dbPath) return
+    const dir = dirname(this.dbPath)
     if (!existsSync(dir)) {
       mkdirSync(dir, { recursive: true })
     }
-    writeFileSync(DB_PATH, this.dump())
+    writeFileSync(this.dbPath, this.exportSync())
     this.dirty = false
   }
 }

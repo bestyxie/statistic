@@ -9,6 +9,7 @@
     "dev:web": "pnpm --filter @statistic/web dev",
     "build": "pnpm --filter @statistic/web build",
     "lint": "eslint .",
+    "test": "pnpm --filter @statistic/api test",
     "db:init": "pnpm --filter @statistic/api db:init"
   },
   "pnpm": {
