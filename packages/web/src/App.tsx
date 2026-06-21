@@ -15,6 +15,7 @@ import DesktopDataEntry from './pages/data-entry/DesktopDataEntry'
 import DesktopSuppliers from './pages/suppliers/DesktopSuppliers'
 // Products desktop still uses original component during migration
 import DesktopProducts from './pages/Products'
+import DesktopLabelTrend from './pages/label-trend/DesktopLabelTrend'
 
 // Mobile pages
 import MobileDashboard from './pages/dashboard/MobileDashboard'
@@ -26,6 +27,7 @@ import MobileStats from './pages/stats/MobileStats'
 import MobileDataEntry from './pages/data-entry/MobileDataEntry'
 import MobileSuppliers from './pages/suppliers/MobileSuppliers'
 import MobileProducts from './pages/products/MobileProducts'
+import MobileLabelTrend from './pages/label-trend/MobileLabelTrend'
 
 import { setNavigateToLogin } from './lib/api'
 
@@ -88,6 +90,7 @@ function AppContent() {
         <Route path="/" element={<ResponsivePage desktop={<DesktopDashboard />} mobile={<MobileDashboard />} />} />
         <Route path="/shops" element={<ResponsivePage desktop={<DesktopShops />} mobile={<MobileShops />} />} />
         <Route path="/products" element={<ResponsivePage desktop={<DesktopProducts />} mobile={<MobileProducts />} />} />
+        <Route path="/label-trend" element={<ResponsivePage desktop={<DesktopLabelTrend />} mobile={<MobileLabelTrend />} />} />
         <Route path="/product-ranking" element={<ResponsivePage desktop={<DesktopRanking />} mobile={<MobileRanking />} />} />
         <Route path="/visitors" element={<ResponsivePage desktop={<DesktopVisitors />} mobile={<MobileVisitors />} />} />
         <Route path="/transactions" element={<ResponsivePage desktop={<DesktopTransactions />} mobile={<MobileTransactions />} />} />

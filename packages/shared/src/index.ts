@@ -253,3 +253,12 @@ export interface ProductLabel {
   created_at: string
   updated_at: string
 }
+
+/** Label 每日访客/访问趋势（一条记录 = 某个 label 在某天的聚合） */
+export interface LabelTrendItem {
+  date: string
+  label_id: string
+  label_name: string
+  visitor_count: number
+  view_count: number
+}

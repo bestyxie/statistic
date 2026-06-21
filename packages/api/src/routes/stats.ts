@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelTrendItem } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
 import { syncProductLabel } from '../utils/label'
 
@@ -791,6 +791,83 @@ stats.delete('/refunds/:id', async (c) => {
   const db = c.env.DB
   await db.prepare('DELETE FROM refunds WHERE id = ?').bind(c.req.param('id')).run()
   return c.json({ message: '删除成功' })
+})
+
+// --- Label daily visitor/view trend ---
+stats.get('/label-trend', async (c) => {
+  const db = c.env.DB
+  const labelIdsRaw = c.req.query('label_ids') || ''
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const shopId = c.req.query('shop_id')
+
+  const labelIds = labelIdsRaw.split(',').map((s) => s.trim()).filter(Boolean)
+  if (labelIds.length === 0 || !start || !end) {
+    return c.json({ items: [] })
+  }
+
+  const placeholders = labelIds.map(() => '?').join(',')
+  const conditions = [`pl.label_id IN (${placeholders})`, 'pvr.date >= ?', 'pvr.date <= ?']
+  const params: string[] = [...labelIds, start, end]
+  if (shopId) {
+    conditions.push('p.shop_id = ?')
+    params.push(shopId)
+  }
+  const where = conditions.join(' AND ')
+
+  const rows = await db.prepare(
+    `SELECT pvr.date, pl.label_id, pl.label_name, pl.sort,
+            COUNT(DISTINCT pvr.visitor_id) AS visitor_count,
+            COALESCE(SUM(pvr.visit_count), 0) AS view_count
+     FROM product_visitor_relations pvr
+     JOIN product_label_relations plr ON pvr.product_id = plr.product_id
+     JOIN product_labels pl ON plr.label_id = pl.label_id
+     JOIN products p ON pvr.product_id = p.id
+     WHERE ${where}
+     GROUP BY pvr.date, pl.label_id
+     ORDER BY pvr.date, pl.sort`
+  ).bind(...params).all<{ date: string; label_id: string; label_name: string; sort: number; visitor_count: number; view_count: number }>()
+
+  // 补齐每个 label × 每个日期的缺失行
+  const labelMeta = new Map<string, { label_name: string; sort: number }>()
+  for (const r of rows.results) {
+    if (!labelMeta.has(r.label_id)) {
+      labelMeta.set(r.label_id, { label_name: r.label_name, sort: r.sort })
+    }
+  }
+  // 把请求里的 label_id 也补进 meta（即使无数据也展示），按 sort 升序、未知的排末尾
+  for (const id of labelIds) {
+    if (!labelMeta.has(id)) labelMeta.set(id, { label_name: id, sort: Number.MAX_SAFE_INTEGER })
+  }
+  const orderedLabelIds = [...labelMeta.entries()]
+    .sort((a, b) => a[1].sort - b[1].sort)
+    .map(([id]) => id)
+
+  const indexed = new Map<string, { visitor_count: number; view_count: number }>()
+  for (const r of rows.results) {
+    indexed.set(`${r.date}|${r.label_id}`, { visitor_count: r.visitor_count, view_count: r.view_count })
+  }
+
+  const items: LabelTrendItem[] = []
+  const cur = new Date(start + 'T00:00:00Z')
+  const endD = new Date(end + 'T00:00:00Z')
+  while (cur <= endD) {
+    const ds = cur.toISOString().slice(0, 10)
+    for (const id of orderedLabelIds) {
+      const meta = labelMeta.get(id)!
+      const hit = indexed.get(`${ds}|${id}`)
+      items.push({
+        date: ds,
+        label_id: id,
+        label_name: meta.label_name,
+        visitor_count: hit?.visitor_count ?? 0,
+        view_count: hit?.view_count ?? 0,
+      })
+    }
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  return c.json({ items })
 })
 
 export default stats

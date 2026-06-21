@@ -141,6 +141,12 @@ export default function MobileProducts() {
               排行榜
             </button>
             <button
+              onClick={() => navigate('/label-trend')}
+              className="px-3 py-1.5 border border-blue-600 text-blue-600 rounded-md text-sm"
+            >
+              Label趋势
+            </button>
+            <button
               onClick={() => {
                 setForm({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
                 setShowForm(true)
