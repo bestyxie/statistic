@@ -91,6 +91,16 @@ export function useTransactions() {
     }
   }
 
+  const handleDelete = async (id: string) => {
+    if (!confirm('确定删除此成交记录？关联的退款也会被删除。')) return
+    try {
+      await api.deleteTransaction(id)
+      loadTransactions()
+    } catch (err: any) {
+      alert(err.message)
+    }
+  }
+
   const totalPages = Math.ceil(total / limit)
   const totalAmount = items.reduce(
     (s, t) => s + parseFloat(t.price || '0') * (t.quantity || 0),
@@ -134,6 +144,8 @@ export function useTransactions() {
     refundForm,
     setRefundForm,
     handleRefund,
+    // Delete
+    handleDelete,
     // Computed
     totalAmount,
     totalQty,

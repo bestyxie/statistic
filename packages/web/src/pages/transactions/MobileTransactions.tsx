@@ -28,6 +28,7 @@ export default function MobileTransactions() {
     refundForm,
     setRefundForm,
     handleRefund,
+    handleDelete,
     totalAmount,
     totalQty,
     totalRefundQty,
@@ -147,8 +148,8 @@ export default function MobileTransactions() {
                   </span>
                 </div>
 
-                {!isFullyRefunded && (
-                  <MobileCardActions>
+                <MobileCardActions>
+                  {!isFullyRefunded && (
                     <button
                       onClick={() => {
                         setRefundModal(tx)
@@ -163,8 +164,14 @@ export default function MobileTransactions() {
                     >
                       退款
                     </button>
-                  </MobileCardActions>
-                )}
+                  )}
+                  <button
+                    onClick={() => handleDelete(tx.id)}
+                    className="text-gray-500 hover:text-gray-700 text-sm"
+                  >
+                    删除
+                  </button>
+                </MobileCardActions>
               </MobileCard>
             )
           })}
