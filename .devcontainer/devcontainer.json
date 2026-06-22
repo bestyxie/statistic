@@ -12,10 +12,12 @@
 		"ghcr.io/warrenbuckley/codespace-features/sqlite:1": {}
 	},
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postStartCommand": "mkdir -p ~/.claude && cp /mnt/claude-config/settings.json ~/.claude/settings.json",
+	// "postStartCommand": "mkdir -p ~/.claude && cp /mnt/claude-config/settings.json ~/.claude/settings.json",
 	"postCreateCommand": "npm install -g @anthropic-ai/claude-code",
 	"mounts": [
-		"source=${localEnv:HOME}/.claude,target=/mnt/claude-config,type=bind,consistency=cached,readonly"
+		"source=claude-code-config-${devcontainerId},target=/home/root/.claude,type=volume",
+		"source=claude-code-node-modules-${devcontainerId},target=/workspace/node_modules,type=volume",
+		"source=claude-code-pnpm-store,target=/var/lib/pnpm-store,type=volume"
 	]
 	// Configure tool-specific properties.
 	// "customizations": {},

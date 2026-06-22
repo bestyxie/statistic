@@ -39,3 +39,7 @@ packages/api/backups/
 # Encrypted test data
 encrypted.txt
 .gstack/
+
+# Unrelated nested sample repo and local working notes
+vscode-remote-try-node/
+description.md
