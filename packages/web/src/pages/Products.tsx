@@ -277,7 +277,7 @@ export default function Products() {
         onClose={() => setFormTarget(null)}
         onSaved={() => { setFormTarget(null); load() }}
       />
-      <TransactionFormModal product={txProduct} onClose={() => setTxProduct(null)} />
+      <TransactionFormModal key={txProduct?.id ?? 'none'} product={txProduct} onClose={() => setTxProduct(null)} />
       <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
