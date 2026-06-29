@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import LabelMultiSelect from './components/LabelMultiSelect'
 import MetricToggle from './components/MetricToggle'
+import LabelTrendDot from './components/LabelTrendDot'
+import LabelProductDrawer, { type LabelProductDrawerTarget } from './components/LabelProductDrawer'
 import { useLabelTrend } from './hooks/useLabelTrend'
 import type { LabelMetric, LabelTxMetric } from './hooks/useLabelTrend'
 
@@ -34,6 +37,12 @@ export default function DesktopLabelTrend() {
     loading,
     error,
   } = useLabelTrend()
+
+  const [drawerTarget, setDrawerTarget] = useState<LabelProductDrawerTarget | null>(null)
+  const handlePointClick = (date: string | undefined, labelId: string, labelName: string) => {
+    if (!date) return
+    setDrawerTarget({ label_id: labelId, label_name: labelName, date })
+  }
 
   return (
     <div className="space-y-6">
@@ -102,6 +111,14 @@ export default function DesktopLabelTrend() {
                   stroke={s.color}
                   strokeWidth={2}
                   dot={{ r: 3 }}
+                  activeDot={
+                    <LabelTrendDot
+                      color={s.color}
+                      labelId={s.label_id}
+                      labelName={s.label_name}
+                      onPointClick={handlePointClick}
+                    />
+                  }
                   connectNulls
                 />
               ))}
@@ -146,6 +163,8 @@ export default function DesktopLabelTrend() {
           </ResponsiveContainer>
         )}
       </div>
+
+      <LabelProductDrawer target={drawerTarget} onClose={() => setDrawerTarget(null)} />
     </div>
   )
 }

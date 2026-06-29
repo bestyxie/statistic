@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelProductStat, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
 import { syncProductLabel } from '../utils/label'
 
@@ -943,6 +943,40 @@ stats.get('/label-tx-trend', async (c) => {
   }
 
   return c.json({ items })
+})
+
+// --- Label 某天按商品拆分的浏览记录（点击趋势图某个点时调用）---
+stats.get('/label-products', async (c) => {
+  const db = c.env.DB
+  const labelId = c.req.query('label_id')
+  const date = c.req.query('date')
+  const shopId = c.req.query('shop_id')
+
+  if (!labelId || !date) {
+    return c.json({ items: [] })
+  }
+
+  const conditions = ['plr.label_id = ?', 'pvr.date = ?']
+  const params: string[] = [labelId, date]
+  if (shopId) {
+    conditions.push('p.shop_id = ?')
+    params.push(shopId)
+  }
+  const where = conditions.join(' AND ')
+
+  const rows = await db.prepare(
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, p.shop_id,
+            COUNT(DISTINCT pvr.visitor_id) AS visitor_count,
+            COALESCE(SUM(pvr.visit_count), 0) AS view_count
+     FROM product_visitor_relations pvr
+     JOIN products p ON pvr.product_id = p.id
+     JOIN product_label_relations plr ON pvr.product_id = plr.product_id
+     WHERE ${where}
+     GROUP BY p.id
+     ORDER BY visitor_count DESC`
+  ).bind(...params).all<LabelProductStat>()
+
+  return c.json({ items: rows.results })
 })
 
 export default stats

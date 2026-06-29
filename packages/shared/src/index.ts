@@ -271,3 +271,16 @@ export interface LabelTxTrendItem {
   tx_count: number
   tx_amount: number
 }
+
+/** 某 label 在某天按商品拆分的浏览记录（一条记录 = 该 label 下某个商品当天的浏览聚合） */
+export interface LabelProductStat {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  price: string
+  description: string
+  shop_id: string
+  view_count: number
+  visitor_count: number
+}
