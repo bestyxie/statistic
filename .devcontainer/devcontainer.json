@@ -13,7 +13,7 @@
 	},
 	// Use 'postCreateCommand' to run commands after the container is created.
 	// "postStartCommand": "mkdir -p ~/.claude && cp /mnt/claude-config/settings.json ~/.claude/settings.json",
-	"postCreateCommand": "npm install -g @anthropic-ai/claude-code",
+	"postCreateCommand": "npm install -g @anthropic-ai/claude-code && mkdir -p ~/.config/pnpm && printf 'storeDir: /var/lib/pnpm-store\\n' > ~/.config/pnpm/config.yaml",
 	"mounts": [
 		"source=claude-code-config-${devcontainerId},target=/home/root/.claude,type=volume",
 		"source=claude-code-node-modules-${devcontainerId},target=/workspace/node_modules,type=volume",
