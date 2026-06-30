@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { api } from '../../../lib/api'
-import type { LabelTrendItem, LabelTxTrendItem, ProductLabel } from '@statistic/shared'
+import type { LabelSalesItem, LabelTrendItem, LabelTxTrendItem, ProductLabel } from '@statistic/shared'
 
 export type LabelMetric = 'visitor_count' | 'view_count'
 export type LabelTxMetric = 'tx_count' | 'tx_amount'
@@ -14,6 +14,13 @@ export interface LabelChartSeries {
 export interface LabelChartRow {
   date: string
   [labelId: string]: string | number
+}
+
+export interface LabelSalesRow {
+  label_id: string
+  label_name: string
+  tx_quantity: number
+  color: string
 }
 
 interface UseLabelTrendReturn {
@@ -35,6 +42,12 @@ interface UseLabelTrendReturn {
   series: LabelChartSeries[]
   loading: boolean
   error: string | null
+  salesStart: string
+  setSalesStart: (v: string) => void
+  salesEnd: string
+  setSalesEnd: (v: string) => void
+  labelSalesRows: LabelSalesRow[]
+  salesLoading: boolean
 }
 
 const DEFAULT_DAYS = 30
@@ -66,6 +79,10 @@ export function useLabelTrend(): UseLabelTrendReturn {
   const [txItems, setTxItems] = useState<LabelTxTrendItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [salesStart, setSalesStart] = useState('')
+  const [salesEnd, setSalesEnd] = useState('')
+  const [labelSales, setLabelSales] = useState<LabelSalesItem[]>([])
+  const [salesLoading, setSalesLoading] = useState(false)
 
   // 拉标签列表，默认勾选前 N 个（按 sort 升序，对齐 /labels 接口排序）
   useEffect(() => {
@@ -134,6 +151,28 @@ export function useLabelTrend(): UseLabelTrendReturn {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelKey, start, end])
 
+  // 销量排行：独立时间范围（留空 = 全部时间），不受上方趋势的品牌选择与日期影响
+  useEffect(() => {
+    let cancelled = false
+    setSalesLoading(true)
+    api.getLabelSales(salesStart || undefined, salesEnd || undefined)
+      .then((res) => {
+        if (cancelled) return
+        setLabelSales(res.items || [])
+      })
+      .catch(() => {
+        if (cancelled) return
+        setLabelSales([])
+      })
+      .finally(() => {
+        if (cancelled) return
+        setSalesLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [salesStart, salesEnd])
+
   const clearLabels = () => setSelectedIds(new Set())
 
   // 折线图 series：按 labels 数组顺序（sort 升序）展示，颜色稳定
@@ -172,6 +211,12 @@ export function useLabelTrend(): UseLabelTrendReturn {
     return [...byDate.values()].sort((a, b) => (a.date as string).localeCompare(b.date as string))
   }, [txItems, txMetric])
 
+  // 销量排行展示行：用全量 labels 的下标着色，与趋势图颜色一致
+  const labelSalesRows = useMemo<LabelSalesRow[]>(() => {
+    const colorById = new Map(labels.map((l, i) => [l.label_id, colorFor(i)]))
+    return labelSales.map((s) => ({ ...s, color: colorById.get(s.label_id) ?? '#9ca3af' }))
+  }, [labelSales, labels])
+
   return {
     labels,
     labelsLoading,
@@ -191,5 +236,11 @@ export function useLabelTrend(): UseLabelTrendReturn {
     series,
     loading,
     error,
+    salesStart,
+    setSalesStart,
+    salesEnd,
+    setSalesEnd,
+    labelSalesRows,
+    salesLoading,
   }
 }

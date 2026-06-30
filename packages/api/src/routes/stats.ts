@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelProductStat, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelProductStat, LabelSalesItem, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
 import { syncProductLabel } from '../utils/label'
 
@@ -975,6 +975,43 @@ stats.get('/label-products', async (c) => {
      GROUP BY p.id
      ORDER BY visitor_count DESC`
   ).bind(...params).all<LabelProductStat>()
+
+  return c.json({ items: rows.results })
+})
+
+// --- 全部 label 的销量汇总（独立时间范围，留空表示全部时间）---
+stats.get('/label-sales', async (c) => {
+  const db = c.env.DB
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const shopId = c.req.query('shop_id')
+
+  // 日期/店铺条件放在 LEFT JOIN 的 ON 子句，避免把无销量的 label 过滤掉
+  const onConditions: string[] = []
+  const params: string[] = []
+  if (start) {
+    onConditions.push('t.date >= ?')
+    params.push(start)
+  }
+  if (end) {
+    onConditions.push('t.date <= ?')
+    params.push(end)
+  }
+  if (shopId) {
+    onConditions.push('t.shop_id = ?')
+    params.push(shopId)
+  }
+  const onClause = onConditions.length ? ` AND ${onConditions.join(' AND ')}` : ''
+
+  const rows = await db.prepare(
+    `SELECT pl.label_id, pl.label_name, pl.sort,
+            COALESCE(SUM(t.quantity), 0) AS tx_quantity
+     FROM product_labels pl
+     LEFT JOIN product_label_relations plr ON pl.label_id = plr.label_id
+     LEFT JOIN transactions t ON plr.product_id = t.product_id${onClause}
+     GROUP BY pl.label_id, pl.label_name, pl.sort
+     ORDER BY tx_quantity DESC, pl.sort`
+  ).bind(...params).all<LabelSalesItem>()
 
   return c.json({ items: rows.results })
 })

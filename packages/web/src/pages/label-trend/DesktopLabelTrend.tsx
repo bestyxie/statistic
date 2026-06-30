@@ -36,6 +36,12 @@ export default function DesktopLabelTrend() {
     series,
     loading,
     error,
+    salesStart,
+    setSalesStart,
+    salesEnd,
+    setSalesEnd,
+    labelSalesRows,
+    salesLoading,
   } = useLabelTrend()
 
   const [drawerTarget, setDrawerTarget] = useState<LabelProductDrawerTarget | null>(null)
@@ -161,6 +167,71 @@ export default function DesktopLabelTrend() {
               ))}
             </LineChart>
           </ResponsiveContainer>
+        )}
+      </div>
+
+      {/* 品牌销量排行：独立时间范围（留空 = 全部时间），展示所有品牌 */}
+      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-800">品牌销量排行</h2>
+          <div className="flex flex-wrap items-end gap-2 sm:gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">开始日期</label>
+              <input
+                type="date"
+                value={salesStart}
+                onChange={(e) => setSalesStart(e.target.value)}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">结束日期</label>
+              <input
+                type="date"
+                value={salesEnd}
+                onChange={(e) => setSalesEnd(e.target.value)}
+                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={() => { setSalesStart(''); setSalesEnd('') }}
+              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
+            >
+              清空
+            </button>
+            <span className="text-xs text-gray-400">留空汇总全部销量</span>
+          </div>
+        </div>
+        {salesLoading ? (
+          <p className="text-center text-gray-400 py-12 text-sm">加载中...</p>
+        ) : labelSalesRows.length === 0 ? (
+          <p className="text-center text-gray-400 py-12 text-sm">暂无品牌</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200 bg-gray-50">
+                  <th className="text-center py-2 px-3 text-gray-500 font-medium w-16">排名</th>
+                  <th className="text-left py-2 px-3 text-gray-500 font-medium">品牌</th>
+                  <th className="text-right py-2 px-3 text-gray-500 font-medium">销售数量</th>
+                </tr>
+              </thead>
+              <tbody>
+                {labelSalesRows.map((row, i) => (
+                  <tr key={row.label_id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <td className="py-2 px-3 text-center text-gray-500">{i + 1}</td>
+                    <td className="py-2 px-3 text-gray-800">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: row.color }} />
+                        {row.label_name}
+                      </span>
+                    </td>
+                    <td className="py-2 px-3 text-right font-medium text-orange-600">{row.tx_quantity}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
 

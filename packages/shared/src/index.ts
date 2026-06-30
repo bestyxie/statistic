@@ -284,3 +284,10 @@ export interface LabelProductStat {
   view_count: number
   visitor_count: number
 }
+
+/** 某 label 在指定区间（或全部时间）的销量汇总（一条记录 = 一个 label） */
+export interface LabelSalesItem {
+  label_id: string
+  label_name: string
+  tx_quantity: number
+}
