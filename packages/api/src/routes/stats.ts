@@ -1,5 +1,5 @@
 import { Hono } from 'hono'
-import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelProductStat, LabelSalesItem, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { ExternalData, ExternalVisitor, ExternalCustomerVisitor, ExternalVisitorRecord, LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 import { extractPrice, extractPriceWithApi } from '../utils/price'
 import { syncProductLabel } from '../utils/label'
 
@@ -1012,6 +1012,48 @@ stats.get('/label-sales', async (c) => {
      GROUP BY pl.label_id, pl.label_name, pl.sort
      ORDER BY tx_quantity DESC, pl.sort`
   ).bind(...params).all<LabelSalesItem>()
+
+  return c.json({ items: rows.results })
+})
+
+// --- 某 label 在区间内的销售商品（按销量降序，点击“详情”时调用）---
+stats.get('/label-sales-products', async (c) => {
+  const db = c.env.DB
+  const labelId = c.req.query('label_id')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
+  const shopId = c.req.query('shop_id')
+
+  if (!labelId) {
+    return c.json({ items: [] })
+  }
+
+  const conditions = ['plr.label_id = ?']
+  const params: string[] = [labelId]
+  if (start) {
+    conditions.push('t.date >= ?')
+    params.push(start)
+  }
+  if (end) {
+    conditions.push('t.date <= ?')
+    params.push(end)
+  }
+  if (shopId) {
+    conditions.push('t.shop_id = ?')
+    params.push(shopId)
+  }
+  const where = conditions.join(' AND ')
+
+  const rows = await db.prepare(
+    `SELECT p.id, p.name, p.image_url, p.sku, p.description,
+            COALESCE(SUM(t.quantity), 0) AS tx_quantity
+     FROM transactions t
+     JOIN products p ON t.product_id = p.id
+     JOIN product_label_relations plr ON t.product_id = plr.product_id
+     WHERE ${where}
+     GROUP BY p.id
+     ORDER BY tx_quantity DESC`
+  ).bind(...params).all<LabelSalesProduct>()
 
   return c.json({ items: rows.results })
 })

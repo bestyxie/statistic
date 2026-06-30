@@ -4,6 +4,7 @@ import LabelMultiSelect from './components/LabelMultiSelect'
 import MetricToggle from './components/MetricToggle'
 import LabelTrendDot from './components/LabelTrendDot'
 import LabelProductDrawer, { type LabelProductDrawerTarget } from './components/LabelProductDrawer'
+import LabelSalesProductsModal, { type LabelSalesProductsTarget } from './components/LabelSalesProductsModal'
 import { useLabelTrend } from './hooks/useLabelTrend'
 import type { LabelMetric, LabelTxMetric } from './hooks/useLabelTrend'
 
@@ -45,6 +46,7 @@ export default function DesktopLabelTrend() {
   } = useLabelTrend()
 
   const [drawerTarget, setDrawerTarget] = useState<LabelProductDrawerTarget | null>(null)
+  const [salesModalTarget, setSalesModalTarget] = useState<LabelSalesProductsTarget | null>(null)
   const handlePointClick = (date: string | undefined, labelId: string, labelName: string) => {
     if (!date) return
     setDrawerTarget({ label_id: labelId, label_name: labelName, date })
@@ -214,6 +216,7 @@ export default function DesktopLabelTrend() {
                   <th className="text-center py-2 px-3 text-gray-500 font-medium w-16">排名</th>
                   <th className="text-left py-2 px-3 text-gray-500 font-medium">品牌</th>
                   <th className="text-right py-2 px-3 text-gray-500 font-medium">销售数量</th>
+                  <th className="text-right py-2 px-3 text-gray-500 font-medium">详情</th>
                 </tr>
               </thead>
               <tbody>
@@ -227,6 +230,14 @@ export default function DesktopLabelTrend() {
                       </span>
                     </td>
                     <td className="py-2 px-3 text-right font-medium text-orange-600">{row.tx_quantity}</td>
+                    <td className="py-2 px-3 text-right">
+                      <button
+                        onClick={() => setSalesModalTarget({ label_id: row.label_id, label_name: row.label_name, start: salesStart, end: salesEnd })}
+                        className="text-blue-600 hover:text-blue-800 text-sm"
+                      >
+                        详情
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -236,6 +247,7 @@ export default function DesktopLabelTrend() {
       </div>
 
       <LabelProductDrawer target={drawerTarget} onClose={() => setDrawerTarget(null)} />
+      <LabelSalesProductsModal target={salesModalTarget} onClose={() => setSalesModalTarget(null)} />
     </div>
   )
 }

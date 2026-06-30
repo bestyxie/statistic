@@ -291,3 +291,13 @@ export interface LabelSalesItem {
   label_name: string
   tx_quantity: number
 }
+
+/** 某 label 在指定区间内按商品拆分的销量（一条记录 = 该 label 下某个商品的销量） */
+export interface LabelSalesProduct {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  description: string
+  tx_quantity: number
+}

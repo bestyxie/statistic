@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import statsRoutes from '../stats'
 import { createInMemoryD1, type LocalD1 } from '../../local-db'
-import type { LabelProductStat, LabelSalesItem, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 
 async function seedFixture(db: LocalD1): Promise<void> {
   await db.prepare("INSERT INTO shops (id, name) VALUES (?, ?)").bind('shop-1', 'Shop 1').run()
@@ -300,5 +300,62 @@ describe('GET /stats/label-sales', () => {
     const byLabel = new Map(items.map((i) => [i.label_id, i.tx_quantity]))
     expect(byLabel.get('label-1')).toBe(3)
     expect(byLabel.get('label-2')).toBe(0)
+  })
+})
+
+async function fetchLabelSalesProducts(
+  db: LocalD1,
+  query: string,
+): Promise<{ status: number; items: LabelSalesProduct[] }> {
+  const res = await statsRoutes.fetch(
+    new Request(`http://localhost/label-sales-products?${query}`),
+    { DB: db },
+  )
+  const body = await res.json() as { items?: LabelSalesProduct[] }
+  return { status: res.status, items: body.items ?? [] }
+}
+
+describe('GET /stats/label-sales-products', () => {
+  let db: LocalD1
+
+  beforeEach(async () => {
+    db = await createInMemoryD1()
+    await seedFixture(db)
+  })
+
+  it('returns empty items when label_id is missing', async () => {
+    const { status, items } = await fetchLabelSalesProducts(db, 'start=2026-06-10')
+    expect(status).toBe(200)
+    expect(items).toEqual([])
+  })
+
+  it('returns per-product sales sorted by tx_quantity desc (all-time)', async () => {
+    // label-1: p-A (t-1 qty 2 + t-3 qty 1 = 3); p-B has no tx → excluded (inner join)
+    const { status, items } = await fetchLabelSalesProducts(db, 'label_id=label-1')
+    expect(status).toBe(200)
+    expect(items.map((i) => i.id)).toEqual(['p-A'])
+    expect(items[0].tx_quantity).toBe(3)
+    expect(items[0]).toHaveProperty('image_url')
+    expect(items[0]).toHaveProperty('description')
+  })
+
+  it('aggregates within a date range', async () => {
+    // 2026-06-10 only: label-1 p-A = t-1 (2)
+    const { items } = await fetchLabelSalesProducts(db, 'label_id=label-1&start=2026-06-10&end=2026-06-10')
+    expect(items.map((i) => i.id)).toEqual(['p-A'])
+    expect(items[0].tx_quantity).toBe(2)
+  })
+
+  it('isolates to the requested label', async () => {
+    // label-2 owns p-C: t-2 (qty 1)
+    const { items } = await fetchLabelSalesProducts(db, 'label_id=label-2')
+    expect(items.map((i) => i.id)).toEqual(['p-C'])
+    expect(items[0].tx_quantity).toBe(1)
+  })
+
+  it('filters by shop_id', async () => {
+    // label-1 p-A is shop-1; shop-2 filter → empty
+    const { items } = await fetchLabelSalesProducts(db, 'label_id=label-1&shop_id=shop-2')
+    expect(items).toEqual([])
   })
 })
