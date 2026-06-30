@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import ProductDetailDrawer from '../../../components/ProductDetailDrawer'
+import { useImagePreview } from '../../../components/mobile/MobileImagePreview'
 import type { LabelProductStat } from '@statistic/shared'
 
 export interface LabelProductDrawerTarget {
@@ -19,6 +20,7 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const { show: showImage } = useImagePreview()
 
   useEffect(() => {
     if (!target) return
@@ -109,7 +111,16 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
                 >
                   <span className="text-xs text-gray-400 w-5 text-center shrink-0">{idx + 1}</span>
                   {p.image_url ? (
-                    <img src={p.image_url} alt="" className="w-10 h-10 sm:w-12 sm:h-12 rounded object-cover bg-gray-100 shrink-0" />
+                    <img
+                      src={p.image_url}
+                      alt=""
+                      title="点击查看大图"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        showImage(p.image_url)
+                      }}
+                      className="w-10 h-10 sm:w-12 sm:h-12 rounded object-cover bg-gray-100 shrink-0 cursor-zoom-in"
+                    />
                   ) : (
                     <div className="w-10 h-10 sm:w-12 sm:h-12 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs shrink-0">无图</div>
                   )}
