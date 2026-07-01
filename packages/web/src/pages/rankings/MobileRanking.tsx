@@ -12,21 +12,65 @@ export default function MobileRanking() {
   const navigate = useNavigate()
   const {
     shops, selectedShop, handleShopChange,
+    labels, labelId, handleLabelChange,
+    start, setStart, end, setEnd, clearDateRange,
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, rankBase,
+    sortBy, sortOrder, toggleSort, getSortIcon,
     loading, selectedIds, toggleSelect, refreshing, handleRefresh,
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
   const { show: showImage } = useImagePreview()
 
+  const rangeText = start || end ? `${start || '…'}~${end || '…'}` : '全部时间'
+  const sortText = `${sortBy === 'viewers' ? '访客数' : '浏览次数'}${sortOrder === 'asc' ? '↑' : '↓'}`
+  const summaryParts = [rangeText, sortText]
+  if (labelId) summaryParts.push(labels.find((l) => l.label_id === labelId)?.label_name || '品牌')
+  if (selectedShop) summaryParts.push(shops.find((s) => s.id === selectedShop)?.name || '店铺')
+  if (search) summaryParts.push(`搜:${search}`)
+  const summary = summaryParts.join(' · ')
+
   return (
     <div className="space-y-4">
-      <MobilePageHeader title="7日排行榜" actions={
+      <MobilePageHeader title="访问量排行榜" actions={
         <button onClick={() => navigate('/products')} className="text-sm text-blue-600">返回</button>
       } />
 
-      <MobileFilter summary={search ? `搜索: ${search}` : '筛选'}>
+      <MobileFilter summary={summary}>
+        <div>
+          <span className="block text-xs text-gray-500 mb-1">开始日期</span>
+          <input
+            type="date"
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+        </div>
+        <div>
+          <span className="block text-xs text-gray-500 mb-1">结束日期</span>
+          <input
+            type="date"
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+          />
+        </div>
+        {(start || end) && (
+          <button onClick={clearDateRange} className="w-full px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-md">
+            清空日期（全部时间）
+          </button>
+        )}
+        <select
+          value={labelId}
+          onChange={(e) => handleLabelChange(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+        >
+          <option value="">全部标签</option>
+          {labels.map((l) => (
+            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
+          ))}
+        </select>
         <select
           value={selectedShop}
           onChange={(e) => handleShopChange(e.target.value)}
@@ -51,6 +95,23 @@ export default function MobileRanking() {
         {search && (
           <button onClick={clearSearch} className="text-sm text-gray-500">清除搜索</button>
         )}
+        <div>
+          <span className="block text-xs text-gray-500 mb-1">排序</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => toggleSort('views')}
+              className={`flex-1 px-3 py-1.5 text-sm rounded-md border ${sortBy === 'views' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'border-gray-200 text-gray-600'}`}
+            >
+              浏览次数{getSortIcon('views')}
+            </button>
+            <button
+              onClick={() => toggleSort('viewers')}
+              className={`flex-1 px-3 py-1.5 text-sm rounded-md border ${sortBy === 'viewers' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'border-gray-200 text-gray-600'}`}
+            >
+              浏览人数{getSortIcon('viewers')}
+            </button>
+          </div>
+        </div>
       </MobileFilter>
 
       {selectedIds.size > 0 && (

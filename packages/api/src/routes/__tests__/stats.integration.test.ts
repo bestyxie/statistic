@@ -35,6 +35,12 @@ async function seedFixture(db: LocalD1): Promise<void> {
   await db.prepare("INSERT INTO transactions (id, product_id, shop_id, price, quantity, date) VALUES (?, ?, ?, ?, ?, ?)").bind('t-1', 'p-A', 'shop-1', '10.00', 2, '2026-06-10').run()
   await db.prepare("INSERT INTO transactions (id, product_id, shop_id, price, quantity, date) VALUES (?, ?, ?, ?, ?, ?)").bind('t-2', 'p-C', 'shop-2', '5.00', 1, '2026-06-10').run()
   await db.prepare("INSERT INTO transactions (id, product_id, shop_id, price, quantity, date) VALUES (?, ?, ?, ?, ?, ?)").bind('t-3', 'p-A', 'shop-1', '10.00', 1, '2026-06-12').run()
+
+  // daily_product_stats：与上方 product_visitor_relations 聚合对齐（product-ranking 从此表读取）
+  await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-A1', 'p-A', 'shop-1', '2026-06-10', 4, 2).run()
+  await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-A2', 'p-A', 'shop-1', '2026-06-11', 4, 1).run()
+  await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-B1', 'p-B', 'shop-1', '2026-06-10', 2, 1).run()
+  await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-C1', 'p-C', 'shop-2', '2026-06-10', 2, 1).run()
 }
 
 async function fetchLabelTrend(
@@ -357,5 +363,97 @@ describe('GET /stats/label-sales-products', () => {
     // label-1 p-A is shop-1; shop-2 filter → empty
     const { items } = await fetchLabelSalesProducts(db, 'label_id=label-1&shop_id=shop-2')
     expect(items).toEqual([])
+  })
+})
+
+interface ProductRankingItem {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  price: string
+  description: string
+  total_views: number
+  total_viewers: number
+  total_tx_count: number
+}
+
+async function fetchProductRanking(
+  db: LocalD1,
+  query: string,
+): Promise<{ status: number; items: ProductRankingItem[]; total: number }> {
+  const res = await statsRoutes.fetch(
+    new Request(`http://localhost/product-ranking?${query}`),
+    { DB: db },
+  )
+  const body = await res.json() as { items?: ProductRankingItem[]; total?: number }
+  return { status: res.status, items: body.items ?? [], total: body.total ?? 0 }
+}
+
+describe('GET /stats/product-ranking', () => {
+  let db: LocalD1
+
+  beforeEach(async () => {
+    db = await createInMemoryD1()
+    await seedFixture(db)
+  })
+
+  it('defaults to all-time and sorts by viewers desc', async () => {
+    const { status, items, total } = await fetchProductRanking(db, '')
+    expect(status).toBe(200)
+    expect(total).toBe(3)
+    expect(items[0].id).toBe('p-A')
+    expect(items[0].total_views).toBe(8)
+    expect(items[0].total_viewers).toBe(3)
+  })
+
+  it('filters by date range', async () => {
+    // 2026-06-11 only has p-A
+    const { items, total } = await fetchProductRanking(db, 'start=2026-06-11&end=2026-06-11')
+    expect(total).toBe(1)
+    expect(items[0].id).toBe('p-A')
+    expect(items[0].total_views).toBe(4)
+    expect(items[0].total_viewers).toBe(1)
+  })
+
+  it('filters by label_id', async () => {
+    // label-1 = p-A, p-B；按 viewers desc → p-A, p-B
+    const { items, total } = await fetchProductRanking(db, 'label_id=label-1')
+    expect(total).toBe(2)
+    expect(items.map((i) => i.id)).toEqual(['p-A', 'p-B'])
+  })
+
+  it('sorts by views desc', async () => {
+    const { items } = await fetchProductRanking(db, 'sort_by=views&sort_order=desc')
+    expect(items[0].id).toBe('p-A')
+    expect(items[0].total_views).toBe(8)
+  })
+
+  it('respects sort_order=asc', async () => {
+    // viewers: p-A=3, p-B=1, p-C=1 → p-A 排末尾
+    const { items } = await fetchProductRanking(db, 'sort_by=viewers&sort_order=asc')
+    expect(items[items.length - 1].id).toBe('p-A')
+  })
+
+  it('filters by shop_id', async () => {
+    const { items, total } = await fetchProductRanking(db, 'shop_id=shop-2')
+    expect(total).toBe(1)
+    expect(items[0].id).toBe('p-C')
+  })
+
+  it('paginates with limit/page and returns total', async () => {
+    const page1 = await fetchProductRanking(db, 'limit=2&page=1')
+    expect(page1.total).toBe(3)
+    expect(page1.items).toHaveLength(2)
+    const page2 = await fetchProductRanking(db, 'limit=2&page=2')
+    expect(page2.items).toHaveLength(1)
+  })
+
+  it('attaches transaction counts (all-time when no date filter)', async () => {
+    const { items } = await fetchProductRanking(db, '')
+    const a = items.find((i) => i.id === 'p-A')
+    const b = items.find((i) => i.id === 'p-B')
+    expect(a?.total_tx_count).toBe(3)
+    expect(b?.total_tx_count).toBe(0)
   })
 })

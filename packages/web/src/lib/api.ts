@@ -63,6 +63,88 @@ export async function request<T>(path: string, options?: RequestInit): Promise<T
   return data as T
 }
 
+// --- 接口返回类型（与后端 stats 路由返回结构对齐）---
+export interface ProductRankingItem {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  price: string
+  description: string
+  total_views: number
+  total_viewers: number
+  total_tx_count: number
+}
+
+interface TrendResult {
+  shopTrend: { date: string; visitor_count: number; shop_name: string }[]
+  productTrend: { date: string; view_count: number; viewer_count: number; product_name: string; description: string; image_url: string }[]
+}
+
+interface TopProduct {
+  id: string
+  name: string
+  image_url: string
+  sku: string
+  price: string
+  description: string
+  total_views: number
+  total_viewers: number
+}
+
+interface Transaction {
+  id: string
+  product_id: string
+  shop_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+  created_at: string
+  product_name: string
+  image_url: string
+  sku: string
+  description: string
+  shop_name: string
+  refund_quantity: number
+  refund_count: number
+}
+
+interface TransactionInput {
+  id: string
+  product_id: string
+  shop_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+}
+
+interface Refund {
+  id: string
+  transaction_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+  created_at: string
+  product_name: string
+  image_url: string
+  sku: string
+  tx_price: string
+  tx_quantity: number
+  tx_date: string
+}
+
+interface RefundInput {
+  id: string
+  transaction_id: string
+  price: string
+  quantity: number
+  date: string
+  note: string
+}
+
 export const api = {
   // Auth
   checkSetup: () => request<{ hasAdmin: boolean }>('/auth/check'),
@@ -96,11 +178,26 @@ export const api = {
   getDashboard: (shopId?: string) =>
     request<DashboardData>(`/stats/dashboard${shopId ? `?shop_id=${shopId}` : ''}`),
   getTrend: (start: string, end: string, shopId?: string) =>
-    request<any>(`/stats/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
+    request<TrendResult>(`/stats/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
   getTopProducts: (start: string, end: string, shopId?: string) =>
-    request<any>(`/stats/top-products?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
-  getProductRanking: (days?: number, shopId?: string, page?: number, limit?: number, search?: string) =>
-    request<{ items: any[]; total: number; page: number; limit: number }>(`/stats/product-ranking?days=${days || 7}${shopId ? `&shop_id=${shopId}` : ''}&page=${page || 1}&limit=${limit || 20}${search ? `&search=${encodeURIComponent(search)}` : ''}`),
+    request<TopProduct[]>(`/stats/top-products?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
+  getProductRanking: (
+    start?: string, end?: string, shopId?: string, labelId?: string,
+    page?: number, limit?: number, search?: string, sortBy?: string, sortOrder?: string,
+  ) =>
+    request<{ items: ProductRankingItem[]; total: number; page: number; limit: number }>(
+      `/stats/product-ranking?${[
+        start && `start=${start}`,
+        end && `end=${end}`,
+        shopId && `shop_id=${shopId}`,
+        labelId && `label_id=${labelId}`,
+        `page=${page || 1}`,
+        `limit=${limit || 20}`,
+        search && `search=${encodeURIComponent(search)}`,
+        sortBy && `sort_by=${sortBy}`,
+        sortOrder && `sort_order=${sortOrder}`,
+      ].filter(Boolean).join('&')}`,
+    ),
   importData: (data: ExternalData, shopId: string, date: string) =>
     request<{ message: string; imported_products: number; total_visitors: number }>('/stats/import', { method: 'POST', body: JSON.stringify({ data, shop_id: shopId, date }) }),
   getProductStats: (productId: string, start?: string, end?: string) =>
@@ -116,7 +213,7 @@ export const api = {
 
   // Transactions
   createTransaction: (data: { product_id: string; shop_id: string; price: string; quantity?: number; date: string; note?: string }) =>
-    request<any>('/stats/transactions', { method: 'POST', body: JSON.stringify(data) }),
+    request<TransactionInput>('/stats/transactions', { method: 'POST', body: JSON.stringify(data) }),
   getTransactions: (params?: { shop_id?: string; product_id?: string; start?: string; end?: string; page?: number; limit?: number; search?: string }) => {
     const q = new URLSearchParams()
     if (params?.shop_id) q.set('shop_id', params.shop_id)
@@ -126,7 +223,7 @@ export const api = {
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.search) q.set('search', params.search)
-    return request<{ items: any[]; total: number; page: number; limit: number }>(`/stats/transactions?${q.toString()}`)
+    return request<{ items: Transaction[]; total: number; page: number; limit: number }>(`/stats/transactions?${q.toString()}`)
   },
   deleteTransaction: (id: string) =>
     request<{ message: string }>(`/stats/transactions/${id}`, { method: 'DELETE' }),
@@ -137,13 +234,13 @@ export const api = {
 
   // Refunds
   createRefund: (data: { transaction_id: string; price: string; quantity?: number; date: string; note?: string }) =>
-    request<any>('/stats/refunds', { method: 'POST', body: JSON.stringify(data) }),
+    request<RefundInput>('/stats/refunds', { method: 'POST', body: JSON.stringify(data) }),
   getRefunds: (params?: { start?: string; end?: string; shop_id?: string }) => {
     const q = new URLSearchParams()
     if (params?.start) q.set('start', params.start)
     if (params?.end) q.set('end', params.end)
     if (params?.shop_id) q.set('shop_id', params.shop_id)
-    return request<any[]>(`/stats/refunds?${q.toString()}`)
+    return request<Refund[]>(`/stats/refunds?${q.toString()}`)
   },
   deleteRefund: (id: string) =>
     request<{ message: string }>(`/stats/refunds/${id}`, { method: 'DELETE' }),

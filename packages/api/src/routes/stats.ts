@@ -191,35 +191,72 @@ stats.get('/top-products', async (c) => {
 // --- Product ranking by views ---
 stats.get('/product-ranking', async (c) => {
   const db = c.env.DB
-  const days = parseInt(c.req.query('days') || '7')
+  const start = c.req.query('start')
+  const end = c.req.query('end')
   const shopId = c.req.query('shop_id')
+  const labelId = c.req.query('label_id')
   const search = c.req.query('search')
   const limit = parseInt(c.req.query('limit') || '20')
   const page = parseInt(c.req.query('page') || '1')
   const offset = (page - 1) * limit
-  const startDate = new Date(Date.now() - (days - 1) * 86400000).toISOString().slice(0, 10)
 
-  const conditions = ['ps.date >= ?']
-  const params: string[] = [startDate]
+  // 排序字段白名单，默认按浏览人数降序
+  const sortColumnMap: Record<string, string> = {
+    views: 'total_views',
+    viewers: 'total_viewers',
+  }
+  const sortByRaw = c.req.query('sort_by') || 'viewers'
+  const sortColumn = sortColumnMap[sortByRaw] || 'total_viewers'
+  const orderClause = c.req.query('sort_order') === 'asc' ? 'ASC' : 'DESC'
+
+  // start/end 均缺省时不过滤日期 = 全部时间
+  const conditions: string[] = []
+  const params: string[] = []
+  if (start) {
+    conditions.push('ps.date >= ?')
+    params.push(start)
+  }
+  if (end) {
+    conditions.push('ps.date <= ?')
+    params.push(end)
+  }
   if (shopId) {
     conditions.push('ps.shop_id = ?')
     params.push(shopId)
+  }
+  if (labelId) {
+    conditions.push('ps.product_id IN (SELECT product_id FROM product_label_relations WHERE label_id = ?)')
+    params.push(labelId)
   }
   if (search) {
     conditions.push('p.description LIKE ?')
     params.push(`%${search}%`)
   }
-  const where = conditions.join(' AND ')
+  const where = conditions.length ? conditions.join(' AND ') : '1=1'
 
   const joinProducts = search ? ' JOIN products p ON ps.product_id = p.id' : ''
   const totalRes = await db.prepare(
     `SELECT COUNT(DISTINCT ps.product_id) as total FROM daily_product_stats ps${joinProducts} WHERE ${where}`
   ).bind(...params).first<{ total: number }>()
 
-  const txShopFilter = shopId ? ' AND shop_id = ?' : ''
-  const txParams = shopId ? [startDate, shopId] : [startDate]
+  // 事务数：与上方一致地按 start/end + shop 过滤
+  const txConditions: string[] = []
+  const txParams: string[] = []
+  if (start) {
+    txConditions.push('date >= ?')
+    txParams.push(start)
+  }
+  if (end) {
+    txConditions.push('date <= ?')
+    txParams.push(end)
+  }
+  if (shopId) {
+    txConditions.push('shop_id = ?')
+    txParams.push(shopId)
+  }
+  const txWhere = txConditions.length ? `WHERE ${txConditions.join(' AND ')}` : ''
   const txCounts = await db.prepare(
-    `SELECT product_id, SUM(quantity) as total_tx_count FROM transactions WHERE date >= ?${txShopFilter} GROUP BY product_id`
+    `SELECT product_id, SUM(quantity) as total_tx_count FROM transactions ${txWhere} GROUP BY product_id`
   ).bind(...txParams).all()
   const txMap = new Map<string, number>()
   for (const t of txCounts.results as any[]) {
@@ -227,7 +264,7 @@ stats.get('/product-ranking', async (c) => {
   }
 
   const results = await db.prepare(
-    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY total_views DESC LIMIT ? OFFSET ?`
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY ${sortColumn} ${orderClause} LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all()
 
   const ranking = (results.results as any[]).map((r) => ({
