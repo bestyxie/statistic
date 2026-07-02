@@ -1,4 +1,5 @@
 import { useTransactions } from '../hooks/useTransactions'
+import TimeRangePicker from '../components/TimeRangePicker'
 
 export default function Transactions() {
   const {
@@ -10,10 +11,8 @@ export default function Transactions() {
     totalPages,
     searchInput,
     setSearchInput,
-    startInput,
-    setStartInput,
-    endInput,
-    setEndInput,
+    range,
+    setRange,
     doSearch,
     setSearchParams,
     refundModal,
@@ -60,26 +59,7 @@ export default function Transactions() {
           )}
         </div>
         <div className="relative">
-          <input
-            type="date"
-            value={startInput}
-            onChange={(e) => setStartInput(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 pr-7"
-          />
-          {startInput && (
-            <button type="button" onClick={() => { setStartInput(''); setSearchParams((prev) => { prev.delete('start'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
-          )}
-        </div>
-        <div className="relative">
-          <input
-            type="date"
-            value={endInput}
-            onChange={(e) => setEndInput(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 pr-7"
-          />
-          {endInput && (
-            <button type="button" onClick={() => { setEndInput(''); setSearchParams((prev) => { prev.delete('end'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
-          )}
+          <TimeRangePicker value={range} onChange={setRange} showTime={false} />
         </div>
         <button onClick={doSearch} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">搜索</button>
       </div>

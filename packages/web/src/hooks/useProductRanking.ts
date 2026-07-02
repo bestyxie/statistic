@@ -7,14 +7,24 @@ import type { Shop, ProductLabel } from '@statistic/shared'
 const DEFAULT_SORT_BY = 'viewers'
 const DEFAULT_SORT_ORDER = 'desc'
 
-// 默认最近 7 天，且以昨天为终点：[今天-7, 今天-1]，对齐按昨日导入的数据节奏
-function defaultRange(): { start: string; end: string } {
-  const end = new Date(Date.now() - 86400000)
-  const start = new Date(Date.now() - 7 * 86400000)
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-  }
+// 默认最近 7 天，且以昨天为终点：[7 天前 00:00, 昨天 23:59]，对齐按昨日导入的数据节奏
+function defaultRange(): [number, number] {
+  const now = new Date()
+  const start = new Date(now)
+  start.setHours(0, 0, 0, 0)
+  start.setDate(start.getDate() - 7)
+  const end = new Date(now)
+  end.setHours(0, 0, 0, 0)
+  end.setDate(end.getDate() - 1)
+  end.setHours(23, 59, 59, 999)
+  return [start.getTime(), end.getTime()]
+}
+
+// 时间戳 → 后端日期参数 YYYY-MM-DD（按本地日期）
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 export function useProductRanking() {
@@ -33,10 +43,8 @@ export function useProductRanking() {
   const sortBy = searchParams.get('sort_by') || DEFAULT_SORT_BY
   const sortOrder = searchParams.get('sort_order') || DEFAULT_SORT_ORDER
 
-  // 日期范围：本地 state（默认最近 7 天），清空后传 undefined = 全部时间
-  const initRange = defaultRange()
-  const [start, setStart] = useState(initRange.start)
-  const [end, setEnd] = useState(initRange.end)
+  // 日期范围 [开始, 结束] 时间戳（默认最近 7 天）；null = 已清空 = 全部时间
+  const [range, setRange] = useState<[number, number] | null>(defaultRange)
 
   // Multi-select（批量刷新）
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -46,13 +54,11 @@ export function useProductRanking() {
     setSearchParams((prev) => { prev.set('page', String(p)); return prev })
   }
 
-  const clearDateRange = () => {
-    setStart('')
-    setEnd('')
-  }
-
   useEffect(() => { api.getShops().then(setShops) }, [])
   useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
+
+  const startDate = range ? tsToDateStr(range[0]) : undefined
+  const endDate = range ? tsToDateStr(range[1]) : undefined
 
   useEffect(() => {
     let cancelled = false
@@ -60,7 +66,7 @@ export function useProductRanking() {
       setLoading(true)
       try {
         const res = await api.getProductRanking(
-          start || undefined, end || undefined,
+          startDate, endDate,
           selectedShop || undefined, labelId || undefined,
           page, pageSize, search || undefined,
           sortBy, sortOrder,
@@ -74,7 +80,7 @@ export function useProductRanking() {
     }
     load()
     return () => { cancelled = true }
-  }, [start, end, selectedShop, labelId, search, page, sortBy, sortOrder])
+  }, [startDate, endDate, selectedShop, labelId, search, page, sortBy, sortOrder])
 
   const resetSelectionAndPage = (prev: URLSearchParams) => {
     setSelectedIds(new Set())
@@ -153,7 +159,7 @@ export function useProductRanking() {
       setSelectedIds(new Set())
       setLoading(true)
       api.getProductRanking(
-        start || undefined, end || undefined,
+        startDate, endDate,
         selectedShop || undefined, labelId || undefined,
         page, pageSize, search || undefined,
         sortBy, sortOrder,
@@ -174,7 +180,7 @@ export function useProductRanking() {
   return {
     shops, selectedShop, handleShopChange,
     labels, labelId, handleLabelChange,
-    start, setStart, end, setEnd, clearDateRange,
+    range, setRange,
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, pageSize, rankBase,
     sortBy, sortOrder, toggleSort, getSortIcon,

@@ -4,6 +4,7 @@ import MobileFilter from '../../components/mobile/MobileFilter'
 import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCard'
 import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
+import TimeRangePicker from '../../components/TimeRangePicker'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
@@ -13,7 +14,7 @@ export default function MobileRanking() {
   const {
     shops, selectedShop, handleShopChange,
     labels, labelId, handleLabelChange,
-    start, setStart, end, setEnd, clearDateRange,
+    range, setRange,
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, rankBase,
     sortBy, sortOrder, toggleSort, getSortIcon,
@@ -23,7 +24,12 @@ export default function MobileRanking() {
   const [drawerId, setDrawerId] = useState<string | null>(null)
   const { show: showImage } = useImagePreview()
 
-  const rangeText = start || end ? `${start || '…'}~${end || '…'}` : '全部时间'
+  const fmtDate = (ts: number) => {
+    const d = new Date(ts)
+    const p = (n: number) => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+  }
+  const rangeText = range ? `${fmtDate(range[0])}~${fmtDate(range[1])}` : '全部时间'
   const sortText = `${sortBy === 'viewers' ? '访客数' : '浏览次数'}${sortOrder === 'asc' ? '↑' : '↓'}`
   const summaryParts = [rangeText, sortText]
   if (labelId) summaryParts.push(labels.find((l) => l.label_id === labelId)?.label_name || '品牌')
@@ -39,28 +45,9 @@ export default function MobileRanking() {
 
       <MobileFilter summary={summary}>
         <div>
-          <span className="block text-xs text-gray-500 mb-1">开始日期</span>
-          <input
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-          />
+          <span className="block text-xs text-gray-500 mb-1">时间范围{!range && '（全部时间）'}</span>
+          <TimeRangePicker value={range} onChange={setRange} showTime={false} className="w-full" />
         </div>
-        <div>
-          <span className="block text-xs text-gray-500 mb-1">结束日期</span>
-          <input
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-          />
-        </div>
-        {(start || end) && (
-          <button onClick={clearDateRange} className="w-full px-3 py-2 text-sm text-gray-600 border border-gray-300 rounded-md">
-            清空日期（全部时间）
-          </button>
-        )}
         <select
           value={labelId}
           onChange={(e) => handleLabelChange(e.target.value)}

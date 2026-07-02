@@ -10,6 +10,7 @@ import LabelProductDrawer, { type LabelProductDrawerTarget } from './components/
 import LabelSalesProductsModal, { type LabelSalesProductsTarget } from './components/LabelSalesProductsModal'
 import { useLabelTrend } from './hooks/useLabelTrend'
 import type { LabelMetric, LabelTxMetric } from './hooks/useLabelTrend'
+import TimeRangePicker from '../../components/TimeRangePicker'
 
 const VISITOR_METRICS: readonly { value: LabelMetric; label: string }[] = [
   { value: 'visitor_count', label: '访客数' },
@@ -27,10 +28,10 @@ export default function MobileLabelTrend() {
     labelsLoading,
     selectedIds,
     setSelectedIds,
+    range,
+    setRange,
     start,
-    setStart,
     end,
-    setEnd,
     metric,
     setMetric,
     chartData,
@@ -40,10 +41,10 @@ export default function MobileLabelTrend() {
     series,
     loading,
     error,
+    salesRange,
+    setSalesRange,
     salesStart,
-    setSalesStart,
     salesEnd,
-    setSalesEnd,
     labelSalesRows,
     salesLoading,
   } = useLabelTrend()
@@ -61,22 +62,8 @@ export default function MobileLabelTrend() {
 
       <MobileFilter summary={`${start} ~ ${end} · 已选 ${selectedIds.size}`}>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">开始日期</label>
-          <input
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">结束日期</label>
-          <input
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <label className="block text-xs text-gray-500 mb-1">时间范围</label>
+          <TimeRangePicker value={range} onChange={setRange} showTime={false} clearable={false} className="w-full" />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">
@@ -174,34 +161,11 @@ export default function MobileLabelTrend() {
       <MobileCard>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold text-gray-800">品牌销量排行</h2>
-          <button
-            onClick={() => { setSalesStart(''); setSalesEnd('') }}
-            className="px-2 py-1 border border-gray-300 rounded-md text-xs hover:bg-gray-50"
-          >
-            清空
-          </button>
         </div>
-        <div className="flex gap-2 mb-2">
-          <div className="flex-1">
-            <label className="block text-xs text-gray-500 mb-1">开始</label>
-            <input
-              type="date"
-              value={salesStart}
-              onChange={(e) => setSalesStart(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-xs text-gray-500 mb-1">结束</label>
-            <input
-              type="date"
-              value={salesEnd}
-              onChange={(e) => setSalesEnd(e.target.value)}
-              className="w-full border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <div className="mb-2">
+          <label className="block text-xs text-gray-500 mb-1">时间范围{!salesRange && '（全部销量）'}</label>
+          <TimeRangePicker value={salesRange} onChange={setSalesRange} showTime={false} className="w-full" />
         </div>
-        <p className="text-xs text-gray-400 mb-2">留空汇总全部销量</p>
         {salesLoading ? (
           <p className="text-center text-gray-400 py-8 text-sm">加载中...</p>
         ) : labelSalesRows.length === 0 ? (

@@ -29,10 +29,10 @@ interface UseLabelTrendReturn {
   selectedIds: Set<string>
   setSelectedIds: (next: Set<string>) => void
   clearLabels: () => void
+  range: [number, number] | null
+  setRange: (v: [number, number] | null) => void
   start: string
-  setStart: (v: string) => void
   end: string
-  setEnd: (v: string) => void
   metric: LabelMetric
   setMetric: (m: LabelMetric) => void
   chartData: LabelChartRow[]
@@ -42,10 +42,10 @@ interface UseLabelTrendReturn {
   series: LabelChartSeries[]
   loading: boolean
   error: string | null
+  salesRange: [number, number] | null
+  setSalesRange: (v: [number, number] | null) => void
   salesStart: string
-  setSalesStart: (v: string) => void
   salesEnd: string
-  setSalesEnd: (v: string) => void
   labelSalesRows: LabelSalesRow[]
   salesLoading: boolean
 }
@@ -53,13 +53,21 @@ interface UseLabelTrendReturn {
 const DEFAULT_DAYS = 30
 const DEFAULT_SELECT_COUNT = 5
 
-function defaultRange(): { start: string; end: string } {
-  const end = new Date()
-  const start = new Date(Date.now() - (DEFAULT_DAYS - 1) * 86400000)
-  return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
-  }
+function defaultRange(): [number, number] {
+  const now = new Date()
+  const start = new Date(now)
+  start.setHours(0, 0, 0, 0)
+  start.setDate(start.getDate() - (DEFAULT_DAYS - 1))
+  const end = new Date(now)
+  end.setHours(23, 59, 59, 999)
+  return [start.getTime(), end.getTime()]
+}
+
+// 时间戳 → 后端日期参数 YYYY-MM-DD（按本地日期）
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
 function colorFor(index: number): string {
@@ -70,39 +78,41 @@ export function useLabelTrend(): UseLabelTrendReturn {
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [labelsLoading, setLabelsLoading] = useState(true)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const init = defaultRange()
-  const [start, setStart] = useState(init.start)
-  const [end, setEnd] = useState(init.end)
+  // 趋势时间范围 [开始, 结束] 时间戳（默认最近 30 天）；不可清空
+  const [range, setRange] = useState<[number, number] | null>(defaultRange)
+  // 销量排行时间范围（默认 null = 全部时间）；可清空
+  const [salesRange, setSalesRange] = useState<[number, number] | null>(null)
+  const start = range ? tsToDateStr(range[0]) : ''
+  const end = range ? tsToDateStr(range[1]) : ''
+  const salesStart = salesRange ? tsToDateStr(salesRange[0]) : ''
+  const salesEnd = salesRange ? tsToDateStr(salesRange[1]) : ''
   const [metric, setMetric] = useState<LabelMetric>('visitor_count')
   const [txMetric, setTxMetric] = useState<LabelTxMetric>('tx_count')
   const [items, setItems] = useState<LabelTrendItem[]>([])
   const [txItems, setTxItems] = useState<LabelTxTrendItem[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [salesStart, setSalesStart] = useState('')
-  const [salesEnd, setSalesEnd] = useState('')
   const [labelSales, setLabelSales] = useState<LabelSalesItem[]>([])
   const [salesLoading, setSalesLoading] = useState(false)
 
   // 拉标签列表，默认勾选前 N 个（按 sort 升序，对齐 /labels 接口排序）
   useEffect(() => {
     let cancelled = false
-    setLabelsLoading(true)
-    api.getLabels()
-      .then((list) => {
+    const load = async () => {
+      try {
+        const list = await api.getLabels()
         if (cancelled) return
         setLabels(list)
         setSelectedIds(new Set(list.slice(0, DEFAULT_SELECT_COUNT).map((l) => l.label_id)))
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (cancelled) return
         const message = err instanceof Error ? err.message : '加载标签失败'
         setError(message)
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLabelsLoading(false)
-      })
+      } finally {
+        if (!cancelled) setLabelsLoading(false)
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }
@@ -111,39 +121,36 @@ export function useLabelTrend(): UseLabelTrendReturn {
   // 选中标签 + 日期变化时同时拉访客趋势和成交趋势
   const labelKey = [...selectedIds].sort().join(',')
   useEffect(() => {
-    if (selectedIds.size === 0 || !start || !end) {
-      setItems([])
-      setTxItems([])
-      setError(null)
-      return
-    }
-
     let cancelled = false
-    setLoading(true)
-    setError(null)
-
-    const ids = [...selectedIds]
-    Promise.all([
-      api.getLabelTrend(ids, start, end),
-      api.getLabelTxTrend(ids, start, end),
-    ])
-      .then(([visitorRes, txRes]) => {
+    const load = async () => {
+      if (selectedIds.size === 0 || !start || !end) {
+        setItems([])
+        setTxItems([])
+        setError(null)
+        return
+      }
+      setLoading(true)
+      setError(null)
+      try {
+        const ids = [...selectedIds]
+        const [visitorRes, txRes] = await Promise.all([
+          api.getLabelTrend(ids, start, end),
+          api.getLabelTxTrend(ids, start, end),
+        ])
         if (cancelled) return
         setItems(visitorRes.items || [])
         setTxItems(txRes.items || [])
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (cancelled) return
         const message = err instanceof Error ? err.message : '加载趋势失败'
         setError(message)
         setItems([])
         setTxItems([])
-      })
-      .finally(() => {
-        if (cancelled) return
-        setLoading(false)
-      })
-
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }
@@ -154,20 +161,20 @@ export function useLabelTrend(): UseLabelTrendReturn {
   // 销量排行：独立时间范围（留空 = 全部时间），不受上方趋势的品牌选择与日期影响
   useEffect(() => {
     let cancelled = false
-    setSalesLoading(true)
-    api.getLabelSales(salesStart || undefined, salesEnd || undefined)
-      .then((res) => {
+    const load = async () => {
+      setSalesLoading(true)
+      try {
+        const res = await api.getLabelSales(salesStart || undefined, salesEnd || undefined)
         if (cancelled) return
         setLabelSales(res.items || [])
-      })
-      .catch(() => {
+      } catch {
         if (cancelled) return
         setLabelSales([])
-      })
-      .finally(() => {
-        if (cancelled) return
-        setSalesLoading(false)
-      })
+      } finally {
+        if (!cancelled) setSalesLoading(false)
+      }
+    }
+    load()
     return () => {
       cancelled = true
     }
@@ -223,10 +230,10 @@ export function useLabelTrend(): UseLabelTrendReturn {
     selectedIds,
     setSelectedIds,
     clearLabels,
+    range,
+    setRange,
     start,
-    setStart,
     end,
-    setEnd,
     metric,
     setMetric,
     chartData,
@@ -236,10 +243,10 @@ export function useLabelTrend(): UseLabelTrendReturn {
     series,
     loading,
     error,
+    salesRange,
+    setSalesRange,
     salesStart,
-    setSalesStart,
     salesEnd,
-    setSalesEnd,
     labelSalesRows,
     salesLoading,
   }

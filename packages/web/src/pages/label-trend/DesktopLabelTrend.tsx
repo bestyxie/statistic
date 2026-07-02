@@ -7,6 +7,7 @@ import LabelProductDrawer, { type LabelProductDrawerTarget } from './components/
 import LabelSalesProductsModal, { type LabelSalesProductsTarget } from './components/LabelSalesProductsModal'
 import { useLabelTrend } from './hooks/useLabelTrend'
 import type { LabelMetric, LabelTxMetric } from './hooks/useLabelTrend'
+import TimeRangePicker from '../../components/TimeRangePicker'
 
 const VISITOR_METRICS: readonly { value: LabelMetric; label: string }[] = [
   { value: 'visitor_count', label: '访客数' },
@@ -24,10 +25,8 @@ export default function DesktopLabelTrend() {
     labelsLoading,
     selectedIds,
     setSelectedIds,
-    start,
-    setStart,
-    end,
-    setEnd,
+    range,
+    setRange,
     metric,
     setMetric,
     chartData,
@@ -37,10 +36,10 @@ export default function DesktopLabelTrend() {
     series,
     loading,
     error,
+    salesRange,
+    setSalesRange,
     salesStart,
-    setSalesStart,
     salesEnd,
-    setSalesEnd,
     labelSalesRows,
     salesLoading,
   } = useLabelTrend()
@@ -60,22 +59,8 @@ export default function DesktopLabelTrend() {
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
         <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
-            <input
-              type="date"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
-            <input
-              type="date"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">时间范围</label>
+            <TimeRangePicker value={range} onChange={setRange} showTime={false} clearable={false} />
           </div>
           <div className="flex-1 min-w-[200px]">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -178,30 +163,9 @@ export default function DesktopLabelTrend() {
           <h2 className="text-base sm:text-lg font-semibold text-gray-800">品牌销量排行</h2>
           <div className="flex flex-wrap items-end gap-2 sm:gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">开始日期</label>
-              <input
-                type="date"
-                value={salesStart}
-                onChange={(e) => setSalesStart(e.target.value)}
-                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+              <label className="block text-xs text-gray-500 mb-1">时间范围{!salesRange && '（全部销量）'}</label>
+              <TimeRangePicker value={salesRange} onChange={setSalesRange} showTime={false} />
             </div>
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">结束日期</label>
-              <input
-                type="date"
-                value={salesEnd}
-                onChange={(e) => setSalesEnd(e.target.value)}
-                className="border border-gray-300 rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              onClick={() => { setSalesStart(''); setSalesEnd('') }}
-              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
-            >
-              清空
-            </button>
-            <span className="text-xs text-gray-400">留空汇总全部销量</span>
           </div>
         </div>
         {salesLoading ? (
