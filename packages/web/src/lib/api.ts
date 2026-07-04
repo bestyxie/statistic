@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'
-import type { Shop, Product, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { Shop, Product, ProductNote, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
@@ -74,6 +74,8 @@ export interface ProductRankingItem {
   total_views: number
   total_viewers: number
   total_tx_count: number
+  latest_note_content?: string | null
+  latest_note_at?: string | null
 }
 
 interface TrendResult {
@@ -173,6 +175,14 @@ export const api = {
     request<{ message: string }>(`/products/${id}`, { method: 'DELETE' }),
   refreshProducts: (productIds: string[]) =>
     request<{ success: boolean; count: number; refreshed_at: string }>('/products/refresh', { method: 'POST', body: JSON.stringify({ product_ids: productIds }) }),
+
+  // Product notes（商品备注）
+  getProductNotes: (productId: string) =>
+    request<ProductNote[]>(`/products/${productId}/notes`),
+  addProductNote: (productId: string, content: string) =>
+    request<ProductNote>(`/products/${productId}/notes`, { method: 'POST', body: JSON.stringify({ content }) }),
+  deleteProductNote: (productId: string, noteId: string) =>
+    request<{ message: string }>(`/products/${productId}/notes/${noteId}`, { method: 'DELETE' }),
 
   // Stats
   getDashboard: (shopId?: string) =>

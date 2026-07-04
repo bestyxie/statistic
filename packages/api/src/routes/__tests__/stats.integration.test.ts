@@ -41,6 +41,10 @@ async function seedFixture(db: LocalD1): Promise<void> {
   await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-A2', 'p-A', 'shop-1', '2026-06-11', 4, 1).run()
   await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-B1', 'p-B', 'shop-1', '2026-06-10', 2, 1).run()
   await db.prepare("INSERT INTO daily_product_stats (id, product_id, shop_id, date, view_count, viewer_count) VALUES (?, ?, ?, ?, ?, ?)").bind('dps-C1', 'p-C', 'shop-2', '2026-06-10', 2, 1).run()
+
+  // product_notes：p-A 两条（用于断言排行榜 latest_note）
+  await db.prepare("INSERT INTO product_notes (id, product_id, content, created_at) VALUES (?, ?, ?, ?)").bind('sn-A1', 'p-A', '旧备注', '2026-06-09 09:00:00').run()
+  await db.prepare("INSERT INTO product_notes (id, product_id, content, created_at) VALUES (?, ?, ?, ?)").bind('sn-A2', 'p-A', '最新备注', '2026-06-13 09:00:00').run()
 }
 
 async function fetchLabelTrend(
@@ -376,6 +380,8 @@ interface ProductRankingItem {
   total_views: number
   total_viewers: number
   total_tx_count: number
+  latest_note_content?: string | null
+  latest_note_at?: string | null
 }
 
 async function fetchProductRanking(
@@ -455,5 +461,14 @@ describe('GET /stats/product-ranking', () => {
     const b = items.find((i) => i.id === 'p-B')
     expect(a?.total_tx_count).toBe(3)
     expect(b?.total_tx_count).toBe(0)
+  })
+
+  it('attaches latest note per product', async () => {
+    const { items } = await fetchProductRanking(db, '')
+    const a = items.find((i) => i.id === 'p-A')
+    const b = items.find((i) => i.id === 'p-B')
+    expect(a?.latest_note_content).toBe('最新备注')
+    expect(a?.latest_note_at).toBe('2026-06-13 09:00:00')
+    expect(b?.latest_note_content).toBeNull()
   })
 })

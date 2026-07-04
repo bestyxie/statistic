@@ -8,9 +8,15 @@ import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
 import SetLabelModal from './products/SetLabelModal'
+import ProductNotesModal from '../components/ProductNotesModal'
+import ProductNotesAddModal from '../components/ProductNotesAddModal'
 import HoverPopup from '../components/HoverPopup'
 import { useImagePreview } from '../components/mobile/MobileImagePreview'
 import type { Product, Shop, ProductLabel } from '@statistic/shared'
+
+function errMsg(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
 
 export default function Products() {
   const navigate = useNavigate()
@@ -18,6 +24,8 @@ export default function Products() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [drawerId, setDrawerId] = useState<string | null>(null)
+  const [notesProduct, setNotesProduct] = useState<Product | null>(null)
+  const [addNoteProduct, setAddNoteProduct] = useState<Product | null>(null)
   const [shops, setShops] = useState<Shop[]>([])
   const selectedShop = searchParams.get('shop') || ''
   const setSelectedShop = (v: string) => setSearchParams((p) => { p.delete('page'); if (v) p.set('shop', v); else p.delete('shop'); return p })
@@ -99,8 +107,8 @@ export default function Products() {
       alert(`刷新成功，共刷新 ${res.count} 个商品`)
       setSelectedIds(new Set())
       load()
-    } catch (err: any) {
-      alert(err.message || '刷新失败')
+    } catch (err: unknown) {
+      alert(errMsg(err) || '刷新失败')
     } finally {
       setRefreshing(false)
     }
@@ -140,15 +148,25 @@ export default function Products() {
     try {
       await api.deleteProduct(id)
       load()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(errMsg(err))
     }
   }
 
   useEffect(() => { api.getShops().then(setShops) }, [])
   useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
-  useEffect(() => { load() }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId, noLabel])
-  useEffect(() => { setSearchInput(search) }, [search])
+  useEffect(() => {
+    const run = async () => { await load() }
+    run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedShop, page, visitDate, search, sortBy, sortOrder, labelId, noLabel])
+
+  // URL 搜索变化时同步输入框（渲染期调整 state，避免 effect 级联渲染）
+  const [lastUrlSearch, setLastUrlSearch] = useState(search)
+  if (search !== lastUrlSearch) {
+    setLastUrlSearch(search)
+    setSearchInput(search)
+  }
 
   const runLabelSync = async () => {
     setSyncingLabels(true)
@@ -169,8 +187,8 @@ export default function Products() {
       }
       api.getLabels().then(setLabels).catch(() => {})
       load()
-    } catch (err: any) {
-      setSyncProgress(`同步失败: ${err.message}`)
+    } catch (err: unknown) {
+      setSyncProgress(`同步失败: ${errMsg(err)}`)
     } finally {
       setSyncingLabels(false)
     }
@@ -181,8 +199,8 @@ export default function Products() {
       const res = await api.importLabels()
       alert(`导入成功，共 ${res.imported} 个标签`)
       api.getLabels().then(setLabels).catch(() => {})
-    } catch (err: any) {
-      alert(`导入失败: ${err.message}`)
+    } catch (err: unknown) {
+      alert(`导入失败: ${errMsg(err)}`)
     }
   }
 
@@ -282,6 +300,8 @@ export default function Products() {
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
       <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
+      <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} onChanged={load} />
+      <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} onChanged={load} />
 
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         {loading ? (
@@ -304,7 +324,7 @@ export default function Products() {
                     </th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">图片</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">商品描述</th>
-                    <th className="text-left py-3 px-5 text-gray-500 font-medium">店铺</th>
+                    <th className="text-left py-3 px-5 text-gray-500 font-medium">备注</th>
                     <th className="text-left py-3 px-5 text-gray-500 font-medium">价格</th>
                     <th
                       className="text-right py-3 px-5 text-gray-500 font-medium cursor-pointer hover:bg-gray-100"
@@ -343,27 +363,39 @@ export default function Products() {
                       </td>
                       <td className="py-3 px-5">
                         {p.description ? (
-                          <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description}</div>}>
+                          <HoverPopup side="bottom-right" interactive popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description}</div>}>
                             <span className="font-medium text-gray-800 max-w-xs truncate block">{p.description}</span>
                           </HoverPopup>
                         ) : (
                           <span className="font-medium text-gray-800">-</span>
                         )}
                       </td>
-                      <td className="py-3 px-5 text-gray-600">{p.shop_name}</td>
+                      <td className="py-3 px-5 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          {p.latest_note_content ? (
+                            <HoverPopup side="bottom-right" interactive popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.latest_note_content}</div>}>
+                              <span className="text-blue-600 hover:text-blue-800 cursor-pointer truncate block max-w-[140px]" onClick={() => setNotesProduct(p)}>{p.latest_note_content}</span>
+                            </HoverPopup>
+                          ) : (
+                            <span className="text-gray-400 text-sm">暂无</span>
+                          )}
+                          <button type="button" onClick={() => setAddNoteProduct(p)} className="text-blue-600 hover:text-blue-800 text-xs shrink-0">添加</button>
+                        </div>
+                      </td>
                       <td className="py-3 px-5 text-gray-600">{p.price || '-'}</td>
-                      <td className="py-3 px-5 text-right font-medium">{(p as any).yesterday_visitors || 0}</td>
+                      <td className="py-3 px-5 text-right font-medium">{p.yesterday_visitors || 0}</td>
                       <td className="py-3 px-5 text-right">
                         <button
                           onClick={() => setTxListProduct(p)}
-                          className={`font-medium cursor-pointer hover:underline ${(p as any).transaction_count > 0 ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400 hover:text-gray-500'}`}
+                          className={`font-medium cursor-pointer hover:underline ${(p.transaction_count || 0) > 0 ? 'text-orange-600 hover:text-orange-700' : 'text-gray-400 hover:text-gray-500'}`}
                         >
-                          {(p as any).transaction_count || 0}
+                          {p.transaction_count || 0}
                         </button>
                       </td>
                       <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
                         <button onClick={() => setTxProduct(p)} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
+                        <button onClick={() => setNotesProduct(p)} className="text-blue-600 hover:text-blue-800 mr-3">备注</button>
                         <HoverPopup
                           side="bottom-right"
                           interactive

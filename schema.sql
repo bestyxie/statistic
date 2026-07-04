@@ -168,3 +168,12 @@ CREATE TABLE product_label_relations (
   FOREIGN KEY (label_id) REFERENCES product_labels(label_id) ON DELETE CASCADE,
   UNIQUE(product_id, label_id)
 );
+
+-- 商品备注（一个商品可有多条，按 created_at 倒序取最近一条展示）
+CREATE TABLE product_notes (
+  id TEXT PRIMARY KEY,
+  product_id TEXT NOT NULL,
+  content TEXT NOT NULL,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+);

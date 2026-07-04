@@ -264,7 +264,10 @@ stats.get('/product-ranking', async (c) => {
   }
 
   const results = await db.prepare(
-    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY ${sortColumn} ${orderClause} LIMIT ? OFFSET ?`
+    `SELECT p.id, p.name, p.image_url, p.sku, p.price, p.description, SUM(ps.view_count) as total_views, SUM(ps.viewer_count) as total_viewers,
+      (SELECT pn.content FROM product_notes pn WHERE pn.product_id = p.id ORDER BY pn.created_at DESC LIMIT 1) as latest_note_content,
+      (SELECT pn.created_at FROM product_notes pn WHERE pn.product_id = p.id ORDER BY pn.created_at DESC LIMIT 1) as latest_note_at
+     FROM daily_product_stats ps JOIN products p ON ps.product_id = p.id WHERE ${where} GROUP BY ps.product_id ORDER BY ${sortColumn} ${orderClause} LIMIT ? OFFSET ?`
   ).bind(...params, limit, offset).all()
 
   const ranking = (results.results as any[]).map((r) => ({

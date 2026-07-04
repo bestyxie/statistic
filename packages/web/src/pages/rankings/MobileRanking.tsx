@@ -7,6 +7,9 @@ import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
+import ProductNotesModal from '../../components/ProductNotesModal'
+import ProductNotesAddModal from '../../components/ProductNotesAddModal'
+import type { ProductRankingItem } from '../../lib/api'
 
 export default function MobileRanking() {
   const navigate = useNavigate()
@@ -21,6 +24,8 @@ export default function MobileRanking() {
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
+  const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
+  const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
   const { show: showImage } = useImagePreview()
 
   const rangeText = start || end ? `${start || '…'}~${end || '…'}` : '全部时间'
@@ -167,10 +172,17 @@ export default function MobileRanking() {
                           <span className="text-orange-600 font-medium">{p.total_tx_count} 成交</span>
                         )}
                       </div>
+                      {p.latest_note_content && (
+                        <p className="mt-1 text-xs text-gray-500 truncate" title={p.latest_note_content}>
+                          备注：{p.latest_note_content}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <MobileCardActions>
                     <button onClick={() => setDrawerId(p.id)} className="text-green-600 text-sm">查看统计</button>
+                    <button onClick={() => setNotesProduct(p)} className="text-blue-600 text-sm">备注</button>
+                    <button onClick={() => setAddNoteProduct(p)} className="text-blue-600 text-sm">添加备注</button>
                   </MobileCardActions>
                 </MobileCard>
               )
@@ -181,6 +193,8 @@ export default function MobileRanking() {
       )}
 
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+      <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
+      <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </div>
   )
 }

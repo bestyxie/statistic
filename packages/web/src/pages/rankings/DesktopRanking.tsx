@@ -1,6 +1,9 @@
 import { useProductRanking } from '../../hooks/useProductRanking'
 import HoverPopup from '../../components/HoverPopup'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
+import ProductNotesModal from '../../components/ProductNotesModal'
+import ProductNotesAddModal from '../../components/ProductNotesAddModal'
+import type { ProductRankingItem } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useState, useCallback } from 'react'
 
@@ -17,6 +20,8 @@ export default function DesktopRanking() {
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
+  const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
+  const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
 
   const toggleSelectAll = useCallback(() => {
     const allSelected = ranking.every((p) => selectedIds.has(p.id))
@@ -105,7 +110,7 @@ export default function DesktopRanking() {
                   </th>
                   <th className="text-center py-3 px-5 text-gray-500 font-medium w-16">排名</th>
                   <th className="text-left py-3 px-5 text-gray-500 font-medium">商品</th>
-                  <th className="text-left py-3 px-5 text-gray-500 font-medium">编号</th>
+                  <th className="text-left py-3 px-5 text-gray-500 font-medium">备注</th>
                   <th onClick={() => toggleSort('views')} className={`text-right py-3 px-5 font-medium cursor-pointer select-none whitespace-nowrap ${sortBy === 'views' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>浏览次数{getSortIcon('views')}</th>
                   <th onClick={() => toggleSort('viewers')} className={`text-right py-3 px-5 font-medium cursor-pointer select-none whitespace-nowrap ${sortBy === 'viewers' ? 'text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}>浏览人数{getSortIcon('viewers')}</th>
                   <th className="text-right py-3 px-5 text-gray-500 font-medium">成交数量</th>
@@ -130,16 +135,30 @@ export default function DesktopRanking() {
                               <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover bg-gray-100" />
                             </HoverPopup>
                           ) : (<div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs">无</div>)}
-                          <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
+                          <HoverPopup side="bottom-right" interactive popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
                             <span className="font-medium text-gray-800 max-w-[200px] truncate block">{p.description || p.name}</span>
                           </HoverPopup>
                         </div>
                       </td>
-                      <td className="py-3 px-5 text-gray-400 font-mono text-xs">{p.sku || '-'}</td>
+                      <td className="py-3 px-5 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          {p.latest_note_content ? (
+                            <HoverPopup side="bottom-right" interactive popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.latest_note_content}</div>}>
+                              <span className="text-blue-600 hover:text-blue-800 cursor-pointer truncate block max-w-[140px]" onClick={() => setNotesProduct(p)}>{p.latest_note_content}</span>
+                            </HoverPopup>
+                          ) : (
+                            <span className="text-gray-400 text-sm">暂无</span>
+                          )}
+                          <button type="button" onClick={() => setAddNoteProduct(p)} className="text-blue-600 hover:text-blue-800 text-xs shrink-0">添加</button>
+                        </div>
+                      </td>
                       <td className="py-3 px-5 text-right font-bold text-blue-600">{p.total_views}</td>
                       <td className="py-3 px-5 text-right font-bold text-green-600">{p.total_viewers}</td>
                       <td className="py-3 px-5 text-right font-bold text-orange-600">{p.total_tx_count}</td>
-                      <td className="py-3 px-5 text-right"><button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button></td>
+                      <td className="py-3 px-5 text-right whitespace-nowrap">
+                        <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
+                        <button onClick={() => setNotesProduct(p)} className="text-blue-600 hover:text-blue-800 text-sm ml-3">备注</button>
+                      </td>
                     </tr>
                   )
                 })}
@@ -159,6 +178,8 @@ export default function DesktopRanking() {
         )}
       </div>
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+      <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
+      <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </>
   )
 }

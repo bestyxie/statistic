@@ -58,7 +58,9 @@ products.get('/', async (c) => {
 
   const dataParams = [statsDate, ...countParams]
   const query = `SELECT p.*, s.name as shop_name, COALESCE(ps.viewer_count, 0) as yesterday_visitors,
-    COALESCE(SUM(t.quantity), 0) as transaction_count
+    COALESCE(SUM(t.quantity), 0) as transaction_count,
+    (SELECT pn.content FROM product_notes pn WHERE pn.product_id = p.id ORDER BY pn.created_at DESC LIMIT 1) as latest_note_content,
+    (SELECT pn.created_at FROM product_notes pn WHERE pn.product_id = p.id ORDER BY pn.created_at DESC LIMIT 1) as latest_note_at
     FROM products p
     JOIN shops s ON p.shop_id = s.id
     LEFT JOIN daily_product_stats ps ON ps.product_id = p.id AND ps.date = ?
@@ -178,6 +180,43 @@ products.post('/refresh', async (c) => {
   }
 
   return c.json({ success: true, count: ids.length, refreshed_at: now })
+})
+
+// --- 商品备注（一个商品可有多条）---
+products.get('/:id/notes', async (c) => {
+  const db = c.env.DB
+  const result = await db.prepare(
+    `SELECT id, product_id, content, created_at FROM product_notes WHERE product_id = ? ORDER BY created_at DESC`
+  ).bind(c.req.param('id')).all()
+  return c.json(result.results)
+})
+
+products.post('/:id/notes', async (c) => {
+  const db = c.env.DB
+  const productId = c.req.param('id')
+  const { content } = await c.req.json<{ content: string }>()
+  if (!content || !content.trim()) {
+    return c.json({ error: '备注内容不能为空' }, 400)
+  }
+  const product = await db.prepare('SELECT id FROM products WHERE id = ?').bind(productId).first()
+  if (!product) {
+    return c.json({ error: '商品不存在' }, 404)
+  }
+  const id = crypto.randomUUID()
+  await db.prepare(
+    'INSERT INTO product_notes (id, product_id, content) VALUES (?, ?, ?)'
+  ).bind(id, productId, content.trim()).run()
+  const row = await db.prepare(
+    'SELECT id, product_id, content, created_at FROM product_notes WHERE id = ?'
+  ).bind(id).first()
+  return c.json(row)
+})
+
+products.delete('/:id/notes/:noteId', async (c) => {
+  const db = c.env.DB
+  await db.prepare('DELETE FROM product_notes WHERE id = ? AND product_id = ?')
+    .bind(c.req.param('noteId'), c.req.param('id')).run()
+  return c.json({ message: '删除成功' })
 })
 
 export default products

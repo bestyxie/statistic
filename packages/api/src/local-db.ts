@@ -351,6 +351,20 @@ export class LocalD1 implements D1Database {
       this.dirty = true
     }
 
+    const noteTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='product_notes'")
+    if (noteTable.length === 0) {
+      this.db.run(`
+        CREATE TABLE product_notes (
+          id TEXT PRIMARY KEY,
+          product_id TEXT NOT NULL,
+          content TEXT NOT NULL,
+          created_at TEXT DEFAULT (datetime('now')),
+          FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+        )
+      `)
+      this.dirty = true
+    }
+
     // Auto-save every 5 seconds if dirty（仅持久化模式）
     if (this.dbPath) {
       setInterval(() => { if (this.dirty) this.save() }, 5000)

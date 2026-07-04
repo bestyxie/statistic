@@ -4,6 +4,10 @@ import { api } from '../lib/api'
 import { supplierApi, type ProductSupplierWithInfo } from '../lib/supplierApi'
 import type { Product, Shop, Supplier, ProductLabel } from '@statistic/shared'
 
+function errMsg(e: unknown): string {
+  return e instanceof Error ? e.message : String(e)
+}
+
 export function useProducts() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -95,7 +99,7 @@ export function useProducts() {
   const [refreshing, setRefreshing] = useState(false)
   const [showProductTx, setShowProductTx] = useState(false)
   const [productTxProduct, setProductTxProduct] = useState<Product | null>(null)
-  const [productTxList, setProductTxList] = useState<any[]>([])
+  const [productTxList, setProductTxList] = useState<Awaited<ReturnType<typeof api.getTransactions>>['items']>([])
   const [productTxLoading, setProductTxLoading] = useState(false)
   const [showProductSuppliers, setShowProductSuppliers] = useState(false)
   const [psProduct, setPsProduct] = useState<Product | null>(null)
@@ -106,6 +110,8 @@ export function useProducts() {
   const [allSuppliers, setAllSuppliers] = useState<Supplier[]>([])
   const [addSupplierForm, setAddSupplierForm] = useState({ supplier_id: '', price: '', note: '' })
   const [labelProduct, setLabelProduct] = useState<Product | null>(null)
+  const [notesProduct, setNotesProduct] = useState<Product | null>(null)
+  const [addNoteProduct, setAddNoteProduct] = useState<Product | null>(null)
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [syncingLabels, setSyncingLabels] = useState(false)
   const [syncProgress, setSyncProgress] = useState('')
@@ -165,8 +171,8 @@ export function useProducts() {
       alert(`刷新成功，共刷新 ${res.count} 个商品`)
       setSelectedIds(new Set())
       load()
-    } catch (err: any) {
-      alert(err.message || '刷新失败')
+    } catch (err: unknown) {
+      alert(errMsg(err) || '刷新失败')
     } finally {
       setRefreshing(false)
     }
@@ -208,8 +214,8 @@ export function useProducts() {
     try {
       const res = await api.getTransactions({ product_id: productId, limit: 50 })
       setProductTxList(res.items || [])
-    } catch (err: any) {
-      console.error('加载成交记录失败:', err)
+    } catch (err: unknown) {
+      console.error('加载成交记录失败:', errMsg(err))
       setProductTxList([])
     } finally {
       setProductTxLoading(false)
@@ -237,8 +243,8 @@ export function useProducts() {
       setShowFullDesc(false)
       setForm({ shop_id: '', name: '', image_url: '', sku: '', price: '' })
       load()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(errMsg(err))
     }
   }
 
@@ -261,8 +267,8 @@ export function useProducts() {
     try {
       await api.deleteProduct(id)
       load()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(errMsg(err))
     }
   }
 
@@ -301,8 +307,8 @@ export function useProducts() {
       })
       setShowTxForm(false)
       setTxProduct(null)
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(errMsg(err))
     }
   }
 
@@ -358,8 +364,8 @@ export function useProducts() {
       })
       setShowAddSupplier(false)
       setAddSupplierProduct(null)
-    } catch (err: any) {
-      alert(err.message || '添加失败')
+    } catch (err: unknown) {
+      alert(errMsg(err) || '添加失败')
     }
   }
 
@@ -369,12 +375,18 @@ export function useProducts() {
   }, [])
 
   useEffect(() => {
-    load()
+    const run = async () => {
+      await load()
+    }
+    run()
   }, [load])
 
-  useEffect(() => {
+  // URL 搜索变化时同步输入框（渲染期调整 state，避免 effect 级联渲染）
+  const [lastUrlSearch, setLastUrlSearch] = useState(search)
+  if (search !== lastUrlSearch) {
+    setLastUrlSearch(search)
     setSearchInput(search)
-  }, [search])
+  }
 
   // Load labels once
   useEffect(() => {
@@ -401,8 +413,8 @@ export function useProducts() {
       }
       api.getLabels().then(setLabels).catch(() => {})
       load()
-    } catch (err: any) {
-      setSyncProgress(`同步失败: ${err.message}`)
+    } catch (err: unknown) {
+      setSyncProgress(`同步失败: ${errMsg(err)}`)
     } finally {
       setSyncingLabels(false)
     }
@@ -413,8 +425,8 @@ export function useProducts() {
       const res = await api.importLabels()
       alert(`导入成功，共 ${res.imported} 个标签`)
       api.getLabels().then(setLabels).catch(() => {})
-    } catch (err: any) {
-      alert(`导入失败: ${err.message}`)
+    } catch (err: unknown) {
+      alert(`导入失败: ${errMsg(err)}`)
     }
   }
 
@@ -464,6 +476,10 @@ export function useProducts() {
     // Set label modal
     labelProduct,
     setLabelProduct,
+    notesProduct,
+    setNotesProduct,
+    addNoteProduct,
+    setAddNoteProduct,
     // Selection
     selectedIds,
     toggleSelect,

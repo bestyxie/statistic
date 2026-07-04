@@ -17,6 +17,21 @@ export interface Product {
   price: string
   created_at: string
   updated_at: string
+  /** 最近一条备注内容（列表接口附带，无则 null） */
+  latest_note_content?: string | null
+  /** 最近一条备注时间（列表接口附带，无则 null） */
+  latest_note_at?: string | null
+  /** 列表接口附带的聚合字段 */
+  yesterday_visitors?: number
+  transaction_count?: number
+}
+
+/** 商品备注（一个商品可有多条） */
+export interface ProductNote {
+  id: string
+  product_id: string
+  content: string
+  created_at: string
 }
 
 export interface DailyShopStats {

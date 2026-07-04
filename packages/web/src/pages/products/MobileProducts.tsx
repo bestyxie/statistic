@@ -6,6 +6,8 @@ import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import SetLabelModal from './SetLabelModal'
+import ProductNotesModal from '../../components/ProductNotesModal'
+import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -97,6 +99,13 @@ export default function MobileProducts() {
     // Set label modal
     labelProduct,
     setLabelProduct,
+    // Notes modal
+    notesProduct,
+    setNotesProduct,
+    addNoteProduct,
+    setAddNoteProduct,
+    // Reload
+    load,
     // Navigation
     navigate,
   } = useProducts()
@@ -273,9 +282,9 @@ export default function MobileProducts() {
 
               {/* Info row */}
               <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500 pl-[4.25rem]">
-                {p.shop_name && (
+                {p.latest_note_content && (
                   <>
-                    <span>{p.shop_name}</span>
+                    <span className="truncate max-w-[120px]" title={p.latest_note_content}>{p.latest_note_content}</span>
                     <span className="text-gray-300">·</span>
                   </>
                 )}
@@ -285,19 +294,19 @@ export default function MobileProducts() {
                     <span className="text-gray-300">·</span>
                   </>
                 )}
-                <span className="font-medium">{(p as any).yesterday_visitors || 0} 访客</span>
+                <span className="font-medium">{p.yesterday_visitors || 0} 访客</span>
                 <span className="text-gray-300">·</span>
                 <button
                   onClick={() => {
-                    if ((p as any).transaction_count > 0) openProductTx(p)
+                    if ((p.transaction_count || 0) > 0) openProductTx(p)
                   }}
                   className={`font-medium ${
-                    (p as any).transaction_count > 0
+                    (p.transaction_count || 0) > 0
                       ? 'text-orange-600 hover:text-orange-700'
                       : 'text-gray-400 hover:text-gray-500'
                   }`}
                 >
-                  {(p as any).transaction_count || 0} 成交
+                  {p.transaction_count || 0} 成交
                 </button>
               </div>
 
@@ -332,6 +341,18 @@ export default function MobileProducts() {
                   className="text-teal-600 text-sm"
                 >
                   设置标签
+                </button>
+                <button
+                  onClick={() => setNotesProduct(p)}
+                  className="text-blue-600 text-sm"
+                >
+                  备注
+                </button>
+                <button
+                  onClick={() => setAddNoteProduct(p)}
+                  className="text-blue-600 text-sm"
+                >
+                  添加备注
                 </button>
                 <button
                   onClick={() => handleEdit(p)}
@@ -866,6 +887,8 @@ export default function MobileProducts() {
         onClose={() => setDrawerId(null)}
       />
       <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
+      <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} onChanged={load} />
+      <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} onChanged={load} />
     </div>
   )
 }
