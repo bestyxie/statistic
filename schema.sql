@@ -1,20 +1,11 @@
-DROP TABLE IF EXISTS product_visitor_relations;
-DROP TABLE IF EXISTS visitors;
-DROP TABLE IF EXISTS transactions;
-DROP TABLE IF EXISTS daily_product_stats;
-DROP TABLE IF EXISTS daily_shop_stats;
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS shops;
-DROP TABLE IF EXISTS admin_users;
-
-CREATE TABLE admin_users (
+CREATE TABLE IF NOT EXISTS admin_users (
   id TEXT PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   password_hash TEXT NOT NULL,
   created_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE TABLE shops (
+CREATE TABLE IF NOT EXISTS shops (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   platform TEXT DEFAULT '',
@@ -22,7 +13,7 @@ CREATE TABLE shops (
   updated_at TEXT DEFAULT (datetime('now'))
 );
 
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
   id TEXT PRIMARY KEY,
   shop_id TEXT NOT NULL,
   name TEXT NOT NULL,
@@ -37,7 +28,7 @@ CREATE TABLE products (
   UNIQUE(shop_id, sku)
 );
 
-CREATE TABLE daily_shop_stats (
+CREATE TABLE IF NOT EXISTS daily_shop_stats (
   id TEXT PRIMARY KEY,
   shop_id TEXT NOT NULL,
   date TEXT NOT NULL,
@@ -47,7 +38,7 @@ CREATE TABLE daily_shop_stats (
   UNIQUE(shop_id, date)
 );
 
-CREATE TABLE daily_product_stats (
+CREATE TABLE IF NOT EXISTS daily_product_stats (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   shop_id TEXT NOT NULL,
@@ -61,7 +52,7 @@ CREATE TABLE daily_product_stats (
 );
 
 -- 访客主表（独立存在，不随商品删除）
-CREATE TABLE visitors (
+CREATE TABLE IF NOT EXISTS visitors (
   id TEXT PRIMARY KEY,
   ext_visitor_id TEXT UNIQUE NOT NULL,
   nick_name TEXT DEFAULT '',
@@ -73,7 +64,7 @@ CREATE TABLE visitors (
 );
 
 -- 商品-访客关联表（记录某访客某天访问了某商品）
-CREATE TABLE product_visitor_relations (
+CREATE TABLE IF NOT EXISTS product_visitor_relations (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   visitor_id TEXT NOT NULL,
@@ -86,7 +77,7 @@ CREATE TABLE product_visitor_relations (
 );
 
 -- 成交记录
-CREATE TABLE transactions (
+CREATE TABLE IF NOT EXISTS transactions (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   shop_id TEXT NOT NULL,
@@ -100,7 +91,7 @@ CREATE TABLE transactions (
 );
 
 -- 退款记录（关联成交记录）
-CREATE TABLE refunds (
+CREATE TABLE IF NOT EXISTS refunds (
   id TEXT PRIMARY KEY,
   transaction_id TEXT NOT NULL,
   price TEXT NOT NULL,
@@ -112,7 +103,7 @@ CREATE TABLE refunds (
 );
 
 -- 供应商
-CREATE TABLE suppliers (
+CREATE TABLE IF NOT EXISTS suppliers (
   id TEXT PRIMARY KEY,
   wechat_nickname TEXT NOT NULL,
   wechat_id TEXT DEFAULT '',
@@ -122,7 +113,7 @@ CREATE TABLE suppliers (
 );
 
 -- 商品-供应商关联（多对多）
-CREATE TABLE product_suppliers (
+CREATE TABLE IF NOT EXISTS product_suppliers (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   supplier_id TEXT NOT NULL,
@@ -136,7 +127,7 @@ CREATE TABLE product_suppliers (
 );
 
 -- 拿货记录（关联商品-供应商）
-CREATE TABLE purchase_records (
+CREATE TABLE IF NOT EXISTS purchase_records (
   id TEXT PRIMARY KEY,
   product_supplier_id TEXT NOT NULL,
   price TEXT NOT NULL,
@@ -148,7 +139,7 @@ CREATE TABLE purchase_records (
 );
 
 -- Label 定义（从 yxcapp.cn 导入）
-CREATE TABLE product_labels (
+CREATE TABLE IF NOT EXISTS product_labels (
   label_id TEXT PRIMARY KEY,
   label_name TEXT NOT NULL,
   sort INTEGER DEFAULT 0,
@@ -159,7 +150,7 @@ CREATE TABLE product_labels (
 );
 
 -- 商品-Label 关联（多对多）
-CREATE TABLE product_label_relations (
+CREATE TABLE IF NOT EXISTS product_label_relations (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   label_id TEXT NOT NULL,
@@ -170,7 +161,7 @@ CREATE TABLE product_label_relations (
 );
 
 -- 商品备注（一个商品可有多条，按 created_at 倒序取最近一条展示）
-CREATE TABLE product_notes (
+CREATE TABLE IF NOT EXISTS product_notes (
   id TEXT PRIMARY KEY,
   product_id TEXT NOT NULL,
   content TEXT NOT NULL,
