@@ -24,6 +24,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
   const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
   const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [visitorModal, setVisitorModal] = useState<{ open: boolean; date: string; visitors: VisitorWithDate[]; loading: boolean }>({ open: false, date: '', visitors: [], loading: false })
   const [visitorProductsModal, setVisitorProductsModal] = useState<{ visitor: VisitorWithDate | null }>({ visitor: null })
 
@@ -38,6 +39,21 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
       alert(err.message)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 刷新当前商品（与商品列表「刷新选中」一致：调第三方接口刷新该商品）
+  const handleRefresh = async () => {
+    if (!productId) return
+    setRefreshing(true)
+    try {
+      const res = await api.refreshProducts([productId])
+      alert(`刷新成功，共刷新 ${res.count} 个商品`)
+      await fetchData()
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '刷新失败')
+    } finally {
+      setRefreshing(false)
     }
   }
 
@@ -284,6 +300,23 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
           ) : (
             <p className="text-center text-gray-400 py-12">商品不存在</p>
           )}
+        </div>
+
+        {/* 底部操作栏（固定，不随内容滚动） */}
+        <div className="shrink-0 bg-white border-t border-gray-200 px-4 sm:px-6 py-3 flex justify-end gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing || !productId}
+            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm disabled:opacity-50"
+          >
+            {refreshing ? '刷新中...' : '刷新'}
+          </button>
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+          >
+            关闭
+          </button>
         </div>
       </div>
     </div>
