@@ -16,6 +16,9 @@ export default function MobileTransactions() {
     start,
     end,
     search,
+    labels,
+    labelId,
+    handleLabelChange,
     searchInput,
     setSearchInput,
     startInput,
@@ -35,7 +38,12 @@ export default function MobileTransactions() {
     totalRefundCount,
   } = useTransactions()
 
-  const filterSummary = [search && `搜索: ${search}`, start && `从 ${start}`, end && `至 ${end}`].filter(Boolean).join(' · ') || undefined
+  const filterSummary = [
+    search && `搜索: ${search}`,
+    labelId && (labels.find((l) => l.label_id === labelId)?.label_name || '标签'),
+    start && `从 ${start}`,
+    end && `至 ${end}`,
+  ].filter(Boolean).join(' · ') || undefined
 
   const { show: showImage } = useImagePreview()
 
@@ -64,6 +72,16 @@ export default function MobileTransactions() {
           onKeyDown={(e) => e.key === 'Enter' && doSearch()}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
+        <select
+          value={labelId}
+          onChange={(e) => handleLabelChange(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">全部标签</option>
+          {labels.map((l) => (
+            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
+          ))}
+        </select>
         <input
           type="date"
           value={startInput}

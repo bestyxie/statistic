@@ -224,7 +224,7 @@ export const api = {
   // Transactions
   createTransaction: (data: { product_id: string; shop_id: string; price: string; quantity?: number; date: string; note?: string }) =>
     request<TransactionInput>('/stats/transactions', { method: 'POST', body: JSON.stringify(data) }),
-  getTransactions: (params?: { shop_id?: string; product_id?: string; start?: string; end?: string; page?: number; limit?: number; search?: string }) => {
+  getTransactions: (params?: { shop_id?: string; product_id?: string; start?: string; end?: string; page?: number; limit?: number; search?: string; label_id?: string }) => {
     const q = new URLSearchParams()
     if (params?.shop_id) q.set('shop_id', params.shop_id)
     if (params?.product_id) q.set('product_id', params.product_id)
@@ -233,6 +233,7 @@ export const api = {
     if (params?.page) q.set('page', String(params.page))
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.search) q.set('search', params.search)
+    if (params?.label_id) q.set('label_id', params.label_id)
     return request<{ items: Transaction[]; total: number; page: number; limit: number }>(`/stats/transactions?${q.toString()}`)
   },
   deleteTransaction: (id: string) =>

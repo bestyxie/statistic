@@ -696,6 +696,7 @@ stats.get('/transactions', async (c) => {
   const start = c.req.query('start')
   const end = c.req.query('end')
   const search = c.req.query('search')
+  const labelId = c.req.query('label_id')
   const page = Math.max(1, parseInt(c.req.query('page') || '1'))
   const limit = Math.max(1, parseInt(c.req.query('limit') || '30'))
   const offset = (page - 1) * limit
@@ -708,6 +709,7 @@ stats.get('/transactions', async (c) => {
   if (start) { conditions.push('t.date >= ?'); params.push(start) }
   if (end) { conditions.push('t.date <= ?'); params.push(end) }
   if (search) { conditions.push('p.description LIKE ?'); params.push(`%${search}%`) }
+  if (labelId) { conditions.push('t.product_id IN (SELECT product_id FROM product_label_relations WHERE label_id = ?)'); params.push(labelId) }
 
   const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
 

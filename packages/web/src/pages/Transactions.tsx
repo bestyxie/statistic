@@ -10,6 +10,9 @@ export default function Transactions() {
     totalPages,
     searchInput,
     setSearchInput,
+    labels,
+    labelId,
+    handleLabelChange,
     startInput,
     setStartInput,
     endInput,
@@ -81,6 +84,16 @@ export default function Transactions() {
             <button type="button" onClick={() => { setEndInput(''); setSearchParams((prev) => { prev.delete('end'); prev.delete('page'); return prev }) }} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
           )}
         </div>
+        <select
+          value={labelId}
+          onChange={(e) => handleLabelChange(e.target.value)}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="">全部标签</option>
+          {labels.map((l) => (
+            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
+          ))}
+        </select>
         <button onClick={doSearch} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">搜索</button>
       </div>
 

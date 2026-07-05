@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
+import type { ProductLabel } from '@statistic/shared'
 
 export function useTransactions() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<any[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
+  const [labels, setLabels] = useState<ProductLabel[]>([])
   const [refundModal, setRefundModal] = useState<any>(null)
   const [refundForm, setRefundForm] = useState({
     price: '',
@@ -27,6 +29,7 @@ export function useTransactions() {
   const start = searchParams.get('start') || ''
   const end = searchParams.get('end') || ''
   const search = searchParams.get('search') || ''
+  const labelId = searchParams.get('label') || ''
 
   const [searchInput, setSearchInput] = useState(search)
   const [startInput, setStartInput] = useState(start)
@@ -51,6 +54,7 @@ export function useTransactions() {
         start: start || undefined,
         end: end || undefined,
         search: search || undefined,
+        label_id: labelId || undefined,
         page,
         limit,
       })
@@ -61,11 +65,21 @@ export function useTransactions() {
     } finally {
       setLoading(false)
     }
-  }, [page, start, end, search])
+  }, [page, start, end, search, labelId])
 
   useEffect(() => {
     loadTransactions()
   }, [loadTransactions])
+
+  useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
+
+  const handleLabelChange = (v: string) =>
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (v) prev.set('label', v)
+      else prev.delete('label')
+      return prev
+    })
 
   useEffect(() => {
     setSearchInput(search)
@@ -130,6 +144,9 @@ export function useTransactions() {
     start,
     end,
     search,
+    labels,
+    labelId,
+    handleLabelChange,
     searchInput,
     setSearchInput,
     startInput,

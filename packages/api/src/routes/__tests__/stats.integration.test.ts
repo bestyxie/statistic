@@ -472,3 +472,39 @@ describe('GET /stats/product-ranking', () => {
     expect(b?.latest_note_content).toBeNull()
   })
 })
+
+interface TxRow {
+  id: string
+  product_id: string
+}
+
+async function fetchTransactions(db: LocalD1, query: string): Promise<{ status: number; items: TxRow[]; total: number }> {
+  const res = await statsRoutes.fetch(new Request(`http://localhost/transactions?${query}`), { DB: db })
+  const body = await res.json() as { items?: TxRow[]; total?: number }
+  return { status: res.status, items: body.items ?? [], total: body.total ?? 0 }
+}
+
+describe('GET /stats/transactions', () => {
+  let db: LocalD1
+
+  beforeEach(async () => {
+    db = await createInMemoryD1()
+    await seedFixture(db)
+  })
+
+  it('returns all transactions without filter', async () => {
+    const { total } = await fetchTransactions(db, '')
+    expect(total).toBe(3)
+  })
+
+  it('filters by label_id', async () => {
+    // label-1 = p-A, p-B → p-A 的成交 t-1, t-3（p-B 无成交）
+    const l1 = await fetchTransactions(db, 'label_id=label-1')
+    expect(l1.total).toBe(2)
+    expect(l1.items.map((t) => t.id).sort()).toEqual(['t-1', 't-3'])
+    // label-2 = p-C → t-2
+    const l2 = await fetchTransactions(db, 'label_id=label-2')
+    expect(l2.total).toBe(1)
+    expect(l2.items.map((t) => t.id)).toEqual(['t-2'])
+  })
+})
