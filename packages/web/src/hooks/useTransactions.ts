@@ -2,14 +2,22 @@ import { useState, useEffect, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { ProductLabel } from '@statistic/shared'
+import type { Transaction } from '../lib/api'
+
+// 时间戳 → 后端日期参数 YYYY-MM-DD（按本地日期）
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
 
 export function useTransactions() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const [items, setItems] = useState<any[]>([])
+  const [items, setItems] = useState<Transaction[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [labels, setLabels] = useState<ProductLabel[]>([])
-  const [refundModal, setRefundModal] = useState<any>(null)
+  const [refundModal, setRefundModal] = useState<Transaction | null>(null)
   const [refundForm, setRefundForm] = useState({
     price: '',
     quantity: '1',
@@ -32,18 +40,29 @@ export function useTransactions() {
   const labelId = searchParams.get('label') || ''
 
   const [searchInput, setSearchInput] = useState(search)
-  const [startInput, setStartInput] = useState(start)
-  const [endInput, setEndInput] = useState(end)
+
+  // 时间范围 [开始, 结束] 时间戳，派生自 URL；null = 全部时间。清空与选择均即时生效
+  const range: [number, number] | null =
+    start && end ? [new Date(`${start}T00:00:00`).getTime(), new Date(`${end}T00:00:00`).getTime()] : null
+  const setRange = (next: [number, number] | null) => {
+    setSearchParams((prev) => {
+      prev.delete('page')
+      if (next) {
+        prev.set('start', tsToDateStr(next[0]))
+        prev.set('end', tsToDateStr(next[1]))
+      } else {
+        prev.delete('start')
+        prev.delete('end')
+      }
+      return prev
+    })
+  }
 
   const doSearch = () =>
     setSearchParams((prev) => {
       prev.delete('page')
       if (searchInput) prev.set('search', searchInput)
       else prev.delete('search')
-      if (startInput) prev.set('start', startInput)
-      else prev.delete('start')
-      if (endInput) prev.set('end', endInput)
-      else prev.delete('end')
       return prev
     })
 
@@ -60,15 +79,18 @@ export function useTransactions() {
       })
       setItems(res.items || [])
       setTotal(res.total || 0)
-    } catch (e: any) {
-      console.error('加载失败:', e.message)
+    } catch (e: unknown) {
+      console.error('加载失败:', e instanceof Error ? e.message : e)
     } finally {
       setLoading(false)
     }
   }, [page, start, end, search, labelId])
 
   useEffect(() => {
-    loadTransactions()
+    const load = async () => {
+      await loadTransactions()
+    }
+    load()
   }, [loadTransactions])
 
   useEffect(() => { api.getLabels().then(setLabels).catch(() => {}) }, [])
@@ -81,11 +103,12 @@ export function useTransactions() {
       return prev
     })
 
-  useEffect(() => {
+  // URL 搜索变化时同步输入框（渲染期调整 state，避免 effect 级联渲染）
+  const [lastUrlSearch, setLastUrlSearch] = useState(search)
+  if (search !== lastUrlSearch) {
+    setLastUrlSearch(search)
     setSearchInput(search)
-    setStartInput(start)
-    setEndInput(end)
-  }, [search, start, end])
+  }
 
   const handleRefund = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,8 +123,8 @@ export function useTransactions() {
       })
       setRefundModal(null)
       loadTransactions()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '操作失败')
     }
   }
 
@@ -110,8 +133,8 @@ export function useTransactions() {
     try {
       await api.deleteTransaction(id)
       loadTransactions()
-    } catch (err: any) {
-      alert(err.message)
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : '操作失败')
     }
   }
 
@@ -143,16 +166,14 @@ export function useTransactions() {
     // Filters
     start,
     end,
+    range,
+    setRange,
     search,
     labels,
     labelId,
     handleLabelChange,
     searchInput,
     setSearchInput,
-    startInput,
-    setStartInput,
-    endInput,
-    setEndInput,
     doSearch,
     setSearchParams,
     // Refund

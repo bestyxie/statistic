@@ -3,6 +3,7 @@ import HoverPopup from '../../components/HoverPopup'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
+import TimeRangePicker from '../../components/TimeRangePicker'
 import type { ProductRankingItem } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useState, useCallback } from 'react'
@@ -12,7 +13,7 @@ export default function DesktopRanking() {
   const {
     shops, selectedShop, handleShopChange,
     labels, labelId, handleLabelChange,
-    start, setStart, end, setEnd, clearDateRange,
+    range, setRange,
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, pageSize, rankBase,
     sortBy, toggleSort, getSortIcon,
@@ -59,19 +60,9 @@ export default function DesktopRanking() {
         {/* 筛选栏：日期范围（清空=全部时间）/ 品牌 / 店铺 / 描述搜索 */}
         <div className="flex flex-wrap items-end gap-3 bg-white rounded-lg border border-gray-200 p-3">
           <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">开始日期</label>
-            <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <label className="block text-xs font-medium text-gray-500 mb-1">时间范围{!range && '（全部时间）'}</label>
+            <TimeRangePicker value={range} onChange={setRange} showTime={false} />
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-500 mb-1">结束日期</label>
-            <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-          </div>
-          {(start || end) && (
-            <button onClick={clearDateRange} className="px-3 py-2 text-gray-500 hover:text-gray-700 text-sm border border-gray-300 rounded-md">清空日期</button>
-          )}
-          {!start && !end && (
-            <span className="px-3 py-2 text-xs text-gray-400">全部时间</span>
-          )}
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">品牌</label>
             <select value={labelId} onChange={(e) => handleLabelChange(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">

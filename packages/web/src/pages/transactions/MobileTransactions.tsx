@@ -3,6 +3,7 @@ import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCar
 import MobileFilter from '../../components/mobile/MobileFilter'
 import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
+import TimeRangePicker from '../../components/TimeRangePicker'
 import { useTransactions } from '../../hooks/useTransactions'
 
 export default function MobileTransactions() {
@@ -15,16 +16,14 @@ export default function MobileTransactions() {
     totalPages,
     start,
     end,
+    range,
+    setRange,
     search,
     labels,
     labelId,
     handleLabelChange,
     searchInput,
     setSearchInput,
-    startInput,
-    setStartInput,
-    endInput,
-    setEndInput,
     doSearch,
     refundModal,
     setRefundModal,
@@ -41,8 +40,7 @@ export default function MobileTransactions() {
   const filterSummary = [
     search && `搜索: ${search}`,
     labelId && (labels.find((l) => l.label_id === labelId)?.label_name || '标签'),
-    start && `从 ${start}`,
-    end && `至 ${end}`,
+    start && end && `${start} ~ ${end}`,
   ].filter(Boolean).join(' · ') || undefined
 
   const { show: showImage } = useImagePreview()
@@ -82,18 +80,7 @@ export default function MobileTransactions() {
             <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
           ))}
         </select>
-        <input
-          type="date"
-          value={startInput}
-          onChange={(e) => setStartInput(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
-        <input
-          type="date"
-          value={endInput}
-          onChange={(e) => setEndInput(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        <TimeRangePicker value={range} onChange={setRange} showTime={false} className="w-full" />
         <button
           onClick={doSearch}
           className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"

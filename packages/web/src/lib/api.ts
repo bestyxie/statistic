@@ -94,7 +94,7 @@ interface TopProduct {
   total_viewers: number
 }
 
-interface Transaction {
+export interface Transaction {
   id: string
   product_id: string
   shop_id: string
