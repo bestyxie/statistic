@@ -30,11 +30,12 @@ export const supplierApi = {
     request<{ message: string }>(`/suppliers/${id}`, { method: 'DELETE' }),
 
   // 全量关联（搜索）
-  getAllProducts: (params?: { search?: string; supplier_id?: string; product_id?: string }) => {
+  getAllProducts: (params?: { search?: string; supplier_id?: string; product_id?: string; label_id?: string }) => {
     const q = new URLSearchParams()
     if (params?.search) q.set('search', params.search)
     if (params?.supplier_id) q.set('supplier_id', params.supplier_id)
     if (params?.product_id) q.set('product_id', params.product_id)
+    if (params?.label_id) q.set('label_id', params.label_id)
     return request<ProductSupplierWithInfo[]>(`/suppliers/all-products?${q.toString()}`)
   },
 

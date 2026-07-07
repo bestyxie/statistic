@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supplierApi, type ProductSupplierWithInfo } from '../../lib/supplierApi'
 import { api } from '../../lib/api'
-import type { Supplier, Product, Shop } from '@statistic/shared'
+import type { Supplier, Product, Shop, ProductLabel } from '@statistic/shared'
 import SupplierForm from './SupplierForm'
 import HoverPopup from '../HoverPopup'
 
@@ -13,6 +13,8 @@ export default function SupplyListTab() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filterSupplier, setFilterSupplier] = useState('')
+  const [filterLabel, setFilterLabel] = useState('')
+  const [labels, setLabels] = useState<ProductLabel[]>([])
 
   // 添加/编辑模式
   const [addMode, setAddMode] = useState<AddMode>('none')
@@ -43,10 +45,10 @@ export default function SupplyListTab() {
 
   const loadLinks = useCallback(() => {
     setLoading(true)
-    supplierApi.getAllProducts({ search, supplier_id: filterSupplier })
+    supplierApi.getAllProducts({ search, supplier_id: filterSupplier, label_id: filterLabel })
       .then(setLinks)
       .finally(() => setLoading(false))
-  }, [search, filterSupplier])
+  }, [search, filterSupplier, filterLabel])
 
   const [shops, setShops] = useState<Shop[]>([])
 
@@ -58,7 +60,7 @@ export default function SupplyListTab() {
     api.getShops().then(setShops)
   }
 
-  useEffect(() => { loadSuppliers(); loadShops() }, [])
+  useEffect(() => { loadSuppliers(); loadShops(); api.getLabels().then(setLabels).catch(() => {}) }, [])
   useEffect(() => { loadLinks() }, [loadLinks])
 
   const loadCatalog = async (q: string) => {
@@ -174,6 +176,13 @@ export default function SupplyListTab() {
             <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">全部供应商</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
+            </select>
+          </div>
+          <div className="w-full sm:w-48">
+            <label className="block text-xs text-gray-500 mb-1">按品牌筛选</label>
+            <select value={filterLabel} onChange={(e) => setFilterLabel(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">全部品牌</option>
+              {labels.map((l) => <option key={l.label_id} value={l.label_id}>{l.label_name}</option>)}
             </select>
           </div>
           <div className="flex gap-2">
