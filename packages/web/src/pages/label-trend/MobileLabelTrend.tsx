@@ -8,6 +8,7 @@ import MetricToggle from './components/MetricToggle'
 import LabelTrendDot from './components/LabelTrendDot'
 import LabelProductDrawer, { type LabelProductDrawerTarget } from './components/LabelProductDrawer'
 import LabelSalesProductsModal, { type LabelSalesProductsTarget } from './components/LabelSalesProductsModal'
+import YesterdayVisitorRankDrawer from './components/YesterdayVisitorRankDrawer'
 import { useLabelTrend } from './hooks/useLabelTrend'
 import type { LabelMetric, LabelTxMetric } from './hooks/useLabelTrend'
 import TimeRangePicker from '../../components/TimeRangePicker'
@@ -51,6 +52,7 @@ export default function MobileLabelTrend() {
 
   const [drawerTarget, setDrawerTarget] = useState<LabelProductDrawerTarget | null>(null)
   const [salesModalTarget, setSalesModalTarget] = useState<LabelSalesProductsTarget | null>(null)
+  const [rankOpen, setRankOpen] = useState(false)
   const handlePointClick = (date: string | undefined, labelId: string, labelName: string) => {
     if (!date) return
     setDrawerTarget({ label_id: labelId, label_name: labelName, date })
@@ -78,9 +80,18 @@ export default function MobileLabelTrend() {
       </MobileFilter>
 
       <MobileCard>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <h2 className="text-sm font-semibold text-gray-800">每日访客趋势</h2>
-          <MetricToggle value={metric} options={VISITOR_METRICS} onChange={setMetric} />
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => setRankOpen(true)}
+              className="px-2 py-1 text-xs border border-gray-300 rounded-md text-gray-600 bg-white hover:bg-gray-50"
+            >
+              昨日排行
+            </button>
+            <MetricToggle value={metric} options={VISITOR_METRICS} onChange={setMetric} />
+          </div>
         </div>
         {error ? (
           <p className="text-center text-red-500 py-8 text-sm">{error}</p>
@@ -210,6 +221,7 @@ export default function MobileLabelTrend() {
 
       <LabelProductDrawer target={drawerTarget} onClose={() => setDrawerTarget(null)} />
       <LabelSalesProductsModal target={salesModalTarget} onClose={() => setSalesModalTarget(null)} />
+      <YesterdayVisitorRankDrawer open={rankOpen} labels={labels} onClose={() => setRankOpen(false)} />
     </div>
   )
 }
