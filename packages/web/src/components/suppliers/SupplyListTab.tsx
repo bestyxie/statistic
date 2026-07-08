@@ -15,6 +15,8 @@ export default function SupplyListTab() {
   const [filterSupplier, setFilterSupplier] = useState('')
   const [filterLabel, setFilterLabel] = useState('')
   const [labels, setLabels] = useState<ProductLabel[]>([])
+  const [page, setPage] = useState(1)
+  const pageSize = 20
 
   // 添加/编辑模式
   const [addMode, setAddMode] = useState<AddMode>('none')
@@ -162,6 +164,22 @@ export default function SupplyListTab() {
     setCurlSupplyPrice('')
   }
 
+  // 客户端分页：每页 20 条，分页器样式与商品列表一致
+  const total = links.length
+  const totalPages = Math.max(1, Math.ceil(total / pageSize))
+  const currentPage = Math.min(page, totalPages)
+  const pagedLinks = links.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const pages: (number | '...')[] = []
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (currentPage > 3) pages.push('...')
+    for (let i = Math.max(2, currentPage - 1); i <= Math.min(totalPages - 1, currentPage + 1); i++) pages.push(i)
+    if (currentPage < totalPages - 2) pages.push('...')
+    pages.push(totalPages)
+  }
+
   return (
     <div className="space-y-4">
       {/* 搜索栏 */}
@@ -169,18 +187,18 @@ export default function SupplyListTab() {
         <div className="flex flex-wrap gap-2 sm:gap-3 items-end">
           <div className="flex-1 min-w-[140px]">
             <label className="block text-xs text-gray-500 mb-1">搜索</label>
-            <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} placeholder="供应商 / 商品编号 / 商品描述" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="text" value={search} onChange={(e) => { setSearch(e.target.value); setPage(1) }} placeholder="供应商 / 商品编号 / 商品描述" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按供应商筛选</label>
-            <select value={filterSupplier} onChange={(e) => setFilterSupplier(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select value={filterSupplier} onChange={(e) => { setFilterSupplier(e.target.value); setPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">全部供应商</option>
               {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
             </select>
           </div>
           <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按品牌筛选</label>
-            <select value={filterLabel} onChange={(e) => setFilterLabel(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select value={filterLabel} onChange={(e) => { setFilterLabel(e.target.value); setPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">全部品牌</option>
               {labels.map((l) => <option key={l.label_id} value={l.label_id}>{l.label_name}</option>)}
             </select>
@@ -371,6 +389,7 @@ export default function SupplyListTab() {
         ) : links.length === 0 ? (
           <p className="text-center py-12 text-gray-400 text-sm">暂无供货关联</p>
         ) : (
+          <>
           <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -383,7 +402,7 @@ export default function SupplyListTab() {
               </tr>
             </thead>
             <tbody>
-              {links.map((l) => (
+              {pagedLinks.map((l) => (
                 <tr key={l.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-5">
                     <div className="flex items-center gap-2">
@@ -411,6 +430,29 @@ export default function SupplyListTab() {
             </tbody>
           </table>
           </div>
+          {total > pageSize && (
+            <div className="flex flex-col sm:flex-row items-center justify-between px-3 sm:px-5 py-3 border-t border-gray-200 gap-2">
+              <span className="text-xs sm:text-sm text-gray-500">
+                共 {total} 条，第 {currentPage}/{totalPages} 页
+              </span>
+              <div className="flex items-center gap-1">
+                <button onClick={() => setPage(currentPage - 1)} disabled={currentPage <= 1} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">上一页</button>
+                {pages.map((p, i) =>
+                  p === '...' ? (
+                    <span key={`dots-${i}`} className="px-2 text-gray-400">...</span>
+                  ) : (
+                    <button key={p} onClick={() => setPage(p)} className={`px-3 py-1 text-sm rounded-md border ${p === currentPage ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
+                  )
+                )}
+                <button onClick={() => setPage(currentPage + 1)} disabled={currentPage >= totalPages} className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">下一页</button>
+                <span className="hidden sm:inline mx-2 text-gray-400">|</span>
+                <span className="hidden sm:inline text-sm text-gray-500">跳至</span>
+                <input type="number" min={1} max={totalPages} className="hidden sm:block w-14 px-2 py-1 text-sm border border-gray-300 rounded-md text-center" onKeyDown={(e) => { if (e.key === 'Enter') { const v = parseInt(e.currentTarget.value); if (v >= 1 && v <= totalPages) setPage(v) } }} />
+                <span className="hidden sm:inline text-sm text-gray-500">页</span>
+              </div>
+            </div>
+          )}
+          </>
         )}
       </div>
     </div>
