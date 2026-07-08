@@ -40,7 +40,7 @@ export default function SupplierList({ suppliers, selectedId, loading, onSelect,
   }, [suppliers, search])
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col max-h-[calc(100vh-15rem)]">
       {/* 顶部：搜索 + 添加 */}
       <div className="p-3 border-b border-gray-200 flex gap-2">
         <div className="flex-1 relative">

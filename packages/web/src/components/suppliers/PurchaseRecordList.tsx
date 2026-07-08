@@ -31,7 +31,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col max-h-[calc(100vh-15rem)]">
       <div className="px-5 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
         <h3 className="font-medium text-gray-700 text-sm">拿货记录</h3>
         <button
@@ -52,6 +52,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
         />
       )}
 
+      <div className="flex-1 overflow-y-auto">
       {purchases.length === 0 ? (
         <p className="text-center py-8 text-gray-400 text-sm">暂无拿货记录</p>
       ) : (
@@ -98,6 +99,7 @@ export default function PurchaseRecordList({ purchases, supplierProducts, onSave
         </table>
         </div>
       )}
+      </div>
     </div>
   )
 }
