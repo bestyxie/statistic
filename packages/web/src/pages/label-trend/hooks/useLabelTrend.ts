@@ -70,7 +70,8 @@ function tsToDateStr(ts: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
-function colorFor(index: number): string {
+// 全量 labels 数组的下标着色，供趋势图、销量排行、昨日访客排行共用，保证同品牌颜色一致
+export function colorFor(index: number): string {
   return `hsl(${index * 60}, 70%, 50%)`
 }
 
