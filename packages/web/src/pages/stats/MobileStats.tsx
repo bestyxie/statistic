@@ -4,6 +4,7 @@ import MobileCard, { MobileCardActions } from '../../components/mobile/MobileCar
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 import { useStats } from '../../hooks/useStats'
+import TimeRangePicker from '../../components/TimeRangePicker'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 
 export default function MobileStats() {
@@ -14,10 +15,10 @@ export default function MobileStats() {
     setSelectedShop,
     drawerId,
     setDrawerId,
+    range,
+    setRange,
     start,
-    setStart,
     end,
-    setEnd,
     loading,
     shopTrend,
     productChartData,
@@ -37,22 +38,8 @@ export default function MobileStats() {
       {/* Filter */}
       <MobileFilter summary={`${start} ~ ${end}`}>
         <div>
-          <label className="block text-xs text-gray-500 mb-1">开始日期</label>
-          <input
-            type="date"
-            value={start}
-            onChange={(e) => setStart(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
-        <div>
-          <label className="block text-xs text-gray-500 mb-1">结束日期</label>
-          <input
-            type="date"
-            value={end}
-            onChange={(e) => setEnd(e.target.value)}
-            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <label className="block text-xs text-gray-500 mb-1">时间范围</label>
+          <TimeRangePicker value={range} onChange={setRange} showTime={false} clearable={false} className="w-full" />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">店铺</label>

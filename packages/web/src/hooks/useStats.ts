@@ -3,6 +3,21 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import type { Shop } from '@statistic/shared'
 
+// 时间戳 → 后端日期参数 YYYY-MM-DD（按本地日期）
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+// 默认时间范围：最近 30 天（含今日）
+function defaultRange(): [number, number] {
+  const now = new Date()
+  const s = new Date(now); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() - 29)
+  const e = new Date(now); e.setHours(23, 59, 59, 999)
+  return [s.getTime(), e.getTime()]
+}
+
 interface UseStatsReturn {
   navigate: ReturnType<typeof useNavigate>
   shops: Shop[]
@@ -10,10 +25,10 @@ interface UseStatsReturn {
   setSelectedShop: (shopId: string) => void
   drawerId: string | null
   setDrawerId: (id: string | null) => void
+  range: [number, number] | null
+  setRange: (v: [number, number] | null) => void
   start: string
-  setStart: (start: string) => void
   end: string
-  setEnd: (end: string) => void
   loading: boolean
   shopTrend: Record<string, any>[]
   productChartData: Record<string, any>[]
@@ -29,8 +44,7 @@ export function useStats(): UseStatsReturn {
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState('')
   const [drawerId, setDrawerId] = useState<string | null>(null)
-  const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
-  const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
+  const [range, setRange] = useState<[number, number] | null>(defaultRange)
   const [loading, setLoading] = useState(false)
   const [shopTrend, setShopTrend] = useState<Record<string, any>[]>([])
   const [productTrend, setProductTrend] = useState<Record<string, any>[]>([])
@@ -40,6 +54,10 @@ export function useStats(): UseStatsReturn {
   const [txTotal, setTxTotal] = useState(0)
 
   useEffect(() => { api.getShops().then(setShops) }, [])
+
+  // 从 range 派生后端所需的起止日期字符串
+  const start = range ? tsToDateStr(range[0]) : ''
+  const end = range ? tsToDateStr(range[1]) : ''
 
   const handleQuery = async () => {
     setLoading(true)
@@ -108,10 +126,10 @@ export function useStats(): UseStatsReturn {
     setSelectedShop,
     drawerId,
     setDrawerId,
+    range,
+    setRange,
     start,
-    setStart,
     end,
-    setEnd,
     loading,
     shopTrend,
     productChartData,
