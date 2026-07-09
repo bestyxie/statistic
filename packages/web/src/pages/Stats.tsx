@@ -3,16 +3,30 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../lib/api'
 import HoverPopup from '../components/HoverPopup'
 import ProductDetailDrawer from '../components/ProductDetailDrawer'
+import TimeRangePicker from '../components/TimeRangePicker'
 import type { Shop } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
+
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts); const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function defaultRange(): [number, number] {
+  const now = new Date()
+  const s = new Date(now); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() - 29)
+  const e = new Date(now); e.setHours(23, 59, 59, 999)
+  return [s.getTime(), e.getTime()]
+}
 
 export default function Stats() {
   const navigate = useNavigate()
   const [shops, setShops] = useState<Shop[]>([])
   const [selectedShop, setSelectedShop] = useState('')
   const [drawerId, setDrawerId] = useState<string | null>(null)
-  const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
-  const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
+  const [range, setRange] = useState<[number, number] | null>(defaultRange)
+  const start = range ? tsToDateStr(range[0]) : ''
+  const end = range ? tsToDateStr(range[1]) : ''
   const [loading, setLoading] = useState(false)
   const [shopTrend, setShopTrend] = useState<any[]>([])
   const [productTrend, setProductTrend] = useState<any[]>([])
@@ -88,22 +102,8 @@ export default function Stats() {
       <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
         <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
-            <input
-              type="date"
-              value={start}
-              onChange={(e) => setStart(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
-            <input
-              type="date"
-              value={end}
-              onChange={(e) => setEnd(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">日期范围</label>
+            <TimeRangePicker value={range} onChange={setRange} showTime={false} clearable={false} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">店铺</label>
