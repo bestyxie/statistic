@@ -16,7 +16,7 @@
 	"postCreateCommand": "npm install -g @anthropic-ai/claude-code && mkdir -p ~/.config/pnpm && printf 'storeDir: /var/lib/pnpm-store\\n' > ~/.config/pnpm/config.yaml",
 	"mounts": [
 		"source=claude-code-config-${devcontainerId},target=/home/root/.claude,type=volume",
-		"source=claude-code-node-modules-${devcontainerId},target=/workspace/node_modules,type=volume",
+		"source=claude-code-node-modules-${devcontainerId},target=${containerWorkspaceFolder}/node_modules,type=volume",
 		"source=claude-code-pnpm-store,target=/var/lib/pnpm-store,type=volume"
 	]
 	// Configure tool-specific properties.
