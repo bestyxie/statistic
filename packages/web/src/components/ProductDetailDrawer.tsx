@@ -1,8 +1,22 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import VisitorProductsModal from './VisitorProductsModal'
+import TimeRangePicker from './TimeRangePicker'
 import type { Product, Visitor } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+
+function tsToDateStr(ts: number): string {
+  const d = new Date(ts)
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
+}
+
+function defaultRange(): [number, number] {
+  const now = new Date()
+  const s = new Date(now); s.setHours(0, 0, 0, 0); s.setDate(s.getDate() - 29)
+  const e = new Date(now); e.setHours(23, 59, 59, 999)
+  return [s.getTime(), e.getTime()]
+}
 
 interface DailyStat {
   date: string
@@ -21,12 +35,14 @@ interface Props {
 export default function ProductDetailDrawer({ productId, onClose }: Props) {
   const [product, setProduct] = useState<Product | null>(null)
   const [stats, setStats] = useState<DailyStat[]>([])
-  const [start, setStart] = useState(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
-  const [end, setEnd] = useState(new Date().toISOString().slice(0, 10))
+  const [range, setRange] = useState<[number, number] | null>(defaultRange())
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [visitorModal, setVisitorModal] = useState<{ open: boolean; date: string; visitors: VisitorWithDate[]; loading: boolean }>({ open: false, date: '', visitors: [], loading: false })
   const [visitorProductsModal, setVisitorProductsModal] = useState<{ visitor: VisitorWithDate | null }>({ visitor: null })
+
+  const start = range ? tsToDateStr(range[0]) : ''
+  const end = range ? tsToDateStr(range[1]) : ''
 
   const fetchData = async () => {
     if (!productId) return
@@ -61,10 +77,10 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
     if (!productId) return
     setProduct(null)
     setStats([])
-    setStart(new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10))
-    setEnd(new Date().toISOString().slice(0, 10))
+    const dr = defaultRange()
+    setRange(dr)
     setLoading(true)
-    api.getProductStats(productId, new Date(Date.now() - 29 * 86400000).toISOString().slice(0, 10), new Date().toISOString().slice(0, 10))
+    api.getProductStats(productId, tsToDateStr(dr[0]), tsToDateStr(dr[1]))
       .then((res) => {
         setProduct(res.product as Product)
         setStats(res.stats)
@@ -141,22 +157,8 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
               <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-5">
                 <div className="flex flex-wrap gap-3 sm:gap-4 items-end">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">开始日期</label>
-                    <input
-                      type="date"
-                      value={start}
-                      onChange={(e) => setStart(e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">结束日期</label>
-                    <input
-                      type="date"
-                      value={end}
-                      onChange={(e) => setEnd(e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">统计时间</label>
+                    <TimeRangePicker value={range} onChange={setRange} showTime={false} clearable={false} />
                   </div>
                   <button
                     onClick={fetchData}
