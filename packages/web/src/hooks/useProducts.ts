@@ -178,6 +178,9 @@ export function useProducts() {
     }
   }
 
+  // Clear selection (used after batch supplier add)
+  const clearSelection = () => setSelectedIds(new Set())
+
   // Sorting
   const toggleSort = (field: string) => {
     let newSortBy = field
@@ -486,6 +489,7 @@ export function useProducts() {
     toggleSelectAll,
     handleRefresh,
     refreshing,
+    clearSelection,
     // Product form
     showForm,
     setShowForm,

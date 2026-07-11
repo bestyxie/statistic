@@ -35,6 +35,66 @@ async function fetchAllProducts(db: LocalD1, query: string): Promise<{ status: n
   return { status: res.status, items: Array.isArray(body) ? body : [] }
 }
 
+async function linkBatch(db: LocalD1, body: unknown): Promise<{ status: number; body: Record<string, unknown> }> {
+  const res = await suppliersRoutes.fetch(
+    new Request('http://localhost/link-batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }),
+    { DB: db },
+  )
+  return { status: res.status, body: await res.json() as Record<string, unknown> }
+}
+
+describe('POST /suppliers/link-batch', () => {
+  let db: LocalD1
+
+  beforeEach(async () => {
+    db = await createInMemoryD1()
+    await seedFixture(db)
+  })
+
+  it('links a supplier to multiple products at once', async () => {
+    const res = await linkBatch(db, { product_ids: ['p-A', 'p-B'], supplier_id: 's-2', price: '10', note: 'n' })
+    expect(res.status).toBe(200)
+    expect(res.body.count).toBe(2)
+
+    const { items } = await fetchAllProducts(db, 'supplier_id=s-2')
+    expect(items.map((i) => i.product_id).sort()).toEqual(['p-A', 'p-B'])
+  })
+
+  it('upserts price and note when link already exists', async () => {
+    // p-A → s-1 already seeded with empty price/note
+    const res = await linkBatch(db, { product_ids: ['p-A'], supplier_id: 's-1', price: '99', note: 'updated' })
+    expect(res.status).toBe(200)
+    expect(res.body.count).toBe(1)
+
+    const row = await db.prepare('SELECT price, note FROM product_suppliers WHERE product_id = ? AND supplier_id = ?')
+      .bind('p-A', 's-1').first() as { price: string; note: string } | null
+    expect(row?.price).toBe('99')
+    expect(row?.note).toBe('updated')
+  })
+
+  it('returns 400 when product_ids is empty', async () => {
+    const res = await linkBatch(db, { product_ids: [], supplier_id: 's-1' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBeTruthy()
+  })
+
+  it('returns 400 when product_ids is not an array', async () => {
+    const res = await linkBatch(db, { product_ids: 'p-A', supplier_id: 's-1' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBeTruthy()
+  })
+
+  it('returns 400 when supplier_id is missing', async () => {
+    const res = await linkBatch(db, { product_ids: ['p-A'], supplier_id: '' })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toBeTruthy()
+  })
+})
+
 describe('GET /suppliers/all-products', () => {
   let db: LocalD1
 

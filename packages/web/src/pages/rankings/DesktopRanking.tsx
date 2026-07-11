@@ -4,6 +4,7 @@ import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import TimeRangePicker from '../../components/TimeRangePicker'
+import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
 import type { ProductRankingItem } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useState, useCallback } from 'react'
@@ -17,12 +18,13 @@ export default function DesktopRanking() {
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, pageSize, rankBase,
     sortBy, toggleSort, getSortIcon,
-    loading, selectedIds, toggleSelect, refreshing, handleRefresh,
+    loading, selectedIds, toggleSelect, refreshing, handleRefresh, clearSelection,
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
   const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
   const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
+  const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
 
   const toggleSelectAll = useCallback(() => {
     const allSelected = ranking.every((p) => selectedIds.has(p.id))
@@ -51,6 +53,11 @@ export default function DesktopRanking() {
             {selectedIds.size > 0 && (
               <button onClick={handleRefresh} disabled={refreshing} className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 text-sm disabled:opacity-50">
                 {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
+              </button>
+            )}
+            {selectedIds.size > 0 && (
+              <button onClick={() => setBatchSupplierIds([...selectedIds])} className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm">
+                批量添加供应商 ({selectedIds.size})
               </button>
             )}
             <button onClick={() => navigate('/products')} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">返回商品管理</button>
@@ -169,6 +176,7 @@ export default function DesktopRanking() {
         )}
       </div>
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+      <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={clearSelection} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </>

@@ -290,6 +290,37 @@ suppliers.post('/link', async (c) => {
   return c.json(result)
 })
 
+// 批量给多个商品关联同一个供应商（复用上面的 upsert，幂等）
+suppliers.post('/link-batch', async (c) => {
+  const db = c.env.DB
+  const { product_ids, supplier_id, price, note } = await c.req.json<{
+    product_ids: string[]
+    supplier_id: string
+    price?: string
+    note?: string
+  }>()
+
+  if (!Array.isArray(product_ids)) {
+    return c.json({ error: '商品列表格式错误' }, 400)
+  }
+  if (product_ids.length === 0) {
+    return c.json({ error: '请选择商品' }, 400)
+  }
+  if (!supplier_id) {
+    return c.json({ error: '请选择供应商' }, 400)
+  }
+
+  for (const product_id of product_ids) {
+    const id = crypto.randomUUID()
+    await db.prepare(`
+      INSERT INTO product_suppliers (id, product_id, supplier_id, price, note) VALUES (?, ?, ?, ?, ?)
+      ON CONFLICT(product_id, supplier_id) DO UPDATE SET price = excluded.price, note = excluded.note, updated_at = datetime('now')
+    `).bind(id, product_id, supplier_id, price || '', note || '').run()
+  }
+
+  return c.json({ count: product_ids.length })
+})
+
 suppliers.put('/link/:id', async (c) => {
   const { price, note, supplier_id } = await c.req.json()
   const db = c.env.DB
