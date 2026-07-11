@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useProducts } from '../../hooks/useProducts'
 import MobilePageHeader from '../../components/mobile/MobilePageHeader'
 import MobileFilter from '../../components/mobile/MobileFilter'
@@ -8,6 +9,7 @@ import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import SetLabelModal from './SetLabelModal'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
+import BatchAddSupplierModal from './BatchAddSupplierModal'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -32,6 +34,7 @@ export default function MobileProducts() {
     toggleSelect,
     handleRefresh,
     refreshing,
+    clearSelection,
     // Sort
     sortBy,
     toggleSort,
@@ -109,6 +112,8 @@ export default function MobileProducts() {
     // Navigation
     navigate,
   } = useProducts()
+
+  const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
 
   const filterSummary = [
     searchInput && `搜索: ${searchInput}`,
@@ -237,13 +242,21 @@ export default function MobileProducts() {
 
       {/* Batch actions */}
       {selectedIds.size > 0 && (
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="w-full px-4 py-2 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50"
-        >
-          {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700 disabled:opacity-50"
+          >
+            {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
+          </button>
+          <button
+            onClick={() => setBatchSupplierIds([...selectedIds])}
+            className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md text-sm hover:bg-purple-700"
+          >
+            批量加供应商 ({selectedIds.size})
+          </button>
+        </div>
       )}
 
       {/* Product cards */}
@@ -886,6 +899,7 @@ export default function MobileProducts() {
         productId={drawerId}
         onClose={() => setDrawerId(null)}
       />
+      <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={clearSelection} />
       <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} onChanged={load} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} onChanged={load} />

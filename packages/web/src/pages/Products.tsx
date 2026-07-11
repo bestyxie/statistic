@@ -7,6 +7,7 @@ import TransactionFormModal from './products/TransactionFormModal'
 import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
+import BatchAddSupplierModal from './products/BatchAddSupplierModal'
 import SetLabelModal from './products/SetLabelModal'
 import ProductNotesModal from '../components/ProductNotesModal'
 import ProductNotesAddModal from '../components/ProductNotesAddModal'
@@ -69,6 +70,7 @@ export default function Products() {
   const [txListProduct, setTxListProduct] = useState<Product | null>(null)
   const [suppliersProduct, setSuppliersProduct] = useState<Product | null>(null)
   const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
+  const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
   const [labelProduct, setLabelProduct] = useState<Product | null>(null)
 
   const load = () => {
@@ -284,6 +286,11 @@ export default function Products() {
               {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
             </button>
           )}
+          {selectedIds.size > 0 && (
+            <button onClick={() => setBatchSupplierIds([...selectedIds])} className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 text-sm">
+              批量添加供应商 ({selectedIds.size})
+            </button>
+          )}
           <button onClick={() => navigate('/product-ranking')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">7日排行榜</button>
           <button onClick={() => navigate('/label-trend')} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">品牌访客追踪</button>
         </div>
@@ -299,6 +306,7 @@ export default function Products() {
       <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
+      <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={() => setSelectedIds(new Set())} />
       <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} onChanged={load} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} onChanged={load} />

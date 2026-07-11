@@ -10,6 +10,7 @@ import { useState } from 'react'
 import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
+import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
 import type { ProductRankingItem } from '../../lib/api'
 
 export default function MobileRanking() {
@@ -21,12 +22,13 @@ export default function MobileRanking() {
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, rankBase,
     sortBy, sortOrder, toggleSort, getSortIcon,
-    loading, selectedIds, toggleSelect, refreshing, handleRefresh,
+    loading, selectedIds, toggleSelect, refreshing, handleRefresh, clearSelection,
   } = useProductRanking()
 
   const [drawerId, setDrawerId] = useState<string | null>(null)
   const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
   const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
+  const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
   const { show: showImage } = useImagePreview()
 
   const fmtDate = (ts: number) => {
@@ -107,13 +109,21 @@ export default function MobileRanking() {
       </MobileFilter>
 
       {selectedIds.size > 0 && (
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="w-full px-3 py-2 bg-orange-600 text-white rounded-md text-sm disabled:opacity-50"
-        >
-          {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex-1 px-3 py-2 bg-orange-600 text-white rounded-md text-sm disabled:opacity-50"
+          >
+            {refreshing ? '刷新中...' : `刷新选中 (${selectedIds.size})`}
+          </button>
+          <button
+            onClick={() => setBatchSupplierIds([...selectedIds])}
+            className="flex-1 px-3 py-2 bg-purple-600 text-white rounded-md text-sm"
+          >
+            批量加供应商 ({selectedIds.size})
+          </button>
+        </div>
       )}
 
       {loading ? (
@@ -180,6 +190,7 @@ export default function MobileRanking() {
       )}
 
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
+      <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={clearSelection} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </div>

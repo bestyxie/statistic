@@ -174,6 +174,8 @@ export function useProductRanking() {
     }
   }
 
+  const clearSelection = () => setSelectedIds(new Set())
+
   const rankBase = (page - 1) * pageSize
   const totalPages = Math.ceil(total / pageSize)
 
@@ -184,6 +186,6 @@ export function useProductRanking() {
     searchText, setSearchText, handleSearch, clearSearch, search,
     ranking, total, page, setPage, totalPages, pageSize, rankBase,
     sortBy, sortOrder, toggleSort, getSortIcon,
-    loading, selectedIds, toggleSelect, refreshing, handleRefresh,
+    loading, selectedIds, toggleSelect, refreshing, handleRefresh, clearSelection,
   }
 }

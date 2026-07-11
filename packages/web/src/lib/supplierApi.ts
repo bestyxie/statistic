@@ -42,6 +42,8 @@ export const supplierApi = {
   // 商品-供应商关联
   linkProduct: (data: { product_id: string; supplier_id: string; price?: string; note?: string }) =>
     request<ProductSupplier>('/suppliers/link', { method: 'POST', body: JSON.stringify(data) }),
+  linkBatchProducts: (data: { product_ids: string[]; supplier_id: string; price?: string; note?: string }) =>
+    request<{ count: number }>('/suppliers/link-batch', { method: 'POST', body: JSON.stringify(data) }),
   updateLink: (id: string, data: { price?: string; note?: string; supplier_id?: string }) =>
     request<{ message: string }>(`/suppliers/link/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   unlinkProduct: (id: string) =>
