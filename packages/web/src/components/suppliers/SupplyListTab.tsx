@@ -4,6 +4,7 @@ import { api } from '../../lib/api'
 import type { Supplier, Product, Shop, ProductLabel } from '@statistic/shared'
 import SupplierForm from './SupplierForm'
 import HoverPopup from '../HoverPopup'
+import SearchableSelect from '../SearchableSelect'
 
 type AddMode = 'none' | 'link' | 'curl'
 
@@ -27,7 +28,7 @@ export default function SupplyListTab() {
 
   // 关联商品
   const [catalogProducts, setCatalogProducts] = useState<Product[]>([])
-  const [catalogSearch, setCatalogSearch] = useState('')
+  const [catalogLoading, setCatalogLoading] = useState(false)
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [linkSupplierId, setLinkSupplierId] = useState('')
   const [linkPrice, setLinkPrice] = useState('')
@@ -66,8 +67,14 @@ export default function SupplyListTab() {
   useEffect(() => { loadLinks() }, [loadLinks])
 
   const loadCatalog = async (q: string) => {
-    const res = await api.getProducts(undefined, 1, 20, undefined, q)
-    setCatalogProducts(res.items)
+    if (!q.trim()) { setCatalogProducts([]); return }
+    setCatalogLoading(true)
+    try {
+      const res = await api.getProducts(undefined, 1, 20, undefined, q)
+      setCatalogProducts(res.items)
+    } finally {
+      setCatalogLoading(false)
+    }
   }
 
   // 供应商操作
@@ -158,6 +165,7 @@ export default function SupplyListTab() {
   const closeDialog = () => {
     setAddMode('none')
     setSelectedProduct(null)
+    setCatalogProducts([])
     setCurlInput('')
     setCurlParsed(null)
     setCurlError('')
@@ -204,7 +212,7 @@ export default function SupplyListTab() {
             </select>
           </div>
           <div className="flex gap-2">
-            <button onClick={() => { setAddMode('link'); setLinkSupplierId(filterSupplier || suppliers[0]?.id || '') }} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">关联商品</button>
+            <button onClick={() => { setAddMode('link'); setLinkSupplierId(filterSupplier || suppliers[0]?.id || ''); setCatalogProducts([]); setSelectedProduct(null); setLinkPrice('') }} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">关联商品</button>
             <button onClick={() => { setAddMode('curl'); setCurlSupplierId(filterSupplier || suppliers[0]?.id || '') }} className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 text-sm">cURL 录入</button>
             <button onClick={() => { setShowSupplierForm(true); setEditingSupplier(null) }} className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm">管理供应商</button>
           </div>
@@ -232,29 +240,17 @@ export default function SupplyListTab() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">搜索商品</label>
-                <input type="text" value={catalogSearch} onChange={(e) => { setCatalogSearch(e.target.value); loadCatalog(e.target.value) }} placeholder="商品名称或 SKU" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <SearchableSelect
+                  options={catalogProducts.map((p) => ({ value: p.id, label: p.description || p.name, image: p.image_url || undefined }))}
+                  value={selectedProduct?.id || ''}
+                  onChange={(v) => { const p = catalogProducts.find((x) => x.id === v); if (p) { setSelectedProduct(p); setLinkPrice(p.price) } }}
+                  onSearch={loadCatalog}
+                  loading={catalogLoading}
+                  placeholder="搜索商品"
+                  searchPlaceholder="商品名称或 SKU"
+                  emptyText="无匹配商品"
+                />
               </div>
-              {catalogProducts.length > 0 && (
-                <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
-                  {catalogProducts.map((p) => (
-                    <div key={p.id} onClick={() => { setSelectedProduct(p); setLinkPrice(p.price) }} className={`px-3 py-2 cursor-pointer flex items-center gap-3 hover:bg-gray-50 ${selectedProduct?.id === p.id ? 'bg-blue-50 border-l-2 border-blue-500' : ''}`}>
-                      {p.image_url ? (
-                        <HoverPopup popup={<div className="w-48 h-48"><img src={p.image_url} alt="" className="w-full h-full rounded object-cover" /></div>}>
-                          <img src={p.image_url} alt="" className="w-8 h-8 rounded object-cover bg-gray-100 flex-shrink-0" />
-                        </HoverPopup>
-                      ) : (
-                        <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center text-gray-300 text-xs flex-shrink-0">无</div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{p.description || p.name}</div>}>
-                          <p className="text-sm text-gray-800 truncate block">{p.description || p.name}</p>
-                        </HoverPopup>
-                        <p className="text-xs text-gray-400">{p.sku || '-'} · ¥{p.price || '-'}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
               {selectedProduct && (
                 <div className="bg-gray-50 rounded-lg p-3">
                   <div className="flex items-center gap-3">

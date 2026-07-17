@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SearchableSelect from '../SearchableSelect'
 import type { ProductSupplierWithInfo, PurchaseWithProduct } from '../../lib/supplierApi'
 
 interface Props {
@@ -34,19 +35,18 @@ export default function PurchaseRecordForm({ supplierProducts, purchase, onSubmi
       <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="block text-xs text-gray-500 mb-1">选择商品</label>
-          <select
+          <SearchableSelect
+            options={supplierProducts.map((sp) => ({
+              value: sp.id,
+              label: sp.product_description || sp.product_name || sp.product_sku || sp.id.slice(0, 8),
+              image: sp.product_image || undefined,
+            }))}
             value={form.product_supplier_id}
-            onChange={(e) => setForm({ ...form, product_supplier_id: e.target.value })}
+            onChange={(v) => setForm({ ...form, product_supplier_id: v })}
+            placeholder="请选择"
+            searchPlaceholder="搜索商品..."
             required
-            className="w-full px-3 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">请选择</option>
-            {supplierProducts.map((sp) => (
-              <option key={sp.id} value={sp.id}>
-                {sp.product_description || sp.product_name || sp.product_sku || sp.id.slice(0, 8)}
-              </option>
-            ))}
-          </select>
+          />
         </div>
         <div>
           <label className="block text-xs text-gray-500 mb-1">拿货价格</label>
