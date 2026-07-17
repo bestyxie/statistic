@@ -4,7 +4,7 @@ import type { Product } from '@statistic/shared'
 import type { ProductSupplierWithInfo } from '../../lib/supplierApi'
 
 interface Props {
-  product: Product | null
+  product: Pick<Product, 'id' | 'sku' | 'description'> | null
   onClose: () => void
 }
 

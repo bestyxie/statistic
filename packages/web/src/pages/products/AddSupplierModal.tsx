@@ -3,7 +3,7 @@ import { supplierApi } from '../../lib/supplierApi'
 import type { Product, Supplier } from '@statistic/shared'
 
 interface Props {
-  product: Product | null
+  product: Pick<Product, 'id' | 'sku' | 'description' | 'price'> | null
   onClose: () => void
 }
 
