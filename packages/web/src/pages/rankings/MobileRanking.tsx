@@ -11,6 +11,8 @@ import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
+import AddSupplierModal from '../products/AddSupplierModal'
+import ProductSuppliersModal from '../products/ProductSuppliersModal'
 import type { ProductRankingItem } from '../../lib/api'
 
 export default function MobileRanking() {
@@ -29,6 +31,8 @@ export default function MobileRanking() {
   const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
   const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
   const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
+  const [suppliersProduct, setSuppliersProduct] = useState<ProductRankingItem | null>(null)
+  const [addSupplierProduct, setAddSupplierProduct] = useState<ProductRankingItem | null>(null)
   const { show: showImage } = useImagePreview()
 
   const fmtDate = (ts: number) => {
@@ -180,6 +184,8 @@ export default function MobileRanking() {
                     <button onClick={() => setDrawerId(p.id)} className="text-green-600 text-sm">查看统计</button>
                     <button onClick={() => setNotesProduct(p)} className="text-blue-600 text-sm">备注</button>
                     <button onClick={() => setAddNoteProduct(p)} className="text-blue-600 text-sm">添加备注</button>
+                    <button onClick={() => setSuppliersProduct(p)} className="text-purple-600 text-sm">供应商</button>
+                    <button onClick={() => setAddSupplierProduct(p)} className="text-purple-600 text-sm">添加供应商</button>
                   </MobileCardActions>
                 </MobileCard>
               )
@@ -191,6 +197,8 @@ export default function MobileRanking() {
 
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
       <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={clearSelection} />
+      <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
+      <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </div>

@@ -40,6 +40,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
   const [refreshing, setRefreshing] = useState(false)
   const [visitorModal, setVisitorModal] = useState<{ open: boolean; date: string; visitors: VisitorWithDate[]; loading: boolean }>({ open: false, date: '', visitors: [], loading: false })
   const [visitorProductsModal, setVisitorProductsModal] = useState<{ visitor: VisitorWithDate | null }>({ visitor: null })
+  const [labels, setLabels] = useState<{ label_id: string; label_name: string }[]>([])
 
   const start = range ? tsToDateStr(range[0]) : ''
   const end = range ? tsToDateStr(range[1]) : ''
@@ -77,6 +78,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
     if (!productId) return
     setProduct(null)
     setStats([])
+    setLabels([])
     const dr = defaultRange()
     setRange(dr)
     setLoading(true)
@@ -87,6 +89,8 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
       })
       .catch(() => {})
       .finally(() => setLoading(false))
+    // 商品标签与统计时间无关，仅在切换商品时拉取一次
+    api.getProductLabels(productId).then(setLabels).catch(() => {})
   }, [productId])
 
   const totalViews = stats.reduce((sum, s) => sum + s.view_count, 0)
@@ -148,7 +152,14 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
                   )}
                   <div className="min-w-0">
                     <h2 className="text-sm sm:text-lg font-semibold text-gray-800 break-all">{product.description || product.name}</h2>
-                    {product.sku && <p className="text-sm text-gray-500 font-mono">SKU: {product.sku}</p>}
+                    {(product.sku || labels.length > 0) && (
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        {product.sku && <span className="text-sm text-gray-500 font-mono">SKU: {product.sku}</span>}
+                        {labels.map((l) => (
+                          <span key={l.label_id} className="inline-block px-2 py-0.5 rounded text-xs bg-teal-50 text-teal-700 border border-teal-200">{l.label_name}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

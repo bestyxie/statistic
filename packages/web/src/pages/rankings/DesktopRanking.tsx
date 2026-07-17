@@ -5,6 +5,8 @@ import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import TimeRangePicker from '../../components/TimeRangePicker'
 import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
+import AddSupplierModal from '../products/AddSupplierModal'
+import ProductSuppliersModal from '../products/ProductSuppliersModal'
 import type { ProductRankingItem } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useState, useCallback } from 'react'
@@ -25,6 +27,8 @@ export default function DesktopRanking() {
   const [notesProduct, setNotesProduct] = useState<ProductRankingItem | null>(null)
   const [addNoteProduct, setAddNoteProduct] = useState<ProductRankingItem | null>(null)
   const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
+  const [suppliersProduct, setSuppliersProduct] = useState<ProductRankingItem | null>(null)
+  const [addSupplierProduct, setAddSupplierProduct] = useState<ProductRankingItem | null>(null)
 
   const toggleSelectAll = useCallback(() => {
     const allSelected = ranking.every((p) => selectedIds.has(p.id))
@@ -156,6 +160,19 @@ export default function DesktopRanking() {
                       <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
                         <button onClick={() => setNotesProduct(p)} className="text-blue-600 hover:text-blue-800 text-sm ml-3">备注</button>
+                        <HoverPopup
+                          side="bottom-right"
+                          interactive
+                          popupClassName="py-1 min-w-[80px]"
+                          popup={
+                            <div className="flex flex-col">
+                              <button onClick={() => setSuppliersProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">供应商</button>
+                              <button onClick={() => setAddSupplierProduct(p)} className="text-left px-3 py-1.5 text-sm text-purple-600 hover:bg-gray-50 whitespace-nowrap">添加供应商</button>
+                            </div>
+                          }
+                        >
+                          <button className="text-gray-500 hover:text-gray-700 text-sm ml-3 pb-1">更多 ▾</button>
+                        </HoverPopup>
                       </td>
                     </tr>
                   )
@@ -177,6 +194,8 @@ export default function DesktopRanking() {
       </div>
       <ProductDetailDrawer productId={drawerId} onClose={() => setDrawerId(null)} />
       <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={clearSelection} />
+      <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
+      <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
     </>
