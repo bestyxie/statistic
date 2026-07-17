@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { supplierApi } from '../../lib/supplierApi'
+import SearchableSelect from '../../components/SearchableSelect'
 import type { Product, Supplier } from '@statistic/shared'
 
 interface Props {
@@ -41,12 +42,14 @@ export default function AddSupplierModal({ product, onClose }: Props) {
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">选择供应商</label>
-            <select value={supplierId} onChange={(e) => setSupplierId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">请选择供应商</option>
-              {suppliers.map((s) => (
-                <option key={s.id} value={s.id}>{s.wechat_nickname}{s.remark ? ` (${s.remark})` : ''}</option>
-              ))}
-            </select>
+            <SearchableSelect
+              options={suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname + (s.remark ? ` (${s.remark})` : '') }))}
+              value={supplierId}
+              onChange={setSupplierId}
+              placeholder="请选择供应商"
+              searchPlaceholder="搜索供应商..."
+              emptyText="无匹配供应商"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">供货价</label>

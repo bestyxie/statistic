@@ -8,6 +8,7 @@ import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
 import BatchAddSupplierModal from './products/BatchAddSupplierModal'
+import SearchableSelect from '../components/SearchableSelect'
 import SetLabelModal from './products/SetLabelModal'
 import ProductNotesModal from '../components/ProductNotesModal'
 import ProductNotesAddModal from '../components/ProductNotesAddModal'
@@ -246,17 +247,15 @@ export default function Products() {
               <button type="button" onClick={() => setVisitDate('')} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs">&#x2715;</button>
             )}
           </div>
-          <select
+          <SearchableSelect
+            className="w-48"
+            options={[{ value: '', label: '全部标签' }, { value: '__NO_LABEL__', label: '无标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
             value={labelFilterValue}
-            onChange={(e) => handleLabelFilterChange(e.target.value)}
-            className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">全部标签</option>
-            <option value="__NO_LABEL__">无标签</option>
-            {labels.map((l) => (
-              <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
-            ))}
-          </select>
+            onChange={handleLabelFilterChange}
+            placeholder="全部标签"
+            searchPlaceholder="搜索标签..."
+            emptyText="无匹配标签"
+          />
           <button onClick={handleImportLabels} className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 text-sm">
             导入标签
           </button>
