@@ -5,6 +5,7 @@ import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import TimeRangePicker from '../../components/TimeRangePicker'
 import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
+import SearchableSelect from '../../components/SearchableSelect'
 import AddSupplierModal from '../products/AddSupplierModal'
 import ProductSuppliersModal from '../products/ProductSuppliersModal'
 import type { ProductRankingItem } from '../../lib/api'
@@ -76,10 +77,15 @@ export default function DesktopRanking() {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">品牌</label>
-            <select value={labelId} onChange={(e) => handleLabelChange(e.target.value)} className="border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">全部标签</option>
-              {labels.map((l) => (<option key={l.label_id} value={l.label_id}>{l.label_name}</option>))}
-            </select>
+            <SearchableSelect
+              className="w-48"
+              options={[{ value: '', label: '全部标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
+              value={labelId}
+              onChange={handleLabelChange}
+              placeholder="全部标签"
+              searchPlaceholder="搜索标签..."
+              emptyText="无匹配标签"
+            />
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-1">店铺</label>

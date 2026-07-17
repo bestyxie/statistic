@@ -206,10 +206,15 @@ export default function SupplyListTab() {
           </div>
           <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按品牌筛选</label>
-            <select value={filterLabel} onChange={(e) => { setFilterLabel(e.target.value); setPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">全部品牌</option>
-              {labels.map((l) => <option key={l.label_id} value={l.label_id}>{l.label_name}</option>)}
-            </select>
+            <SearchableSelect
+              className="w-full"
+              options={[{ value: '', label: '全部品牌' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
+              value={filterLabel}
+              onChange={(v) => { setFilterLabel(v); setPage(1) }}
+              placeholder="全部品牌"
+              searchPlaceholder="搜索品牌..."
+              emptyText="无匹配品牌"
+            />
           </div>
           <div className="flex gap-2">
             <button onClick={() => { setAddMode('link'); setLinkSupplierId(filterSupplier || suppliers[0]?.id || ''); setCatalogProducts([]); setSelectedProduct(null); setLinkPrice('') }} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">关联商品</button>

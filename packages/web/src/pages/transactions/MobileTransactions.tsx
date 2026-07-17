@@ -4,6 +4,7 @@ import MobileFilter from '../../components/mobile/MobileFilter'
 import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import TimeRangePicker from '../../components/TimeRangePicker'
+import SearchableSelect from '../../components/SearchableSelect'
 import { useTransactions } from '../../hooks/useTransactions'
 
 export default function MobileTransactions() {
@@ -70,16 +71,15 @@ export default function MobileTransactions() {
           onKeyDown={(e) => e.key === 'Enter' && doSearch()}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <select
+        <SearchableSelect
+          className="w-full"
+          options={[{ value: '', label: '全部标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
           value={labelId}
-          onChange={(e) => handleLabelChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">全部标签</option>
-          {labels.map((l) => (
-            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
-          ))}
-        </select>
+          onChange={handleLabelChange}
+          placeholder="全部标签"
+          searchPlaceholder="搜索标签..."
+          emptyText="无匹配标签"
+        />
         <TimeRangePicker value={range} onChange={setRange} showTime={false} className="w-full" />
         <button
           onClick={doSearch}

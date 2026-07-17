@@ -1,5 +1,6 @@
 import { useTransactions } from '../hooks/useTransactions'
 import TimeRangePicker from '../components/TimeRangePicker'
+import SearchableSelect from '../components/SearchableSelect'
 
 export default function Transactions() {
   const {
@@ -64,16 +65,15 @@ export default function Transactions() {
         <div className="relative">
           <TimeRangePicker value={range} onChange={setRange} showTime={false} />
         </div>
-        <select
+        <SearchableSelect
+          className="w-48"
+          options={[{ value: '', label: '全部标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
           value={labelId}
-          onChange={(e) => handleLabelChange(e.target.value)}
-          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">全部标签</option>
-          {labels.map((l) => (
-            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
-          ))}
-        </select>
+          onChange={handleLabelChange}
+          placeholder="全部标签"
+          searchPlaceholder="搜索标签..."
+          emptyText="无匹配标签"
+        />
         <button onClick={doSearch} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700">搜索</button>
       </div>
 

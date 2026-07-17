@@ -128,11 +128,7 @@ export default function SearchableSelect({
                   title={o.label}
                   className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left ${o.value === value ? 'bg-blue-50 text-blue-700' : 'text-gray-800 hover:bg-blue-50'}`}
                 >
-                  {o.image ? (
-                    <img src={o.image} alt="" className="w-6 h-6 rounded object-cover bg-gray-100 shrink-0" />
-                  ) : (
-                    <span className="w-6 h-6 rounded bg-gray-100 shrink-0" />
-                  )}
+                  {o.image && <img src={o.image} alt="" className="w-6 h-6 rounded object-cover bg-gray-100 shrink-0" />}
                   <span className="flex-1 truncate">{o.label}</span>
                 </button>
               ))

@@ -10,6 +10,7 @@ import SetLabelModal from './SetLabelModal'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import BatchAddSupplierModal from './BatchAddSupplierModal'
+import SearchableSelect from '../../components/SearchableSelect'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -201,20 +202,15 @@ export default function MobileProducts() {
           onChange={(e) => setVisitDate(e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
         />
-        <select
+        <SearchableSelect
+          className="w-full"
+          options={[{ value: '', label: '全部标签' }, { value: '__NO_LABEL__', label: '无标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
           value={noLabel ? '__NO_LABEL__' : labelId}
-          onChange={(e) => {
-            if (e.target.value === '__NO_LABEL__') { setNoLabel(true); setLabelId('') }
-            else { setNoLabel(false); setLabelId(e.target.value) }
-          }}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="">全部标签</option>
-          <option value="__NO_LABEL__">无标签</option>
-          {labels.map((l) => (
-            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
-          ))}
-        </select>
+          onChange={(v) => { if (v === '__NO_LABEL__') { setNoLabel(true); setLabelId('') } else { setNoLabel(false); setLabelId(v) } }}
+          placeholder="全部标签"
+          searchPlaceholder="搜索标签..."
+          emptyText="无匹配标签"
+        />
         <button
           onClick={doSearch}
           className="w-full px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700"

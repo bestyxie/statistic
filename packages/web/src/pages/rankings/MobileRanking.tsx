@@ -11,6 +11,7 @@ import ProductDetailDrawer from '../../components/ProductDetailDrawer'
 import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
+import SearchableSelect from '../../components/SearchableSelect'
 import AddSupplierModal from '../products/AddSupplierModal'
 import ProductSuppliersModal from '../products/ProductSuppliersModal'
 import type { ProductRankingItem } from '../../lib/api'
@@ -59,16 +60,15 @@ export default function MobileRanking() {
           <span className="block text-xs text-gray-500 mb-1">时间范围{!range && '（全部时间）'}</span>
           <TimeRangePicker value={range} onChange={setRange} showTime={false} className="w-full" />
         </div>
-        <select
+        <SearchableSelect
+          className="w-full"
+          options={[{ value: '', label: '全部标签' }, ...labels.map((l) => ({ value: l.label_id, label: l.label_name }))]}
           value={labelId}
-          onChange={(e) => handleLabelChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
-        >
-          <option value="">全部标签</option>
-          {labels.map((l) => (
-            <option key={l.label_id} value={l.label_id}>{l.label_name}</option>
-          ))}
-        </select>
+          onChange={handleLabelChange}
+          placeholder="全部标签"
+          searchPlaceholder="搜索标签..."
+          emptyText="无匹配标签"
+        />
         <select
           value={selectedShop}
           onChange={(e) => handleShopChange(e.target.value)}
