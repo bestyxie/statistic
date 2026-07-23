@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../../lib/api'
 import { colorFor } from '../hooks/useLabelTrend'
+import LabelProductDrawer, { type LabelProductDrawerTarget } from './LabelProductDrawer'
 import type { ProductLabel } from '@statistic/shared'
 
 interface Props {
@@ -29,6 +30,7 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
   const [rows, setRows] = useState<RankRow[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [productTarget, setProductTarget] = useState<LabelProductDrawerTarget | null>(null)
 
   const yesterday = yesterdayStr()
 
@@ -138,7 +140,11 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
                 </thead>
                 <tbody>
                   {rows.map((row, i) => (
-                    <tr key={row.label_id} className="border-b border-gray-100 last:border-b-0">
+                    <tr
+                      key={row.label_id}
+                      onClick={() => setProductTarget({ label_id: row.label_id, label_name: row.label_name, date: yesterday })}
+                      className="border-b border-gray-100 last:border-b-0 cursor-pointer hover:bg-blue-50"
+                    >
                       <td className="py-2 px-3 text-center text-gray-500">{i + 1}</td>
                       <td className="py-2 px-3 text-gray-800">
                         <span className="inline-flex items-center gap-2">
@@ -146,7 +152,12 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
                           <span className="truncate">{row.label_name}</span>
                         </span>
                       </td>
-                      <td className="py-2 px-3 text-right font-medium text-gray-800">{row.visitor_count.toLocaleString()}</td>
+                      <td className="py-2 px-3 text-right font-medium text-gray-800">
+                        <span className="inline-flex items-center gap-1">
+                          {row.visitor_count.toLocaleString()}
+                          <span className="text-gray-300">›</span>
+                        </span>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -155,6 +166,9 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
           )}
         </div>
       </div>
+
+      {/* 点击某品牌行 → 展示该品牌昨日的商品浏览记录（复用 LabelProductDrawer，z-40 同级、DOM 在后故叠在上层）*/}
+      <LabelProductDrawer target={productTarget} onClose={() => setProductTarget(null)} />
     </div>
   )
 }
