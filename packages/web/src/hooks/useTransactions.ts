@@ -11,6 +11,14 @@ function tsToDateStr(ts: number): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`
 }
 
+// 当月范围（默认时间范围）：[本月 1 日 00:00, 今天 23:59:59]
+function currentMonthRange(): [number, number] {
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999).getTime()
+  return [start, end]
+}
+
 export function useTransactions() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<Transaction[]>([])
@@ -34,17 +42,21 @@ export function useTransactions() {
       return prev
     })
 
-  const start = searchParams.get('start') || ''
-  const end = searchParams.get('end') || ''
   const search = searchParams.get('search') || ''
   const labelId = searchParams.get('label') || ''
 
   const [searchInput, setSearchInput] = useState(search)
 
-  // 时间范围 [开始, 结束] 时间戳，派生自 URL；null = 全部时间。清空与选择均即时生效
-  const range: [number, number] | null =
-    start && end ? [new Date(`${start}T00:00:00`).getTime(), new Date(`${end}T00:00:00`).getTime()] : null
+  // 时间范围 [开始, 结束] 时间戳；默认当月（URL 带 start/end 时取 URL，便于分享/刷新保持）。
+  // null = 全部时间（清除后生效）。用本地状态承载默认值，避免 URL 种子导致的重复请求与竞态。
+  const [range, setRangeState] = useState<[number, number] | null>(() => {
+    const s = searchParams.get('start')
+    const e = searchParams.get('end')
+    if (s && e) return [new Date(`${s}T00:00:00`).getTime(), new Date(`${e}T00:00:00`).getTime()]
+    return currentMonthRange()
+  })
   const setRange = (next: [number, number] | null) => {
+    setRangeState(next)
     setSearchParams((prev) => {
       prev.delete('page')
       if (next) {
@@ -57,6 +69,8 @@ export function useTransactions() {
       return prev
     })
   }
+  const start = range ? tsToDateStr(range[0]) : ''
+  const end = range ? tsToDateStr(range[1]) : ''
 
   const doSearch = () =>
     setSearchParams((prev) => {
