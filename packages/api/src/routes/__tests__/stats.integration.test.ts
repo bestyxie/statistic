@@ -508,3 +508,68 @@ describe('GET /stats/transactions', () => {
     expect(l2.items.map((t) => t.id)).toEqual(['t-2'])
   })
 })
+
+describe('PUT /stats/transactions/:id', () => {
+  let db: LocalD1
+
+  beforeEach(async () => {
+    db = await createInMemoryD1()
+    await seedFixture(db)
+  })
+
+  it('updates price, quantity, date and note', async () => {
+    const res = await statsRoutes.fetch(
+      new Request('http://localhost/transactions/t-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: '20.00', quantity: 5, date: '2026-06-11', note: 'edited' }),
+      }),
+      { DB: db },
+    )
+    expect(res.status).toBe(200)
+    const row = await db.prepare('SELECT price, quantity, date, note FROM transactions WHERE id = ?')
+      .bind('t-1').first() as { price: string; quantity: number; date: string; note: string } | null
+    expect(row?.price).toBe('20.00')
+    expect(row?.quantity).toBe(5)
+    expect(row?.date).toBe('2026-06-11')
+    expect(row?.note).toBe('edited')
+  })
+
+  it('defaults quantity to 1 when omitted', async () => {
+    const res = await statsRoutes.fetch(
+      new Request('http://localhost/transactions/t-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: '30.00', date: '2026-06-11' }),
+      }),
+      { DB: db },
+    )
+    expect(res.status).toBe(200)
+    const row = await db.prepare('SELECT quantity FROM transactions WHERE id = ?').bind('t-1').first() as { quantity: number } | null
+    expect(row?.quantity).toBe(1)
+  })
+
+  it('returns 400 when price is missing', async () => {
+    const res = await statsRoutes.fetch(
+      new Request('http://localhost/transactions/t-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: '2026-06-11' }),
+      }),
+      { DB: db },
+    )
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 when date is missing', async () => {
+    const res = await statsRoutes.fetch(
+      new Request('http://localhost/transactions/t-1', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ price: '30.00' }),
+      }),
+      { DB: db },
+    )
+    expect(res.status).toBe(400)
+  })
+})

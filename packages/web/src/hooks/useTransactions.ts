@@ -26,6 +26,7 @@ export function useTransactions() {
   const [loading, setLoading] = useState(true)
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [refundModal, setRefundModal] = useState<Transaction | null>(null)
+  const [editTx, setEditTx] = useState<Transaction | null>(null)
   const [refundForm, setRefundForm] = useState({
     price: '',
     quantity: '1',
@@ -196,6 +197,9 @@ export function useTransactions() {
     refundForm,
     setRefundForm,
     handleRefund,
+    // Edit
+    editTx,
+    setEditTx,
     // Delete
     handleDelete,
     // Computed

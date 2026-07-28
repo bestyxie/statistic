@@ -152,12 +152,15 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
                   )}
                   <div className="min-w-0">
                     <h2 className="text-sm sm:text-lg font-semibold text-gray-800 break-all">{product.description || product.name}</h2>
-                    {(product.sku || labels.length > 0) && (
+                    {(product.sku || labels.length > 0 || product.price) && (
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                         {product.sku && <span className="text-sm text-gray-500 font-mono">SKU: {product.sku}</span>}
                         {labels.map((l) => (
                           <span key={l.label_id} className="inline-block px-2 py-0.5 rounded text-xs bg-teal-50 text-teal-700 border border-teal-200">{l.label_name}</span>
                         ))}
+                        {product.price && (
+                          <span className="inline-block px-2 py-0.5 rounded text-xs bg-orange-50 text-orange-700 border border-orange-200">¥{product.price}</span>
+                        )}
                       </div>
                     )}
                   </div>

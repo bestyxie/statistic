@@ -1,6 +1,7 @@
 import { useTransactions } from '../hooks/useTransactions'
 import TimeRangePicker from '../components/TimeRangePicker'
 import SearchableSelect from '../components/SearchableSelect'
+import TransactionEditModal from '../components/TransactionEditModal'
 
 export default function Transactions() {
   const {
@@ -25,6 +26,9 @@ export default function Transactions() {
     setRefundForm,
     handleRefund,
     handleDelete,
+    editTx,
+    setEditTx,
+    loadTransactions,
     totalAmount,
     totalQty,
     totalRefundQty,
@@ -134,6 +138,12 @@ export default function Transactions() {
                       <td className="px-4 py-3 text-sm text-right font-medium text-orange-600">¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}</td>
                       <td className="px-4 py-3 text-sm text-gray-500 max-w-[120px] truncate" title={tx.note}>{tx.note || '-'}</td>
                       <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <button
+                          onClick={() => setEditTx(tx)}
+                          className="text-blue-600 hover:text-blue-800 text-sm mr-3"
+                        >
+                          编辑
+                        </button>
                         {!isFullyRefunded && (
                           <button
                             onClick={() => { setRefundModal(tx); setRefundForm({ price: tx.price, quantity: String(remainingQuantity), date: new Date().toISOString().slice(0, 10), note: '退款' }) }}
@@ -191,6 +201,11 @@ export default function Transactions() {
             )
           })()}
         </>
+      )}
+
+      {/* 编辑弹窗 */}
+      {editTx && (
+        <TransactionEditModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
       )}
 
       {/* 退款弹窗 */}

@@ -238,6 +238,8 @@ export const api = {
   },
   deleteTransaction: (id: string) =>
     request<{ message: string }>(`/stats/transactions/${id}`, { method: 'DELETE' }),
+  updateTransaction: (id: string, data: { price: string; quantity?: number; date: string; note?: string }) =>
+    request<{ message: string }>(`/stats/transactions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   getTransactionTrend: (start: string, end: string, shopId?: string) =>
     request<{ date: string; tx_count: number; tx_amount: number }[]>(`/stats/transactions/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),
   getDashboardRefunds: (shopId?: string) =>
