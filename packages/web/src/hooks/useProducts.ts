@@ -85,6 +85,9 @@ export function useProducts() {
     date: new Date().toISOString().slice(0, 10),
     note: '',
   })
+  const [txSuppliers, setTxSuppliers] = useState<ProductSupplierWithInfo[]>([])
+  const [txSelectedPsId, setTxSelectedPsId] = useState('')
+  const [txPurchasePrice, setTxPurchasePrice] = useState('')
   const [form, setForm] = useState({
     shop_id: '',
     name: '',
@@ -292,7 +295,18 @@ export function useProducts() {
       date: new Date().toISOString().slice(0, 10),
       note: '',
     })
+    setTxSelectedPsId('')
+    setTxPurchasePrice('')
+    setTxSuppliers([])
     setShowTxForm(true)
+    supplierApi.getAllProducts({ product_id: product.id }).then(setTxSuppliers).catch(() => setTxSuppliers([]))
+  }
+
+  // 选择供应商后自动填入该供应商对该商品的拿货价
+  const selectTxSupplier = (psId: string) => {
+    setTxSelectedPsId(psId)
+    const ps = txSuppliers.find((p) => p.id === psId)
+    setTxPurchasePrice(ps?.price ?? '')
   }
 
   // Submit transaction form
@@ -308,6 +322,22 @@ export function useProducts() {
         date: txForm.date,
         note: txForm.note,
       })
+      // 可选：为选中供应商创建拿货记录（拿货价为空时用该供应商默认供货价）
+      if (txSelectedPsId) {
+        const ps = txSuppliers.find((p) => p.id === txSelectedPsId)
+        if (ps) {
+          try {
+            await supplierApi.createPurchaseRecord(ps.supplier_id, {
+              product_supplier_id: ps.id,
+              price: txPurchasePrice || ps.price,
+              quantity: parseInt(txForm.quantity) || 1,
+              purchase_date: txForm.date,
+            })
+          } catch {
+            alert('成交已记录，但拿货记录创建失败，请到供应商页补录')
+          }
+        }
+      }
       setShowTxForm(false)
       setTxProduct(null)
     } catch (err: unknown) {
@@ -510,6 +540,11 @@ export function useProducts() {
     setTxForm,
     openTxForm,
     handleTxSubmit,
+    txSuppliers,
+    txSelectedPsId,
+    txPurchasePrice,
+    setTxPurchasePrice,
+    selectTxSupplier,
     // Product transaction list
     showProductTx,
     setShowProductTx,
