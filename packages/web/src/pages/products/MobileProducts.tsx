@@ -59,6 +59,11 @@ export default function MobileProducts() {
     txForm,
     setTxForm,
     handleTxSubmit,
+    txSuppliers,
+    txSelectedPsId,
+    txPurchasePrice,
+    setTxPurchasePrice,
+    selectTxSupplier,
     // Product transaction list
     showProductTx,
     setShowProductTx,
@@ -548,6 +553,31 @@ export default function MobileProducts() {
               {txProduct.description?.slice(0, 30) || txProduct.sku}
             </h2>
             <form onSubmit={handleTxSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  供应商
+                </label>
+                <SearchableSelect
+                  options={[{ value: '', label: '不记录拿货' }, ...txSuppliers.map((ps) => ({ value: ps.id, label: ps.supplier_name }))]}
+                  value={txSelectedPsId}
+                  onChange={selectTxSupplier}
+                  placeholder="选择供应商（可选）"
+                  searchPlaceholder="搜索供应商..."
+                  emptyText="该商品暂无供应商"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  拿货价
+                </label>
+                <input
+                  type="text"
+                  value={txPurchasePrice}
+                  onChange={(e) => setTxPurchasePrice(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="可选，选择供应商后自动填入"
+                />
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   成交价
