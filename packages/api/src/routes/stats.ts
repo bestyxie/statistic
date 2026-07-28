@@ -285,7 +285,7 @@ stats.get('/product/:id', async (c) => {
   const start = c.req.query('start')
   const end = c.req.query('end')
 
-  const product = await db.prepare('SELECT id, name, image_url, sku, description FROM products WHERE id = ?').bind(productId).first()
+  const product = await db.prepare('SELECT id, name, image_url, sku, description, price FROM products WHERE id = ?').bind(productId).first()
   if (!product) {
     return c.json({ error: '商品不存在' }, 404)
   }
