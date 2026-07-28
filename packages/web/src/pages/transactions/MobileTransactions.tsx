@@ -5,6 +5,7 @@ import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import TimeRangePicker from '../../components/TimeRangePicker'
 import SearchableSelect from '../../components/SearchableSelect'
+import TransactionEditModal from '../../components/TransactionEditModal'
 import { useTransactions } from '../../hooks/useTransactions'
 
 export default function MobileTransactions() {
@@ -32,6 +33,9 @@ export default function MobileTransactions() {
     setRefundForm,
     handleRefund,
     handleDelete,
+    editTx,
+    setEditTx,
+    loadTransactions,
     totalAmount,
     totalQty,
     totalRefundQty,
@@ -154,6 +158,12 @@ export default function MobileTransactions() {
                 </div>
 
                 <MobileCardActions>
+                  <button
+                    onClick={() => setEditTx(tx)}
+                    className="text-blue-600 hover:text-blue-800 text-sm"
+                  >
+                    编辑
+                  </button>
                   {!isFullyRefunded && (
                     <button
                       onClick={() => {
@@ -189,6 +199,10 @@ export default function MobileTransactions() {
         total={total}
         onPageChange={setPage}
       />
+
+      {editTx && (
+        <TransactionEditModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
+      )}
 
       {refundModal && (
         <div

@@ -688,6 +688,27 @@ stats.post('/transactions', async (c) => {
   return c.json({ id, product_id, shop_id, price, quantity: quantity || 1, date, note: note || '' })
 })
 
+// 编辑成交（成交价 / 数量 / 日期 / 备注）
+stats.put('/transactions/:id', async (c) => {
+  const { price, quantity, date, note } = await c.req.json<{
+    price: string
+    quantity?: number
+    date: string
+    note?: string
+  }>()
+
+  if (!price || !date) {
+    return c.json({ error: '参数不完整' }, 400)
+  }
+
+  const db = c.env.DB
+  await db.prepare(
+    'UPDATE transactions SET price = ?, quantity = ?, date = ?, note = ? WHERE id = ?'
+  ).bind(price, quantity || 1, date, note || '', c.req.param('id')).run()
+
+  return c.json({ message: '更新成功' })
+})
+
 // List transactions
 stats.get('/transactions', async (c) => {
   const db = c.env.DB
