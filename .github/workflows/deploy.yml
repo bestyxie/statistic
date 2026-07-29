@@ -28,9 +28,21 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: |
+          # 迁移记录表：保证每个迁移只执行一次（ALTER 等 SQLite 无法写成幂等的语句也能安全重跑）
+          pnpm exec wrangler d1 execute statistic-db --remote \
+            --command "CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY, applied_at TEXT DEFAULT (datetime('now')));"
           for f in migrations/*.sql; do
-            echo "Running migration: $f"
-            pnpm exec wrangler d1 execute statistic-db --remote --file="$f"
+            name=$(basename "$f")
+            if pnpm exec wrangler d1 execute statistic-db --remote --json \
+                 --command "SELECT name FROM schema_migrations WHERE name='$name';" \
+                 | grep -q "\"$name\""; then
+              echo "Skipping already-applied migration: $name"
+            else
+              echo "Running migration: $f"
+              pnpm exec wrangler d1 execute statistic-db --remote --file="$f"
+              pnpm exec wrangler d1 execute statistic-db --remote \
+                --command "INSERT INTO schema_migrations (name) VALUES ('$name');"
+            fi
           done
 
       - name: Deploy to Cloudflare Workers
