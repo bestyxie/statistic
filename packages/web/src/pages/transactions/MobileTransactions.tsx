@@ -5,7 +5,7 @@ import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import TimeRangePicker from '../../components/TimeRangePicker'
 import SearchableSelect from '../../components/SearchableSelect'
-import TransactionEditModal from '../../components/TransactionEditModal'
+import TransactionModal from '../../components/TransactionModal'
 import { useTransactions } from '../../hooks/useTransactions'
 
 export default function MobileTransactions() {
@@ -201,7 +201,7 @@ export default function MobileTransactions() {
       />
 
       {editTx && (
-        <TransactionEditModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
+        <TransactionModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
       )}
 
       {refundModal && (

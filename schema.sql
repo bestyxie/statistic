@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   quantity INTEGER DEFAULT 1,
   date TEXT NOT NULL,
   note TEXT DEFAULT '',
+  purchase_price TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now')),
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   FOREIGN KEY (shop_id) REFERENCES shops(id) ON DELETE CASCADE
