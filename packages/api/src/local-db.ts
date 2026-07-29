@@ -183,6 +183,14 @@ export class LocalD1 implements D1Database {
       this.dirty = true
     }
 
+    // Migrate: add purchase_price column to transactions if missing
+    const txCols = this.db.exec("PRAGMA table_info('transactions')")
+    const hasPurchasePrice = txCols.length > 0 && txCols[0].values.some((col: unknown[]) => col[1] === 'purchase_price')
+    if (!hasPurchasePrice) {
+      this.db.run("ALTER TABLE transactions ADD COLUMN purchase_price TEXT DEFAULT ''")
+      this.dirty = true
+    }
+
     // Migrate: create refunds table if missing
     const refundTable = this.db.exec("SELECT name FROM sqlite_master WHERE type='table' AND name='refunds'")
     if (refundTable.length === 0) {
