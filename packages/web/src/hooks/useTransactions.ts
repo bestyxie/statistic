@@ -23,6 +23,15 @@ export function useTransactions() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [items, setItems] = useState<Transaction[]>([])
   const [total, setTotal] = useState(0)
+  const [summary, setSummary] = useState({
+    total_quantity: 0,
+    total_amount: 0,
+    total_cost: 0,
+    total_refund_amount: 0,
+    total_profit: 0,
+    total_refund_quantity: 0,
+    total_refund_count: 0,
+  })
   const [loading, setLoading] = useState(true)
   const [labels, setLabels] = useState<ProductLabel[]>([])
   const [refundModal, setRefundModal] = useState<Transaction | null>(null)
@@ -94,6 +103,7 @@ export function useTransactions() {
       })
       setItems(res.items || [])
       setTotal(res.total || 0)
+      if (res.summary) setSummary(res.summary)
     } catch (e: unknown) {
       console.error('加载失败:', e instanceof Error ? e.message : e)
     } finally {
@@ -154,19 +164,12 @@ export function useTransactions() {
   }
 
   const totalPages = Math.ceil(total / limit)
-  const totalAmount = items.reduce(
-    (s, t) => s + parseFloat(t.price || '0') * (t.quantity || 0),
-    0
-  )
-  const totalQty = items.reduce((s, t) => s + (t.quantity || 0), 0)
-  const totalRefundQty = items.reduce(
-    (s, t) => s + (t.refund_quantity || 0),
-    0
-  )
-  const totalRefundCount = items.reduce(
-    (s, t) => s + (t.refund_count || 0),
-    0
-  )
+  // 汇总取自后端（所选时间范围内，不分页）
+  const totalAmount = summary.total_amount
+  const totalQty = summary.total_quantity
+  const totalProfit = summary.total_profit
+  const totalRefundQty = summary.total_refund_quantity
+  const totalRefundCount = summary.total_refund_count
 
   return {
     // Data
@@ -205,6 +208,7 @@ export function useTransactions() {
     // Computed
     totalAmount,
     totalQty,
+    totalProfit,
     totalRefundQty,
     totalRefundCount,
     // Reload

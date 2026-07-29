@@ -507,6 +507,19 @@ describe('GET /stats/transactions', () => {
     expect(l2.total).toBe(1)
     expect(l2.items.map((t) => t.id)).toEqual(['t-2'])
   })
+
+  it('returns range summary; net profit only over orders with 拿货价', async () => {
+    // 仅 t-1 有拿货价 6（成交价 10 × 数量 2）；t-2、t-3 无拿货价 → 不计入利润
+    await db.prepare("UPDATE transactions SET purchase_price = '6' WHERE id = 't-1'").run()
+    // t-1 退 1 件、退款价 10 → 退款额 10
+    await db.prepare("INSERT INTO refunds (id, transaction_id, price, quantity, date) VALUES (?, ?, ?, ?, ?)").bind('rf-1', 't-1', '10', 1, '2026-06-10').run()
+    const res = await statsRoutes.fetch(new Request('http://localhost/transactions'), { DB: db })
+    const body = await res.json() as { summary: { total_quantity: number; total_amount: number; total_profit: number } }
+    expect(body.summary.total_quantity).toBe(4) // 2 + 1 + 1（全部）
+    expect(body.summary.total_amount).toBe(35) // 20 + 5 + 10（全部）
+    // 净利润仅 t-1：成交额 20 − 成本 12 − 退款额 10 = -2（无拿货价的 t-2/t-3 不计入）
+    expect(body.summary.total_profit).toBe(-2)
+  })
 })
 
 describe('POST /stats/transactions', () => {
