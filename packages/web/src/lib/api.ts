@@ -102,6 +102,7 @@ export interface Transaction {
   quantity: number
   date: string
   note: string
+  purchase_price: string
   created_at: string
   product_name: string
   image_url: string
@@ -120,6 +121,7 @@ interface TransactionInput {
   quantity: number
   date: string
   note: string
+  purchase_price: string
 }
 
 interface Refund {
@@ -222,7 +224,7 @@ export const api = {
     request<{ id: string; name: string; image_url: string; sku: string; price: string; description: string; date: string; visit_count: number }[]>(`/stats/visitors/${visitorId}/products`),
 
   // Transactions
-  createTransaction: (data: { product_id: string; shop_id: string; price: string; quantity?: number; date: string; note?: string }) =>
+  createTransaction: (data: { product_id: string; shop_id: string; price: string; quantity?: number; date: string; note?: string; purchase_price?: string }) =>
     request<TransactionInput>('/stats/transactions', { method: 'POST', body: JSON.stringify(data) }),
   getTransactions: (params?: { shop_id?: string; product_id?: string; start?: string; end?: string; page?: number; limit?: number; search?: string; label_id?: string }) => {
     const q = new URLSearchParams()
@@ -238,7 +240,7 @@ export const api = {
   },
   deleteTransaction: (id: string) =>
     request<{ message: string }>(`/stats/transactions/${id}`, { method: 'DELETE' }),
-  updateTransaction: (id: string, data: { price: string; quantity?: number; date: string; note?: string }) =>
+  updateTransaction: (id: string, data: { price: string; quantity?: number; date: string; note?: string; purchase_price?: string }) =>
     request<{ message: string }>(`/stats/transactions/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   getTransactionTrend: (start: string, end: string, shopId?: string) =>
     request<{ date: string; tx_count: number; tx_amount: number }[]>(`/stats/transactions/trend?start=${start}&end=${end}${shopId ? `&shop_id=${shopId}` : ''}`),

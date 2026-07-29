@@ -6,3 +6,4 @@
 - [TypeScript 编码规范](docs/frontend/typescript-standards.md) — 禁止 as/any/ts-ignore，严格模式，常用模式
 - [目录与组件组织规范](docs/frontend/directory-standards.md) — 页面独立文件夹，就近放置，按需提升，不提前抽象
 - [测试规范](docs/testing-standards.md) — 覆盖率 100%，测试文件同级 `__tests__/`，用例独立不共享状态
+- [数据库迁移](docs/database-migrations.md) — schema.sql 与 migrations 的关系、CI 自动执行、如何新增迁移

@@ -1,7 +1,7 @@
 import { useTransactions } from '../hooks/useTransactions'
 import TimeRangePicker from '../components/TimeRangePicker'
 import SearchableSelect from '../components/SearchableSelect'
-import TransactionEditModal from '../components/TransactionEditModal'
+import TransactionModal from '../components/TransactionModal'
 
 export default function Transactions() {
   const {
@@ -205,7 +205,7 @@ export default function Transactions() {
 
       {/* 编辑弹窗 */}
       {editTx && (
-        <TransactionEditModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
+        <TransactionModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
       )}
 
       {/* 退款弹窗 */}

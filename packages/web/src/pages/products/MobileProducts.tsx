@@ -11,6 +11,7 @@ import ProductNotesModal from '../../components/ProductNotesModal'
 import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import BatchAddSupplierModal from './BatchAddSupplierModal'
 import SearchableSelect from '../../components/SearchableSelect'
+import TransactionModal from '../../components/TransactionModal'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -53,17 +54,8 @@ export default function MobileProducts() {
     handleEdit,
     cancelForm,
     // Transaction form
-    showTxForm,
-    setShowTxForm,
     txProduct,
-    txForm,
-    setTxForm,
-    handleTxSubmit,
-    txSuppliers,
-    txSelectedPsId,
-    txPurchasePrice,
-    setTxPurchasePrice,
-    selectTxSupplier,
+    setTxProduct,
     // Product transaction list
     showProductTx,
     setShowProductTx,
@@ -545,114 +537,8 @@ export default function MobileProducts() {
       )}
 
       {/* Transaction form modal */}
-      {showTxForm && txProduct && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-4">
-            <h2 className="text-base font-semibold mb-3">
-              录入成交 —{' '}
-              {txProduct.description?.slice(0, 30) || txProduct.sku}
-            </h2>
-            <form onSubmit={handleTxSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  供应商
-                </label>
-                <SearchableSelect
-                  options={[{ value: '', label: '不记录拿货' }, ...txSuppliers.map((ps) => ({ value: ps.id, label: ps.supplier_name }))]}
-                  value={txSelectedPsId}
-                  onChange={selectTxSupplier}
-                  placeholder="选择供应商（可选）"
-                  searchPlaceholder="搜索供应商..."
-                  emptyText="该商品暂无供应商"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  拿货价
-                </label>
-                <input
-                  type="text"
-                  value={txPurchasePrice}
-                  onChange={(e) => setTxPurchasePrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="可选，选择供应商后自动填入"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  成交价
-                </label>
-                <input
-                  type="text"
-                  value={txForm.price}
-                  onChange={(e) => setTxForm({ ...txForm, price: e.target.value })}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    数量
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    value={txForm.quantity}
-                    onChange={(e) =>
-                      setTxForm({ ...txForm, quantity: e.target.value })
-                    }
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    日期
-                  </label>
-                  <input
-                    type="date"
-                    value={txForm.date}
-                    onChange={(e) =>
-                      setTxForm({ ...txForm, date: e.target.value })
-                    }
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1">
-                  备注
-                </label>
-                <input
-                  type="text"
-                  value={txForm.note}
-                  onChange={(e) => setTxForm({ ...txForm, note: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="可选"
-                />
-              </div>
-              <div className="flex gap-2 pt-2">
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-orange-600 text-white rounded-md text-sm hover:bg-orange-700"
-                >
-                  确认成交
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowTxForm(false)
-                  }}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50"
-                >
-                  取消
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {txProduct && (
+        <TransactionModal key={txProduct.id} product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />
       )}
 
       {/* Product transaction list modal (card-based for mobile) */}

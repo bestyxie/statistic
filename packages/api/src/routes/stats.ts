@@ -665,13 +665,14 @@ stats.get('/visitors/:id/products', async (c) => {
 
 // Create transaction
 stats.post('/transactions', async (c) => {
-  const { product_id, shop_id, price, quantity, date, note } = await c.req.json<{
+  const { product_id, shop_id, price, quantity, date, note, purchase_price } = await c.req.json<{
     product_id: string
     shop_id: string
     price: string
     quantity?: number
     date: string
     note?: string
+    purchase_price?: string
   }>()
 
   if (!product_id || !shop_id || !price || !date) {
@@ -682,19 +683,20 @@ stats.post('/transactions', async (c) => {
   const id = crypto.randomUUID()
 
   await db.prepare(
-    'INSERT INTO transactions (id, product_id, shop_id, price, quantity, date, note) VALUES (?, ?, ?, ?, ?, ?, ?)'
-  ).bind(id, product_id, shop_id, price, quantity || 1, date, note || '').run()
+    'INSERT INTO transactions (id, product_id, shop_id, price, quantity, date, note, purchase_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+  ).bind(id, product_id, shop_id, price, quantity || 1, date, note || '', purchase_price || '').run()
 
-  return c.json({ id, product_id, shop_id, price, quantity: quantity || 1, date, note: note || '' })
+  return c.json({ id, product_id, shop_id, price, quantity: quantity || 1, date, note: note || '', purchase_price: purchase_price || '' })
 })
 
-// 编辑成交（成交价 / 数量 / 日期 / 备注）
+// 编辑成交（成交价 / 数量 / 日期 / 备注 / 拿货价）
 stats.put('/transactions/:id', async (c) => {
-  const { price, quantity, date, note } = await c.req.json<{
+  const { price, quantity, date, note, purchase_price } = await c.req.json<{
     price: string
     quantity?: number
     date: string
     note?: string
+    purchase_price?: string
   }>()
 
   if (!price || !date) {
@@ -703,8 +705,8 @@ stats.put('/transactions/:id', async (c) => {
 
   const db = c.env.DB
   await db.prepare(
-    'UPDATE transactions SET price = ?, quantity = ?, date = ?, note = ? WHERE id = ?'
-  ).bind(price, quantity || 1, date, note || '', c.req.param('id')).run()
+    'UPDATE transactions SET price = ?, quantity = ?, date = ?, note = ?, purchase_price = ? WHERE id = ?'
+  ).bind(price, quantity || 1, date, note || '', purchase_price || '', c.req.param('id')).run()
 
   return c.json({ message: '更新成功' })
 })

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api } from '../lib/api'
 import ProductDetailDrawer from '../components/ProductDetailDrawer'
 import ProductFormModal from './products/ProductFormModal'
-import TransactionFormModal from './products/TransactionFormModal'
+import TransactionModal from '../components/TransactionModal'
 import TransactionListModal from './products/TransactionListModal'
 import ProductSuppliersModal from './products/ProductSuppliersModal'
 import AddSupplierModal from './products/AddSupplierModal'
@@ -301,7 +301,7 @@ export default function Products() {
         onClose={() => setFormTarget(null)}
         onSaved={() => { setFormTarget(null); load() }}
       />
-      <TransactionFormModal key={txProduct?.id ?? 'none'} product={txProduct} onClose={() => setTxProduct(null)} />
+      {txProduct && <TransactionModal key={txProduct.id} product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />}
       <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />

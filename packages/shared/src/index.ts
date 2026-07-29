@@ -143,6 +143,7 @@ export interface Transaction {
   quantity: number
   date: string
   note: string
+  purchase_price: string
   created_at: string
 }
 
