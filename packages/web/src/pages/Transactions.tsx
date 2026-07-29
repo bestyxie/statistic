@@ -31,6 +31,7 @@ export default function Transactions() {
     loadTransactions,
     totalAmount,
     totalQty,
+    totalProfit,
     totalRefundQty,
     totalRefundCount,
   } = useTransactions()
@@ -48,6 +49,7 @@ export default function Transactions() {
             <span className="text-red-600">已退 {totalRefundQty} 件</span>
           )}
           <span className="text-orange-600 font-medium">¥{totalAmount.toFixed(0)}</span>
+          <span className="text-green-600 font-medium">净利润 ¥{totalProfit.toFixed(2)}</span>
         </div>
       </div>
 
@@ -94,8 +96,8 @@ export default function Transactions() {
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">日期</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">商品</th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">店铺</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">成交价</th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">拿货价</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">数量</th>
                   <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">金额</th>
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">备注</th>
@@ -125,8 +127,8 @@ export default function Transactions() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500">{tx.shop_name || '-'}</td>
                       <td className="px-4 py-3 text-sm text-right font-medium">¥{tx.price}</td>
+                      <td className="px-4 py-3 text-sm text-right text-gray-500">{tx.purchase_price ? `¥${tx.purchase_price}` : '-'}</td>
                       <td className="px-4 py-3 text-sm text-right">
                         <span className={isFullyRefunded ? 'text-gray-400 line-through' : ''}>{tx.quantity}</span>
                         {hasRefund && (

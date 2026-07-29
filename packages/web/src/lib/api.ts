@@ -236,7 +236,21 @@ export const api = {
     if (params?.limit) q.set('limit', String(params.limit))
     if (params?.search) q.set('search', params.search)
     if (params?.label_id) q.set('label_id', params.label_id)
-    return request<{ items: Transaction[]; total: number; page: number; limit: number }>(`/stats/transactions?${q.toString()}`)
+    return request<{
+      items: Transaction[]
+      total: number
+      page: number
+      limit: number
+      summary: {
+        total_quantity: number
+        total_amount: number
+        total_cost: number
+        total_refund_amount: number
+        total_profit: number
+        total_refund_quantity: number
+        total_refund_count: number
+      }
+    }>(`/stats/transactions?${q.toString()}`)
   },
   deleteTransaction: (id: string) =>
     request<{ message: string }>(`/stats/transactions/${id}`, { method: 'DELETE' }),

@@ -740,6 +740,43 @@ stats.get('/transactions', async (c) => {
     `SELECT COUNT(*) as count FROM transactions t JOIN products p ON t.product_id = p.id ${where}`
   ).bind(...params).first<{ count: number }>()
 
+  // 所选时间范围内的汇总（不分页）。成交额/数量为全部订单；
+  // 利润仅统计「有拿货价」的订单（无拿货价的订单不计入利润，避免虚高）
+  const summaryRow = await db.prepare(
+    `SELECT
+       COALESCE(SUM(t.quantity), 0) as total_quantity,
+       COALESCE(SUM(CAST(t.price AS REAL) * t.quantity), 0) as total_amount,
+       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(t.price AS REAL) * t.quantity ELSE 0 END), 0) as pp_amount,
+       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(t.purchase_price AS REAL) * t.quantity ELSE 0 END), 0) as pp_cost
+     FROM transactions t JOIN products p ON t.product_id = p.id ${where}`
+  ).bind(...params).first<{ total_quantity: number; total_amount: number; pp_amount: number; pp_cost: number }>()
+
+  const refundSummary = await db.prepare(
+    `SELECT
+       COALESCE(SUM(r.quantity), 0) as total_refund_quantity,
+       COALESCE(SUM(CAST(r.price AS REAL) * r.quantity), 0) as total_refund_amount,
+       COUNT(r.id) as total_refund_count,
+       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(r.price AS REAL) * r.quantity ELSE 0 END), 0) as pp_refund
+     FROM refunds r
+     JOIN transactions t ON r.transaction_id = t.id
+     JOIN products p ON t.product_id = p.id
+     ${where}`
+  ).bind(...params).first<{ total_refund_quantity: number; total_refund_amount: number; total_refund_count: number; pp_refund: number }>()
+
+  const ppAmount = summaryRow?.pp_amount || 0
+  const ppCost = summaryRow?.pp_cost || 0
+  const ppRefund = refundSummary?.pp_refund || 0
+  // 净利润 = 有拿货价订单的（成交额 − 拿货成本 − 退款额）；无拿货价订单不计入
+  const summary = {
+    total_quantity: summaryRow?.total_quantity || 0,
+    total_amount: summaryRow?.total_amount || 0,
+    total_cost: ppCost,
+    total_refund_amount: refundSummary?.total_refund_amount || 0,
+    total_profit: ppAmount - ppCost - ppRefund,
+    total_refund_quantity: refundSummary?.total_refund_quantity || 0,
+    total_refund_count: refundSummary?.total_refund_count || 0,
+  }
+
   const results = await db.prepare(
     `SELECT t.*, p.name as product_name, p.image_url, p.sku, p.description, s.name as shop_name,
        COALESCE(SUM(r.quantity), 0) as refund_quantity,
@@ -759,6 +796,7 @@ stats.get('/transactions', async (c) => {
     total: total?.count || 0,
     page,
     limit,
+    summary,
   })
 })
 

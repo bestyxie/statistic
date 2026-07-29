@@ -38,6 +38,7 @@ export default function MobileTransactions() {
     loadTransactions,
     totalAmount,
     totalQty,
+    totalProfit,
     totalRefundQty,
     totalRefundCount,
   } = useTransactions()
@@ -62,6 +63,7 @@ export default function MobileTransactions() {
               <span className="text-red-600">已退 {totalRefundQty} 件</span>
             )}
             <span className="text-orange-600 font-medium">¥{totalAmount.toFixed(0)}</span>
+            <span className="text-green-600 font-medium">净利润 ¥{totalProfit.toFixed(2)}</span>
           </div>
         }
       />
@@ -137,12 +139,6 @@ export default function MobileTransactions() {
 
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-gray-500">
                   <span>{tx.date}</span>
-                  {tx.shop_name && (
-                    <>
-                      <span className="text-gray-300">|</span>
-                      <span>{tx.shop_name}</span>
-                    </>
-                  )}
                 </div>
 
                 <div className="mt-1 text-sm">
@@ -155,6 +151,9 @@ export default function MobileTransactions() {
                   <span className="text-orange-600 font-medium">
                     ¥{(parseFloat(tx.price) * tx.quantity).toFixed(0)}
                   </span>
+                  {tx.purchase_price && (
+                    <span className="ml-2 text-xs text-gray-400">拿货 ¥{tx.purchase_price}</span>
+                  )}
                 </div>
 
                 <MobileCardActions>
