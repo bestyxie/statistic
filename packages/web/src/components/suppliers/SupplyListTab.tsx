@@ -397,7 +397,7 @@ export default function SupplyListTab() {
               <tr className="border-b border-gray-200 bg-gray-50">
                 <th className="text-left py-3 px-5 text-gray-500 font-medium">商品</th>
                 <th className="text-left py-3 px-5 text-gray-500 font-medium">供应商</th>
-                <th className="text-left py-3 px-5 text-gray-500 font-medium">编号</th>
+                <th className="text-left py-3 px-5 text-gray-500 font-medium">备注</th>
                 <th className="text-right py-3 px-5 text-gray-500 font-medium">进货价</th>
                 <th className="text-right py-3 px-5 text-gray-500 font-medium">操作</th>
               </tr>
@@ -420,7 +420,15 @@ export default function SupplyListTab() {
                     </div>
                   </td>
                   <td className="py-3 px-5 text-gray-700">{l.supplier_name}</td>
-                  <td className="py-3 px-5 text-gray-500 font-mono text-xs">{l.product_sku || '-'}</td>
+                  <td className="py-3 px-5 text-gray-500 text-xs">
+                    {l.note ? (
+                      <HoverPopup side="overlay" popup={<div className="p-3 max-w-sm text-sm text-gray-700 whitespace-normal break-all select-text">{l.note}</div>}>
+                        <span className="max-w-[160px] truncate block">{l.note}</span>
+                      </HoverPopup>
+                    ) : (
+                      <span>-</span>
+                    )}
+                  </td>
                   <td className="py-3 px-5 text-right text-orange-600 font-medium">¥{l.price || '-'}</td>
                   <td className="py-3 px-5 text-right">
                     <button onClick={() => { setEditingLink(l); setEditPrice(l.price); setEditNote(l.note); setEditSupplierId(l.supplier_id) }} className="text-blue-600 hover:text-blue-800 text-xs mr-2">编辑</button>
