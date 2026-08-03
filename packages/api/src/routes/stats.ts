@@ -756,23 +756,26 @@ stats.get('/transactions', async (c) => {
        COALESCE(SUM(r.quantity), 0) as total_refund_quantity,
        COALESCE(SUM(CAST(r.price AS REAL) * r.quantity), 0) as total_refund_amount,
        COUNT(r.id) as total_refund_count,
-       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(r.price AS REAL) * r.quantity ELSE 0 END), 0) as pp_refund
+       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(r.price AS REAL) * r.quantity ELSE 0 END), 0) as pp_refund,
+       COALESCE(SUM(CASE WHEN t.purchase_price != '' THEN CAST(t.purchase_price AS REAL) * r.quantity ELSE 0 END), 0) as pp_refund_cost
      FROM refunds r
      JOIN transactions t ON r.transaction_id = t.id
      JOIN products p ON t.product_id = p.id
      ${where}`
-  ).bind(...params).first<{ total_refund_quantity: number; total_refund_amount: number; total_refund_count: number; pp_refund: number }>()
+  ).bind(...params).first<{ total_refund_quantity: number; total_refund_amount: number; total_refund_count: number; pp_refund: number; pp_refund_cost: number }>()
 
   const ppAmount = summaryRow?.pp_amount || 0
   const ppCost = summaryRow?.pp_cost || 0
   const ppRefund = refundSummary?.pp_refund || 0
-  // 净利润 = 有拿货价订单的（成交额 − 拿货成本 − 退款额）；无拿货价订单不计入
+  const ppRefundCost = refundSummary?.pp_refund_cost || 0
+  // 净利润 = 有拿货价订单的（成交额 − 拿货成本 − 退款额 + 退回货物的拿货成本）；
+  // 退款即退货、库存收回，故退款那部分的拿货成本需加回，避免成本被重复扣减；无拿货价订单不计入
   const summary = {
     total_quantity: summaryRow?.total_quantity || 0,
     total_amount: summaryRow?.total_amount || 0,
     total_cost: ppCost,
     total_refund_amount: refundSummary?.total_refund_amount || 0,
-    total_profit: ppAmount - ppCost - ppRefund,
+    total_profit: ppAmount - ppCost - ppRefund + ppRefundCost,
     total_refund_quantity: refundSummary?.total_refund_quantity || 0,
     total_refund_count: refundSummary?.total_refund_count || 0,
   }

@@ -517,8 +517,8 @@ describe('GET /stats/transactions', () => {
     const body = await res.json() as { summary: { total_quantity: number; total_amount: number; total_profit: number } }
     expect(body.summary.total_quantity).toBe(4) // 2 + 1 + 1（全部）
     expect(body.summary.total_amount).toBe(35) // 20 + 5 + 10（全部）
-    // 净利润仅 t-1：成交额 20 − 成本 12 − 退款额 10 = -2（无拿货价的 t-2/t-3 不计入）
-    expect(body.summary.total_profit).toBe(-2)
+    // 净利润仅 t-1：退 1 件后真正卖出 1 件 → 成交额 20 − 成本 12 − 退款额 10 + 退回成本 6 = 4（无拿货价的 t-2/t-3 不计入）
+    expect(body.summary.total_profit).toBe(4)
   })
 })
 
