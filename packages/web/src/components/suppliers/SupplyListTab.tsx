@@ -199,10 +199,15 @@ export default function SupplyListTab() {
           </div>
           <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按供应商筛选</label>
-            <select value={filterSupplier} onChange={(e) => { setFilterSupplier(e.target.value); setPage(1) }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">全部供应商</option>
-              {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
-            </select>
+            <SearchableSelect
+              className="w-full"
+              options={[{ value: '', label: '全部供应商' }, ...suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname }))]}
+              value={filterSupplier}
+              onChange={(v) => { setFilterSupplier(v); setPage(1) }}
+              placeholder="全部供应商"
+              searchPlaceholder="搜索供应商..."
+              emptyText="无匹配供应商"
+            />
           </div>
           <div className="w-full sm:w-48">
             <label className="block text-xs text-gray-500 mb-1">按品牌筛选</label>
@@ -238,10 +243,15 @@ export default function SupplyListTab() {
             <div className="space-y-3 flex-1 overflow-y-auto">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">供应商</label>
-                <select value={linkSupplierId} onChange={(e) => setLinkSupplierId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <option value="">请选择供应商</option>
-                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
-                </select>
+                <SearchableSelect
+                  className="w-full"
+                  options={suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname }))}
+                  value={linkSupplierId}
+                  onChange={setLinkSupplierId}
+                  placeholder="请选择供应商"
+                  searchPlaceholder="搜索供应商..."
+                  emptyText="无匹配供应商"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">搜索商品</label>
@@ -297,10 +307,15 @@ export default function SupplyListTab() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">供应商</label>
-                  <select value={curlSupplierId} onChange={(e) => setCurlSupplierId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">请选择供应商</option>
-                    {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
-                  </select>
+                  <SearchableSelect
+                    className="w-full"
+                    options={suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname }))}
+                    value={curlSupplierId}
+                    onChange={setCurlSupplierId}
+                    placeholder="请选择供应商"
+                    searchPlaceholder="搜索供应商..."
+                    emptyText="无匹配供应商"
+                  />
                 </div>
               </div>
               <div>
@@ -362,9 +377,15 @@ export default function SupplyListTab() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">供应商</label>
-                <select value={editSupplierId} onChange={(e) => setEditSupplierId(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
-                </select>
+                <SearchableSelect
+                  className="w-full"
+                  options={suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname }))}
+                  value={editSupplierId}
+                  onChange={setEditSupplierId}
+                  placeholder="请选择供应商"
+                  searchPlaceholder="搜索供应商..."
+                  emptyText="无匹配供应商"
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">进货价格</label>

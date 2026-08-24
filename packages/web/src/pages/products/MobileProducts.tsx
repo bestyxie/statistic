@@ -766,16 +766,15 @@ export default function MobileProducts() {
             <div className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">选择供应商</label>
-                <select
+                <SearchableSelect
+                  className="w-full"
+                  options={allSuppliers.map((s) => ({ value: s.id, label: s.wechat_nickname + (s.remark ? ` (${s.remark})` : '') }))}
                   value={addSupplierForm.supplier_id}
-                  onChange={(e) => setAddSupplierForm({ ...addSupplierForm, supplier_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">请选择供应商</option>
-                  {allSuppliers.map((s) => (
-                    <option key={s.id} value={s.id}>{s.wechat_nickname}{s.remark ? ` (${s.remark})` : ''}</option>
-                  ))}
-                </select>
+                  onChange={(v) => setAddSupplierForm({ ...addSupplierForm, supplier_id: v })}
+                  placeholder="请选择供应商"
+                  searchPlaceholder="搜索供应商..."
+                  emptyText="无匹配供应商"
+                />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">供货价</label>

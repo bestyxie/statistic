@@ -5,6 +5,7 @@ import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import MobileFilter from '../../components/mobile/MobileFilter'
 import { supplierApi, type ProductSupplierWithInfo } from '../../lib/supplierApi'
 import type { Supplier } from '@statistic/shared'
+import SearchableSelect from '../../components/SearchableSelect'
 
 export default function MobileSuppliers() {
   const [activeTab, setActiveTab] = useState<'supply' | 'purchases'>('supply')
@@ -86,10 +87,15 @@ function MobileSupplyList() {
           type="text" value={search} onChange={(e) => { setSearch(e.target.value); setTimeout(loadLinks, 300) }}
           placeholder="搜索供应商 / 商品" className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
         />
-        <select value={filterSupplier} onChange={(e) => { setFilterSupplier(e.target.value); setTimeout(loadLinks, 0) }} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
-          <option value="">全部供应商</option>
-          {suppliers.map((s) => <option key={s.id} value={s.id}>{s.wechat_nickname}</option>)}
-        </select>
+        <SearchableSelect
+          className="w-full"
+          options={[{ value: '', label: '全部供应商' }, ...suppliers.map((s) => ({ value: s.id, label: s.wechat_nickname }))]}
+          value={filterSupplier}
+          onChange={(v) => { setFilterSupplier(v); setTimeout(loadLinks, 0) }}
+          placeholder="全部供应商"
+          searchPlaceholder="搜索供应商..."
+          emptyText="无匹配供应商"
+        />
         <button onClick={() => setShowSupplierForm(true)} className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm">
           管理供应商
         </button>
