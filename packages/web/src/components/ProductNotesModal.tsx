@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
+import Modal from './ui/Modal'
 import type { ProductNote } from '@statistic/shared'
 
 interface ProductRef {
@@ -55,8 +56,8 @@ export default function ProductNotesModal({ product, onClose, onChanged }: Props
   const title = (product.description || product.name || product.id).slice(0, 30)
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Modal open onClose={onClose} size="md">
+      <div className="p-4 sm:p-6 flex flex-col">
         <h2 className="text-base sm:text-lg font-semibold mb-4">查看备注 — {title}</h2>
         {loading ? (
           <p className="text-gray-400 text-sm py-4">加载中...</p>
@@ -77,6 +78,6 @@ export default function ProductNotesModal({ product, onClose, onChanged }: Props
           <button type="button" onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">关闭</button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

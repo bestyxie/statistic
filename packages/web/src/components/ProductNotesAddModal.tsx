@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../lib/api'
+import Modal from './ui/Modal'
 
 interface ProductRef {
   id: string
@@ -18,10 +19,9 @@ export default function ProductNotesAddModal({ product, onClose, onChanged }: Pr
   const [content, setContent] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
-  if (!product) return null
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    if (!product) return
     const text = content.trim()
     if (!text) return
     setSubmitting(true)
@@ -36,13 +36,12 @@ export default function ProductNotesAddModal({ product, onClose, onChanged }: Pr
     }
   }
 
-  const title = (product.description || product.name || product.id).slice(0, 30)
+  const title = product ? (product.description || product.name || product.id).slice(0, 30) : ''
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
+    <Modal open={!!product} onClose={onClose} disableClose size="md">
       <form
-        className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full flex flex-col"
-        onClick={(e) => e.stopPropagation()}
+        className="p-4 sm:p-6 flex flex-col"
         onSubmit={handleSubmit}
       >
         <h2 className="text-base sm:text-lg font-semibold mb-4">添加备注 — {title}</h2>
@@ -61,6 +60,6 @@ export default function ProductNotesAddModal({ product, onClose, onChanged }: Pr
           </button>
         </div>
       </form>
-    </div>
+    </Modal>
   )
 }

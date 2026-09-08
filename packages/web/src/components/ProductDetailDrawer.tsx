@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import VisitorProductsModal from './VisitorProductsModal'
 import TimeRangePicker from './TimeRangePicker'
+import Modal from './ui/Modal'
 import type { Product, Visitor } from '@statistic/shared'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 
@@ -110,22 +111,11 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
     }
   }
 
-  useEffect(() => {
-    if (!productId) return
-    const original = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = original }
-  }, [productId])
-
   if (!productId) return null
 
   return (
-    <div className="fixed inset-0 z-50">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-      {/* Drawer */}
-      <div className="absolute inset-y-0 right-0 sm:w-[90vw] sm:max-w-[1200px] w-full bg-gray-50 shadow-xl overflow-hidden flex flex-col">
+    <Modal open onClose={onClose} variant="drawer">
+      <div className="bg-gray-50 h-full overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white shrink-0">
           <h1 className="text-xl font-bold text-gray-800">商品统计</h1>
@@ -261,8 +251,8 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
 
               {/* Visitor modal */}
               {visitorModal.open && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4" onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }}>
-                  <div className="bg-white rounded-lg max-w-lg w-full max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <Modal open onClose={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }} size="lg">
+                  <div className="overflow-hidden">
                     <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
                       <h3 className="text-lg font-semibold text-gray-800">{visitorModal.date} 访客列表</h3>
                       <button onClick={() => { setVisitorModal({ ...visitorModal, open: false }); setVisitorProductsModal({ visitor: null }) }} className="text-gray-400 hover:text-gray-600">
@@ -304,7 +294,7 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
                       )}
                     </div>
                   </div>
-                </div>
+                </Modal>
               )}
 
               {/* 访客商品弹窗 */}
@@ -335,6 +325,6 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

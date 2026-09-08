@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import HoverPopup from './HoverPopup'
+import Modal from './ui/Modal'
 import type { Visitor, VisitorProduct } from '@statistic/shared'
 
 interface Props {
@@ -27,8 +28,8 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
   if (!visitor) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+    <Modal open onClose={onClose} size="xl">
+      <div className="overflow-hidden">
         <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <img
@@ -93,6 +94,6 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../lib/api'
 import { supplierApi, type ProductSupplierWithInfo } from '../lib/supplierApi'
 import SearchableSelect from './SearchableSelect'
+import Modal from './ui/Modal'
 import type { Product } from '@statistic/shared'
 import type { Transaction } from '../lib/api'
 
@@ -43,8 +44,6 @@ export default function TransactionModal({ product, transaction, onClose, onSave
     }
     supplierApi.getAllProducts({ product_id: productId }).then(setProductSuppliers).catch(() => setProductSuppliers([]))
   }, [productId])
-
-  if (!product && !transaction) return null
 
   // 选择供应商：若有供货价则自动填入拿货价（拿货价本身独立于供应商，可单独编辑/留空）
   const handleSelectSupplier = (psId: string) => {
@@ -92,8 +91,8 @@ export default function TransactionModal({ product, transaction, onClose, onSave
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full">
+    <Modal open={!!(product || transaction)} onClose={onClose} disableClose size="md">
+      <div className="p-4 sm:p-6">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{isEdit ? '编辑成交' : '录入成交'} — {productLabel.slice(0, 30)}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -136,6 +135,6 @@ export default function TransactionModal({ product, transaction, onClose, onSave
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }
