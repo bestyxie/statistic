@@ -70,33 +70,30 @@ export default function Modal({
 }: ModalProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const depth = useContext(ModalDepthContext)
-  // 动画状态机：closed → open（进场）→ exiting（退出窗口，动画放完才卸载）。
-  // 退出期间重新打开则取消卸载，回到进场态
+  // 动画状态机：closed → open（进场）→ closing（退出窗口，动画放完才卸载）→ closed。
+  // closing 在渲染期派生（mounted && !open）而非 effect 里置位：effect 晚于
+  // paint，若退出类靠 effect 换，浏览器会先画一帧「空数据 + 进场类」再切
+  // 退出类——视觉上抖一下。派生则 open 翻 false 的同一次 commit 里退出类
+  // 与冻结内容原子生效，无中间帧
   const [mounted, setMounted] = useState(open)
-  const [exiting, setExiting] = useState(false)
+  const closing = mounted && !open
   // 退出动画期间冻结内容：业务惯例是 onClose 同时清数据（setProduct(null)），
   // children 会立刻拿到空 props，淡出中闪成空白。存下最后一次 open 的
   // children（ReactNode 是不可变描述，重渲染旧元素即以旧 props 渲染），
-  // 退出窗口内渲染快照。150ms 内旧闭包的 handler 无实质影响
+  // 退出窗口内渲染快照。100ms 内旧闭包的 handler 无实质影响
   const lastOpenChildren = useRef<ReactNode>(children)
-  if (open && !exiting) lastOpenChildren.current = children
-  const childrenToShow = exiting ? lastOpenChildren.current : children
+  if (open) lastOpenChildren.current = children
+  const childrenToShow = closing ? lastOpenChildren.current : children
   useScrollLock(open)
 
   useEffect(() => {
     if (open) {
-      // 重开：取消挂起的卸载，回到进场态
-      setExiting(false)
       setMounted(true)
       return
     }
     if (!mounted) return
-    // 关闭：进入退出窗口，动画放完再卸载
-    setExiting(true)
-    const t = setTimeout(() => {
-      setMounted(false)
-      setExiting(false)
-    }, EXIT_MS)
+    // 退出窗口计时到点才卸载；期间重开时本 effect 重跑，cleanup 清掉旧计时
+    const t = setTimeout(() => setMounted(false), EXIT_MS)
     return () => clearTimeout(t)
   }, [open, mounted])
 
@@ -126,10 +123,10 @@ export default function Modal({
   const isDrawer = variant === 'drawer'
   const rootAnim = isDrawer
     ? ''
-    : exiting ? 'animate-modal-fade-out' : 'animate-modal-fade-in'
+    : closing ? 'animate-modal-fade-out' : 'animate-modal-fade-in'
   const panelAnim = isDrawer
-    ? exiting ? 'animate-drawer-slide-out' : 'animate-drawer-slide-in'
-    : exiting ? 'animate-modal-scale-out' : 'animate-modal-scale-in'
+    ? closing ? 'animate-drawer-slide-out' : 'animate-drawer-slide-in'
+    : closing ? 'animate-modal-scale-out' : 'animate-modal-scale-in'
   const panelClass = isDrawer
     ? `absolute inset-y-0 right-0 w-full sm:w-[90vw] sm:max-w-[1200px] bg-white shadow-xl flex flex-col ${panelAnim} ${panelClassName}`
     : `bg-white rounded-lg border border-gray-200 w-full ${SIZES[size]} max-h-[85vh] ${panelAnim} ${panelClassName}`
@@ -146,7 +143,7 @@ export default function Modal({
     >
       {isDrawer && (
         <div
-          className={`absolute inset-0 bg-black/50 ${exiting ? 'animate-modal-fade-out' : 'animate-modal-fade-in'}`}
+          className={`absolute inset-0 bg-black/50 ${closing ? 'animate-modal-fade-out' : 'animate-modal-fade-in'}`}
           onClick={disableClose ? undefined : onClose}
         />
       )}

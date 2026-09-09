@@ -273,6 +273,27 @@ describe('Modal', () => {
     }
   })
 
+  it('applies exit classes in the same render open flips false (no flicker frame)', () => {
+    // 回归：曾在 effect 里置 exiting，effect 晚于 paint——关闭那一帧先画出
+    // 「空数据 + 进场类」再切退出类，视觉上抖一下。退出类必须渲染期就位：
+    // open 翻 false 的渲染里内容已冻结、类已是退出方向
+    function App({ open }: { open: boolean }) {
+      return (
+        <Modal open={open} onClose={() => {}}>
+          <p>title: {'商品A'.slice(0, open ? 3 : 0)}</p>
+        </Modal>
+      )
+    }
+    const { rerender } = render(<App open />)
+    rerender(<App open={false} />)
+    // 同一渲染：内容还是关闭前的快照（不闪空）
+    expect(screen.getByText('title: 商品A')).toBeInTheDocument()
+    const root = screen.getByText('title: 商品A').parentElement!.parentElement!
+    // 类已是退出方向（不是先出现进场类、effect 后再换）
+    expect(root.className).toContain('animate-modal-fade-out')
+    expect(screen.getByText('title: 商品A').parentElement!.className).toContain('animate-modal-scale-out')
+  })
+
   it('unmounts immediately when never opened (no lingering DOM)', () => {
     const { onClose } = renderModal({ open: false })
     expect(screen.queryByText('content')).toBeNull()
