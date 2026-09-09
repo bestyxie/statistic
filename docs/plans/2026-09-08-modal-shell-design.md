@@ -56,11 +56,12 @@ interface ModalProps {
 ## Esc 与嵌套关闭
 
 - 每个 open 的壳监听 document keydown；模块级维护打开栈，**只有栈顶响应 Esc**，避免一次 Esc 父子全关。
+- 顶层判定用 **React 树深度**（ModalDepthContext 传递），不能用 DOM 顺序：portal 后嵌套弹窗同一次 commit 挂载时子先插入 body，DOM 顺序与嵌套关系相反；同层则更晚打开者为栈顶。
 - `disableClose` 同时禁遮罩点击与 Esc（表单类）。
 
 ## z-index 分层
 
-所有 Modal 壳统一 `z-50`。嵌套弹窗（如 Drawer 内的访客列表）在父组件 DOM 子树内后渲染，同层级靠 DOM 顺序自然覆盖，消掉 `z-[60]` 手动加层。保留两个特例不动：
+所有 Modal 壳统一 `z-50`。**壳用 `createPortal` 挂到 `document.body`**（2026-09-09 修复：原内联渲染时，页面根容器的 `space-y-*` 会给非末位子元素打 margin-block-end，`fixed inset-0` 的遮罩高度被 24px margin 压短，底部盖不住）。嵌套弹窗（如 Drawer 内的访客列表）同层级靠 portal 顺序追加自然覆盖，消掉 `z-[60]` 手动加层。保留两个特例不动：
 
 - `MobileImagePreview` z-[70]（弹窗内看大图，需恒在上）
 - `HoverPopup` z-[80]

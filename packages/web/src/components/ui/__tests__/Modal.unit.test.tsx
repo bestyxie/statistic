@@ -165,4 +165,19 @@ describe('Modal', () => {
     fireEvent.click(backdrop)
     expect(onClose).not.toHaveBeenCalled()
   })
+
+  it('renders at document.body, escaping parent space-y margin', () => {
+    // 回归：内联渲染时 space-y-6 给非末位子元素打 24px margin-block-end，
+    // fixed inset-0 高度被压掉 24px，遮罩底部盖不住。必须 portal 到 body 逃离父容器样式
+    render(
+      <div className="space-y-6">
+        <p>sibling</p>
+        <Modal open onClose={() => {}}>
+          <p>content</p>
+        </Modal>
+      </div>,
+    )
+    const root = screen.getByText('content').parentElement!.parentElement!
+    expect(root.parentElement).toBe(document.body)
+  })
 })

@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../hooks/useScrollLock'
 
 const SIZES = {
@@ -25,21 +26,35 @@ interface ModalProps {
   children: ReactNode
 }
 
-// Esc 只响应最内层弹窗。不能用「数组尾=栈顶」：effect 执行顺序是子先父后，
-// 与 DOM 嵌套顺序相反。以真实 DOM 顺序为准——记录每个打开弹窗的根节点，
-// keydown 时比较 compareDocumentPosition，DOM 最靠后的（最内层）才响应。
-const openRoots: HTMLElement[] = []
+// Esc 只响应最内层弹窗。不能用 DOM 顺序：portal 到 body 后插入顺序取决于
+// commit 顺序，嵌套弹窗同一次 commit 挂载时是子先父后（内层先插入 body），
+// DOM 顺序与嵌套关系相反。改用 React 树深度（context 传递）判定：
+// 嵌套更深者更内层；同层则更晚注册（更近打开）者为顶层。
+const ModalDepthContext = createContext(0)
 
-/** self 是否是 openRoots 中 DOM 顺序最靠后的（最内层弹窗） */
+interface OpenModal {
+  root: HTMLElement
+  depth: number
+}
+const openModals: OpenModal[] = []
+
+/** self 是否是当前打开弹窗中的最顶层（最内层） */
 function isTopmost(self: HTMLElement): boolean {
-  return openRoots.every(
-    (root) => root === self || self.compareDocumentPosition(root) & Node.DOCUMENT_POSITION_PRECEDING
+  const me = openModals.find((m) => m.root === self)
+  if (!me) return false
+  const meIdx = openModals.indexOf(me)
+  return openModals.every(
+    (m, i) => m === me || m.depth < me.depth || (m.depth === me.depth && i < meIdx),
   )
 }
 
 /**
  * 通用弹窗外壳：只负责遮罩/定位/关闭与滚动锁定。
  * 头部标题、关闭按钮、内部滚动结构由 children 自带。
+ *
+ * 必须用 createPortal 挂到 document.body：页面根容器普遍是 space-y-*，
+ * Tailwind v4 会给非末位子元素打 margin-block-end，fixed inset-0 的遮罩
+ * 高度会被 margin 压短（底部盖不住）。portal 让弹窗逃离宿主页面的布局样式。
  */
 export default function Modal({
   open,
@@ -51,13 +66,14 @@ export default function Modal({
   children,
 }: ModalProps) {
   const rootRef = useRef<HTMLDivElement>(null)
+  const depth = useContext(ModalDepthContext)
   useScrollLock(open)
 
   useEffect(() => {
     if (!open) return
     const root = rootRef.current
     if (!root) return
-    openRoots.push(root)
+    openModals.push({ root, depth })
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       if (!isTopmost(root)) return
@@ -66,11 +82,11 @@ export default function Modal({
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => {
-      const i = openRoots.indexOf(root)
-      if (i !== -1) openRoots.splice(i, 1)
+      const i = openModals.findIndex((m) => m.root === root)
+      if (i !== -1) openModals.splice(i, 1)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, disableClose, onClose])
+  }, [open, disableClose, onClose, depth])
 
   if (!open) return null
 
@@ -79,7 +95,7 @@ export default function Modal({
     ? `absolute inset-y-0 right-0 w-full sm:w-[90vw] sm:max-w-[1200px] bg-white shadow-xl flex flex-col ${panelClassName}`
     : `bg-white rounded-lg border border-gray-200 w-full ${SIZES[size]} max-h-[85vh] ${panelClassName}`
 
-  return (
+  return createPortal(
     <div
       ref={rootRef}
       className={
@@ -93,8 +109,9 @@ export default function Modal({
         <div className="absolute inset-0 bg-black/50" onClick={disableClose ? undefined : onClose} />
       )}
       <div className={panelClass} onClick={(e) => e.stopPropagation()}>
-        {children}
+        <ModalDepthContext.Provider value={depth + 1}>{children}</ModalDepthContext.Provider>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
