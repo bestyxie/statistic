@@ -1,20 +1,31 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { Supplier } from '@statistic/shared'
 import Modal from '../../components/ui/Modal'
 
 interface Props {
+  show: boolean
   supplier?: Supplier | null
   onSubmit: (data: { wechat_nickname: string; wechat_id: string; remark: string }) => Promise<void>
   onCancel: () => void
 }
 
-export default function SupplierForm({ supplier, onSubmit, onCancel }: Props) {
+export default function SupplierForm({ show, supplier, onSubmit, onCancel }: Props) {
   const [form, setForm] = useState({
     wechat_nickname: supplier?.wechat_nickname || '',
     wechat_id: supplier?.wechat_id || '',
     remark: supplier?.remark || '',
   })
   const [error, setError] = useState('')
+
+  // 持续挂载（为退出动画）下，编辑对象变化时重置表单——替代原先条件挂载的重置效果
+  useEffect(() => {
+    setForm({
+      wechat_nickname: supplier?.wechat_nickname || '',
+      wechat_id: supplier?.wechat_id || '',
+      remark: supplier?.remark || '',
+    })
+    setError('')
+  }, [supplier])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,7 +38,7 @@ export default function SupplierForm({ supplier, onSubmit, onCancel }: Props) {
   }
 
   return (
-    <Modal open onClose={onCancel} disableClose size="md">
+    <Modal open={show} onClose={onCancel} disableClose size="md">
       <div className="p-6">
         <h2 className="text-lg font-semibold mb-5">{supplier ? '编辑供应商' : '添加供应商'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">

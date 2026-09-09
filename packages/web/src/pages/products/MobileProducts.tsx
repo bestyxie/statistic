@@ -535,10 +535,8 @@ export default function MobileProducts() {
           </div>
       </Modal>
 
-      {/* Transaction form modal */}
-      {txProduct && (
-        <TransactionModal key={txProduct.id} product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />
-      )}
+      {/* Transaction form modal（持续挂载以获得退出动画，切换商品时 TransactionModal 内部重置表单） */}
+      <TransactionModal product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />
 
       {/* Product transaction list modal (card-based for mobile) */}
       <Modal open={showProductTx && !!productTxProduct} onClose={() => setShowProductTx(false)} size="lg">

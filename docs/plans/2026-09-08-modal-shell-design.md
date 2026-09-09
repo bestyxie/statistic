@@ -59,6 +59,15 @@ interface ModalProps {
 - 顶层判定用 **React 树深度**（ModalDepthContext 传递），不能用 DOM 顺序：portal 后嵌套弹窗同一次 commit 挂载时子先插入 body，DOM 顺序与嵌套关系相反；同层则更晚打开者为栈顶。
 - `disableClose` 同时禁遮罩点击与 Esc（表单类）。
 
+## 进出场动画（2026-09-09 增补）
+
+- 状态机 `closed → open → exiting → closed`：壳内 `mounted`（门控卸载）+ `exiting`（切换进/出动画方向）两态实现；`EXIT_MS = 150ms` 与 index.css 出场 duration 一致。退出窗口内重新打开则取消挂起的卸载、回到进场态。
+- 动画定义在 index.css 的 `@theme`（Tailwind v4 由 `--animate-*` 变量生成 `animate-*` 工具类）：center 变体 fade+scale（0.2s 进 / 0.15s 出），drawer 变体遮罩 fade + 面板 slide（0.25s 进 / 0.15s 出）。
+- **退出期间冻结内容**：业务惯例是 onClose 同时清数据（`setProduct(null)`），children 立即拿到空 props 会闪空白。壳在最后一个 open 帧把 children 存进 ref，退出窗口内渲染该快照（ReactNode 不可变，旧 props 渲染）。
+- Esc 监听的挂载条件用 `mounted` 而非 `open`：退出窗口内按键仍响应。
+- `useScrollLock` 仍随 `open` 解锁（遮罩淡出中即可滚动，与 Radix 行为一致）。
+- **调用方要求**：必须持续渲染（`<XxxModal product={x}/>` 而非 `{x && <XxxModal/>}`），否则关闭时直接卸载、跳过退出动画。为此各弹窗组件去掉 `if (!x) return null` 守卫、`open={!!x}` 下沉进 Modal；表单类组件（TransactionModal / AddSupplierModal / SupplierForm）补「props 变化时重置表单」effect，替代原先靠重挂载的重置。
+
 ## z-index 分层
 
 所有 Modal 壳统一 `z-50`。**壳用 `createPortal` 挂到 `document.body`**（2026-09-09 修复：原内联渲染时，页面根容器的 `space-y-*` 会给非末位子元素打 margin-block-end，`fixed inset-0` 的遮罩高度被 24px margin 压短，底部盖不住）。嵌套弹窗（如 Drawer 内的访客列表）同层级靠 portal 顺序追加自然覆盖，消掉 `z-[60]` 手动加层。保留两个特例不动：

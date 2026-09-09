@@ -1,4 +1,4 @@
-import { cleanup, render, screen, fireEvent } from '@testing-library/react'
+import { cleanup, render, screen, fireEvent, act } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import Modal from '../Modal'
@@ -179,5 +179,103 @@ describe('Modal', () => {
     )
     const root = screen.getByText('content').parentElement!.parentElement!
     expect(root.parentElement).toBe(document.body)
+  })
+
+  it('applies enter animation classes on open (center: fade+scale)', () => {
+    renderModal()
+    const root = screen.getByText('content').parentElement!.parentElement!
+    expect(root.className).toContain('animate-modal-fade-in')
+    expect(screen.getByText('content').parentElement!.className).toContain('animate-modal-scale-in')
+  })
+
+  it('applies drawer slide-in animation on open', () => {
+    renderModal({ variant: 'drawer' })
+    const panel = screen.getByText('content').parentElement!
+    expect(panel.className).toContain('animate-drawer-slide-in')
+    const backdrop = panel.previousElementSibling!
+    expect(backdrop.className).toContain('animate-modal-fade-in')
+  })
+
+  it('stays mounted with exit animation classes while closing', () => {
+    vi.useFakeTimers()
+    try {
+      function App() {
+        const [open, setOpen] = useState(true)
+        return (
+          <Modal open={open} onClose={() => setOpen(false)}>
+            <p>content</p>
+          </Modal>
+        )
+      }
+      render(<App />)
+      fireEvent.click(screen.getByText('content').parentElement!.parentElement!)
+      // 退出窗口内：仍挂载，根与面板带退出动画类
+      expect(screen.getByText('content')).toBeInTheDocument()
+      const root = screen.getByText('content').parentElement!.parentElement!
+      expect(root.className).toContain('animate-modal-fade-out')
+      expect(screen.getByText('content').parentElement!.className).toContain('animate-modal-scale-out')
+      // 窗口结束后卸载
+      act(() => { vi.advanceTimersByTime(200) })
+      expect(screen.queryByText('content')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('stays interactive during exit — Escape can re-trigger onClose', () => {
+    // 退出中若业务重开（onClose 把 open 翻回 true），弹窗应回到进场态而不是被卸载
+    vi.useFakeTimers()
+    try {
+      function App() {
+        const [open, setOpen] = useState(true)
+        return (
+          <Modal open={open} onClose={() => setOpen(!open)}>
+            <p>content</p>
+          </Modal>
+        )
+      }
+      render(<App />)
+      fireEvent.click(screen.getByText('content').parentElement!.parentElement!)
+      // onClose 翻转 open=false 进入退出；再按 Esc 又翻回 true：应回到进场动画
+      fireEvent.keyDown(document, { key: 'Escape' })
+      expect(screen.getByText('content')).toBeInTheDocument()
+      const root = screen.getByText('content').parentElement!.parentElement!
+      expect(root.className).toContain('animate-modal-fade-in')
+      act(() => { vi.advanceTimersByTime(500) })
+      expect(screen.getByText('content')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('freezes content during exit animation (props may clear on close)', () => {
+    // 业务惯例：onClose 同时清数据（setProduct(null)）。退出动画期间 children
+    // 会拿到空 props，淡出中标题/表单闪成空白——壳应冻结最后一次 open 时的内容
+    vi.useFakeTimers()
+    try {
+      function App() {
+        const [name, setName] = useState('商品A')
+        return (
+          <Modal open={!!name} onClose={() => setName('')}>
+            <p>title: {name}</p>
+          </Modal>
+        )
+      }
+      render(<App />)
+      expect(screen.getByText('title: 商品A')).toBeInTheDocument()
+      fireEvent.click(screen.getByText('title: 商品A').parentElement!.parentElement!)
+      // 退出窗口内：内容保持关闭前的样子，不闪空
+      expect(screen.getByText('title: 商品A')).toBeInTheDocument()
+      act(() => { vi.advanceTimersByTime(200) })
+      expect(screen.queryByText('title: 商品A')).toBeNull()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('unmounts immediately when never opened (no lingering DOM)', () => {
+    const { onClose } = renderModal({ open: false })
+    expect(screen.queryByText('content')).toBeNull()
+    expect(onClose).not.toHaveBeenCalled()
   })
 })

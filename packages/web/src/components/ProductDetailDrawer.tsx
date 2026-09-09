@@ -111,10 +111,10 @@ export default function ProductDetailDrawer({ productId, onClose }: Props) {
     }
   }
 
-  if (!productId) return null
-
+  // 不做「!productId 提前 return null」：持续挂载让 Modal 壳的退出动画可播，
+  // open 由触发值是否非空决定
   return (
-    <Modal open onClose={onClose} variant="drawer">
+    <Modal open={!!productId} onClose={onClose} variant="drawer">
       <div className="bg-gray-50 h-full overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white shrink-0">

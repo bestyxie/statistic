@@ -200,9 +200,8 @@ export default function MobileTransactions() {
         onPageChange={setPage}
       />
 
-      {editTx && (
-        <TransactionModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
-      )}
+      {/* 持续挂载（非条件渲染），让 Modal 壳的退出动画有机会播放 */}
+      <TransactionModal transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
 
       <Modal open={!!refundModal} onClose={() => setRefundModal(null)} disableClose size="md">
         <div className="p-4">

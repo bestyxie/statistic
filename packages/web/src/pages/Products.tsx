@@ -301,7 +301,8 @@ export default function Products() {
         onClose={() => setFormTarget(null)}
         onSaved={() => { setFormTarget(null); load() }}
       />
-      {txProduct && <TransactionModal key={txProduct.id} product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />}
+      {/* 持续挂载（非条件渲染），让 Modal 壳的退出动画有机会播放 */}
+      <TransactionModal product={txProduct} onClose={() => setTxProduct(null)} onSaved={load} />
       <TransactionListModal product={txListProduct} onClose={() => setTxListProduct(null)} />
       <ProductSuppliersModal product={suppliersProduct} onClose={() => setSuppliersProduct(null)} />
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />

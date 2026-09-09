@@ -1,6 +1,9 @@
-import { createContext, useContext, useEffect, useRef, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../hooks/useScrollLock'
+
+/** 退出动画时长（ms），与 index.css 里 fade-out/scale-out/slide-out 的 duration 一致 */
+const EXIT_MS = 150
 
 const SIZES = {
   sm: 'max-w-sm',
@@ -67,10 +70,40 @@ export default function Modal({
 }: ModalProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const depth = useContext(ModalDepthContext)
+  // 动画状态机：closed → open（进场）→ exiting（退出窗口，动画放完才卸载）。
+  // 退出期间重新打开则取消卸载，回到进场态
+  const [mounted, setMounted] = useState(open)
+  const [exiting, setExiting] = useState(false)
+  // 退出动画期间冻结内容：业务惯例是 onClose 同时清数据（setProduct(null)），
+  // children 会立刻拿到空 props，淡出中闪成空白。存下最后一次 open 的
+  // children（ReactNode 是不可变描述，重渲染旧元素即以旧 props 渲染），
+  // 退出窗口内渲染快照。150ms 内旧闭包的 handler 无实质影响
+  const lastOpenChildren = useRef<ReactNode>(children)
+  if (open && !exiting) lastOpenChildren.current = children
+  const childrenToShow = exiting ? lastOpenChildren.current : children
   useScrollLock(open)
 
   useEffect(() => {
-    if (!open) return
+    if (open) {
+      // 重开：取消挂起的卸载，回到进场态
+      setExiting(false)
+      setMounted(true)
+      return
+    }
+    if (!mounted) return
+    // 关闭：进入退出窗口，动画放完再卸载
+    setExiting(true)
+    const t = setTimeout(() => {
+      setMounted(false)
+      setExiting(false)
+    }, EXIT_MS)
+    return () => clearTimeout(t)
+  }, [open, mounted])
+
+  useEffect(() => {
+    // 挂载条件用 mounted 而非 open：退出动画窗口内弹窗仍可见，Esc/顶层
+    // 注册保持响应（业务在 onClose 里把 open 翻回 true 可取消关闭）
+    if (!mounted) return
     const root = rootRef.current
     if (!root) return
     openModals.push({ root, depth })
@@ -86,14 +119,20 @@ export default function Modal({
       if (i !== -1) openModals.splice(i, 1)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [open, disableClose, onClose, depth])
+  }, [mounted, disableClose, onClose, depth])
 
-  if (!open) return null
+  if (!mounted) return null
 
   const isDrawer = variant === 'drawer'
+  const rootAnim = isDrawer
+    ? ''
+    : exiting ? 'animate-modal-fade-out' : 'animate-modal-fade-in'
+  const panelAnim = isDrawer
+    ? exiting ? 'animate-drawer-slide-out' : 'animate-drawer-slide-in'
+    : exiting ? 'animate-modal-scale-out' : 'animate-modal-scale-in'
   const panelClass = isDrawer
-    ? `absolute inset-y-0 right-0 w-full sm:w-[90vw] sm:max-w-[1200px] bg-white shadow-xl flex flex-col ${panelClassName}`
-    : `bg-white rounded-lg border border-gray-200 w-full ${SIZES[size]} max-h-[85vh] ${panelClassName}`
+    ? `absolute inset-y-0 right-0 w-full sm:w-[90vw] sm:max-w-[1200px] bg-white shadow-xl flex flex-col ${panelAnim} ${panelClassName}`
+    : `bg-white rounded-lg border border-gray-200 w-full ${SIZES[size]} max-h-[85vh] ${panelAnim} ${panelClassName}`
 
   return createPortal(
     <div
@@ -101,15 +140,18 @@ export default function Modal({
       className={
         isDrawer
           ? 'fixed inset-0 z-50'
-          : 'fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4'
+          : `fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4 ${rootAnim}`
       }
       onClick={disableClose ? undefined : onClose}
     >
       {isDrawer && (
-        <div className="absolute inset-0 bg-black/50" onClick={disableClose ? undefined : onClose} />
+        <div
+          className={`absolute inset-0 bg-black/50 ${exiting ? 'animate-modal-fade-out' : 'animate-modal-fade-in'}`}
+          onClick={disableClose ? undefined : onClose}
+        />
       )}
       <div className={panelClass} onClick={(e) => e.stopPropagation()}>
-        <ModalDepthContext.Provider value={depth + 1}>{children}</ModalDepthContext.Provider>
+        <ModalDepthContext.Provider value={depth + 1}>{childrenToShow}</ModalDepthContext.Provider>
       </div>
     </div>,
     document.body,

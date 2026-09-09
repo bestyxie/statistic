@@ -1,5 +1,40 @@
 @import "tailwindcss";
 
+/* Modal 进出场动画（与 components/ui/Modal.tsx 的 EXIT_MS 同步：出场统一 150ms） */
+@theme {
+  --animate-modal-fade-in: modal-fade-in 0.2s ease-out both;
+  --animate-modal-fade-out: modal-fade-out 0.15s ease-in both;
+  --animate-modal-scale-in: modal-scale-in 0.2s ease-out both;
+  --animate-modal-scale-out: modal-scale-out 0.15s ease-in both;
+  --animate-drawer-slide-in: drawer-slide-in 0.25s ease-out both;
+  --animate-drawer-slide-out: drawer-slide-out 0.15s ease-in both;
+
+  @keyframes modal-fade-in {
+    from { opacity: 0 }
+    to { opacity: 1 }
+  }
+  @keyframes modal-fade-out {
+    from { opacity: 1 }
+    to { opacity: 0 }
+  }
+  @keyframes modal-scale-in {
+    from { opacity: 0; transform: scale(0.96) }
+    to { opacity: 1; transform: scale(1) }
+  }
+  @keyframes modal-scale-out {
+    from { opacity: 1; transform: scale(1) }
+    to { opacity: 0; transform: scale(0.96) }
+  }
+  @keyframes drawer-slide-in {
+    from { transform: translateX(100%) }
+    to { transform: translateX(0) }
+  }
+  @keyframes drawer-slide-out {
+    from { transform: translateX(0) }
+    to { transform: translateX(100%) }
+  }
+}
+
 /* Mobile touch enhancements */
 @media (max-width: 767px) {
   html, body {

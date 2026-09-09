@@ -36,6 +36,16 @@ export default function TransactionModal({ product, transaction, onClose, onSave
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
+  // 持续挂载（为退出动画）下，切换商品/记录时重置表单——替代原先 key 重挂的重置效果
+  useEffect(() => {
+    setPrice(transaction?.price || product?.price || '')
+    setQuantity(transaction ? String(transaction.quantity) : '1')
+    setDate(transaction?.date || new Date().toISOString().slice(0, 10))
+    setNote(transaction?.note || '')
+    setSelectedPsId('')
+    setPurchasePrice(transaction?.purchase_price || '')
+  }, [transaction, product])
+
   // 拉取该商品的供应商列表（用于「供应商」下拉与「拿货价」自动填充）
   useEffect(() => {
     if (!productId) {

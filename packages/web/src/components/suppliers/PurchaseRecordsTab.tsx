@@ -66,9 +66,8 @@ export default function PurchaseRecordsTab() {
 
   return (
     <div className="space-y-4">
-      {showSupplierForm && (
-        <SupplierForm supplier={editingSupplier} onSubmit={handleSupplierSubmit} onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }} />
-      )}
+      {/* 持续挂载以获得退出动画，show 由 SupplierForm 传给 Modal 壳 */}
+      <SupplierForm show={showSupplierForm} supplier={editingSupplier} onSubmit={handleSupplierSubmit} onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         <div className="lg:col-span-1">

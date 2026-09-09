@@ -230,10 +230,8 @@ export default function SupplyListTab() {
         </div>
       </div>
 
-      {/* 供应商弹窗 */}
-      {showSupplierForm && (
-        <SupplierForm supplier={editingSupplier} onSubmit={handleSupplierSubmit} onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }} />
-      )}
+      {/* 供应商弹窗（持续挂载以获得退出动画，show 由 SupplierForm 传给 Modal 壳） */}
+      <SupplierForm show={showSupplierForm} supplier={editingSupplier} onSubmit={handleSupplierSubmit} onCancel={() => { setShowSupplierForm(false); setEditingSupplier(null) }} />
 
       {/* 关联商品弹窗 */}
       <Modal open={addMode === 'link'} onClose={closeDialog} disableClose size="lg">

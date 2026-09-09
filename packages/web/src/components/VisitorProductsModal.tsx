@@ -25,21 +25,21 @@ export default function VisitorProductsModal({ visitor, onClose }: Props) {
       .finally(() => setLoading(false))
   }, [visitor])
 
-  if (!visitor) return null
-
+  // 不做「!visitor 提前 return null」：持续挂载让 Modal 壳的退出动画可播，
+  // open 由触发值是否非空决定
   return (
-    <Modal open onClose={onClose} size="xl">
+    <Modal open={!!visitor} onClose={onClose} size="xl">
       <div className="overflow-hidden">
         <div className="flex items-center justify-between px-3 sm:px-5 py-3 sm:py-4 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <img
-              src={visitor.icon_url || ''}
-              alt={visitor.nick_name}
+              src={visitor?.icon_url || ''}
+              alt={visitor?.nick_name}
               className="w-8 h-8 rounded-full object-cover bg-gray-200"
               onError={(e) => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40"><rect fill="%23e5e7eb" width="40" height="40"/><text x="50%" y="55%" text-anchor="middle" fill="%239ca3af" font-size="16">?</text></svg>' }}
             />
             <div>
-              <h3 className="text-lg font-semibold text-gray-800">{visitor.nick_name || '未知'}</h3>
+              <h3 className="text-lg font-semibold text-gray-800">{visitor?.nick_name || '未知'}</h3>
               <p className="text-xs text-gray-500">浏览过的商品</p>
             </div>
           </div>

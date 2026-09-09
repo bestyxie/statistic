@@ -13,6 +13,13 @@ export default function AddSupplierModal({ product, onClose }: Props) {
   const [supplierId, setSupplierId] = useState('')
   const [price, setPrice] = useState(product?.price || '')
   const [note, setNote] = useState('')
+
+  // 持续挂载（为退出动画）下，切换商品时重置表单——替代原先条件挂载的重置效果
+  useEffect(() => {
+    setPrice(product?.price || '')
+    setNote('')
+    setSupplierId('')
+  }, [product])
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
 
   useEffect(() => {

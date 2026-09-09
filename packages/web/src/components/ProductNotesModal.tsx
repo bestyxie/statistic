@@ -41,9 +41,9 @@ export default function ProductNotesModal({ product, onClose, onChanged }: Props
     load()
   }, [product])
 
-  if (!product) return null
-
+  // 不做「!product 提前 return null」：持续挂载让 Modal 壳的退出动画可播
   const handleDelete = async (noteId: string) => {
+    if (!product) return
     try {
       await api.deleteProductNote(product.id, noteId)
       setNotes((prev) => prev.filter((n) => n.id !== noteId))
@@ -53,10 +53,10 @@ export default function ProductNotesModal({ product, onClose, onChanged }: Props
     }
   }
 
-  const title = (product.description || product.name || product.id).slice(0, 30)
+  const title = (product?.description || product?.name || product?.id || '').slice(0, 30)
 
   return (
-    <Modal open onClose={onClose} size="md">
+    <Modal open={!!product} onClose={onClose} size="md">
       <div className="p-4 sm:p-6 flex flex-col">
         <h2 className="text-base sm:text-lg font-semibold mb-4">查看备注 — {title}</h2>
         {loading ? (
