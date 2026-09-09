@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
-/* Modal 进出场动画（与 components/ui/Modal.tsx 的 EXIT_MS 同步：出场统一 150ms） */
+/* Modal 进出场动画（与 components/ui/Modal.tsx 的 EXIT_MS 同步：出场统一 100ms）。
+   时长刻意压短：弹窗交互要跟手，200ms+ 会有卡顿感 */
 @theme {
-  --animate-modal-fade-in: modal-fade-in 0.2s ease-out both;
-  --animate-modal-fade-out: modal-fade-out 0.15s ease-in both;
-  --animate-modal-scale-in: modal-scale-in 0.2s ease-out both;
-  --animate-modal-scale-out: modal-scale-out 0.15s ease-in both;
-  --animate-drawer-slide-in: drawer-slide-in 0.25s ease-out both;
-  --animate-drawer-slide-out: drawer-slide-out 0.15s ease-in both;
+  --animate-modal-fade-in: modal-fade-in 0.12s ease-out both;
+  --animate-modal-fade-out: modal-fade-out 0.1s ease-in both;
+  --animate-modal-scale-in: modal-scale-in 0.12s ease-out both;
+  --animate-modal-scale-out: modal-scale-out 0.1s ease-in both;
+  --animate-drawer-slide-in: drawer-slide-in 0.15s ease-out both;
+  --animate-drawer-slide-out: drawer-slide-out 0.1s ease-in both;
 
   @keyframes modal-fade-in {
     from { opacity: 0 }

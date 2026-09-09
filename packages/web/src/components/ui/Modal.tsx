@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom'
 import { useScrollLock } from '../../hooks/useScrollLock'
 
 /** 退出动画时长（ms），与 index.css 里 fade-out/scale-out/slide-out 的 duration 一致 */
-const EXIT_MS = 150
+const EXIT_MS = 100
 
 const SIZES = {
   sm: 'max-w-sm',
