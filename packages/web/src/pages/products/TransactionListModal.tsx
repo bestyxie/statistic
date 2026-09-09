@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../../lib/api'
+import Modal from '../../components/ui/Modal'
 import type { Product } from '@statistic/shared'
 
 interface Props {
@@ -22,13 +23,11 @@ export default function TransactionListModal({ product, onClose }: Props) {
       .finally(() => setLoading(false))
   }, [product])
 
-  if (!product) return null
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-6 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Modal open={!!product} onClose={onClose} size="xl" panelClassName="sm:max-w-4xl">
+      <div className="p-3 sm:p-6 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
-          <h2 className="text-sm sm:text-lg font-semibold max-w-[250px] sm:max-w-[400px] truncate" title={product.description || product.sku}>成交记录 — {product.description || product.sku}</h2>
+          <h2 className="text-sm sm:text-lg font-semibold max-w-[250px] sm:max-w-[400px] truncate" title={product?.description || product?.sku}>成交记录 — {product?.description || product?.sku}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
 
@@ -97,10 +96,10 @@ export default function TransactionListModal({ product, onClose }: Props) {
         </div>
 
         <div className="flex gap-2 pt-4 border-t border-gray-200 mt-4">
-          <button onClick={() => navigate(`/transactions?product_id=${product.id}`)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">查看完整成交明细</button>
+          <button onClick={() => product && navigate(`/transactions?product_id=${product.id}`)} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">查看完整成交明细</button>
           <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">关闭</button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

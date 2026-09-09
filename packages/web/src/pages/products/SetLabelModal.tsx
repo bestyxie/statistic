@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../lib/api'
+import Modal from '../../components/ui/Modal'
 import type { Product, ProductLabel } from '@statistic/shared'
 
 interface Props {
@@ -27,8 +28,6 @@ export default function SetLabelModal({ product, onClose }: Props) {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [product])
 
-  if (!product) return null
-
   const toggle = (id: string) => {
     setSelectedIds((prev) => {
       const next = new Set(prev)
@@ -39,6 +38,7 @@ export default function SetLabelModal({ product, onClose }: Props) {
   }
 
   const handleSubmit = async () => {
+    if (!product) return
     try {
       await api.setProductLabels(product.id, [...selectedIds])
       onClose()
@@ -48,7 +48,7 @@ export default function SetLabelModal({ product, onClose }: Props) {
   }
 
   const handleTest = async () => {
-    if (!product.sku) {
+    if (!product?.sku) {
       setDebugResult('该商品没有 SKU')
       return
     }
@@ -65,9 +65,9 @@ export default function SetLabelModal({ product, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-base sm:text-lg font-semibold mb-4">设置标签 — {(product.description || product.sku).slice(0, 30)}</h2>
+    <Modal open={!!product} onClose={onClose} size="md">
+      <div className="p-4 sm:p-6 flex flex-col">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">设置标签 — {product ? (product.description || product.sku).slice(0, 30) : ''}</h2>
         {loading ? (
           <p className="text-gray-400 text-sm py-4">加载中...</p>
         ) : allLabels.length === 0 ? (
@@ -98,6 +98,6 @@ export default function SetLabelModal({ product, onClose }: Props) {
           <button onClick={onClose} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50 ml-auto">取消</button>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

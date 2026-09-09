@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import { useImagePreview } from '../../../components/mobile/MobileImagePreview'
+import Modal from '../../../components/ui/Modal'
 import type { LabelSalesProduct } from '@statistic/shared'
 
 export interface LabelSalesProductsTarget {
@@ -42,29 +43,17 @@ export default function LabelSalesProductsModal({ target, onClose }: Props) {
     }
   }, [target])
 
-  // 打开时锁定背景滚动
-  useEffect(() => {
-    if (!target) return
-    const original = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = original
-    }
-  }, [target])
-
-  if (!target) return null
-
-  const rangeLabel = target.start || target.end
-    ? `${target.start || '不限'} ~ ${target.end || '不限'}`
+  const rangeLabel = target?.start || target?.end
+    ? `${target?.start || '不限'} ~ ${target?.end || '不限'}`
     : '全部时间'
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Modal open={!!target} onClose={onClose} size="xl">
+      <div className="overflow-hidden flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-200 shrink-0">
           <div className="min-w-0">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate">{target.label_name} · 销售商品</h3>
+            <h3 className="text-base sm:text-lg font-semibold text-gray-800 truncate">{target?.label_name} · 销售商品</h3>
             <p className="text-xs text-gray-500">{rangeLabel}</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0 ml-3">
@@ -109,6 +98,6 @@ export default function LabelSalesProductsModal({ target, onClose }: Props) {
           )}
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

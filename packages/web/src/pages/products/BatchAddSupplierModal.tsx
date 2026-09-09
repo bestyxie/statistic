@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supplierApi } from '../../lib/supplierApi'
 import SearchableSelect from '../../components/SearchableSelect'
+import Modal from '../../components/ui/Modal'
 import type { Supplier } from '@statistic/shared'
 
 interface Props {
@@ -22,10 +23,10 @@ export default function BatchAddSupplierModal({ productIds, onClose, onSuccess }
     supplierApi.getSuppliers().then(setSuppliers).catch(() => {})
   }, [])
 
-  if (!productIds || productIds.length === 0) return null
+  const open = !!productIds && productIds.length > 0
 
   const handleSubmit = async () => {
-    if (!supplierId) return
+    if (!supplierId || !productIds) return
     setSubmitting(true)
     try {
       const res = await supplierApi.linkBatchProducts({
@@ -45,9 +46,9 @@ export default function BatchAddSupplierModal({ productIds, onClose, onSuccess }
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-base sm:text-lg font-semibold mb-4">批量添加供应商 — 选中 {productIds.length} 个商品</h2>
+    <Modal open={open} onClose={onClose} disableClose size="md">
+      <div className="p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">批量添加供应商 — 选中 {productIds?.length || 0} 个商品</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">选择供应商</label>
@@ -76,6 +77,6 @@ export default function BatchAddSupplierModal({ productIds, onClose, onSuccess }
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

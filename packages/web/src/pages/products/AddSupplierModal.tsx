@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supplierApi } from '../../lib/supplierApi'
 import SearchableSelect from '../../components/SearchableSelect'
+import Modal from '../../components/ui/Modal'
 import type { Product, Supplier } from '@statistic/shared'
 
 interface Props {
@@ -18,10 +19,8 @@ export default function AddSupplierModal({ product, onClose }: Props) {
     supplierApi.getSuppliers().then(setSuppliers).catch(() => {})
   }, [])
 
-  if (!product) return null
-
   const handleSubmit = async () => {
-    if (!supplierId) return
+    if (!supplierId || !product) return
     try {
       await supplierApi.linkProduct({
         product_id: product.id,
@@ -36,9 +35,9 @@ export default function AddSupplierModal({ product, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-base sm:text-lg font-semibold mb-4">添加供应商 — {(product.description || product.sku).slice(0, 30)}</h2>
+    <Modal open={!!product} onClose={onClose} disableClose size="md">
+      <div className="p-4 sm:p-6">
+        <h2 className="text-base sm:text-lg font-semibold mb-4">添加供应商 — {product ? (product.description || product.sku).slice(0, 30) : ''}</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">选择供应商</label>
@@ -65,6 +64,6 @@ export default function AddSupplierModal({ product, onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </Modal>
   )
 }

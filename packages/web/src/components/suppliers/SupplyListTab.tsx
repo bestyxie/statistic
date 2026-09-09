@@ -5,6 +5,7 @@ import type { Supplier, Product, Shop, ProductLabel } from '@statistic/shared'
 import SupplierForm from './SupplierForm'
 import HoverPopup from '../HoverPopup'
 import SearchableSelect from '../SearchableSelect'
+import Modal from '../../components/ui/Modal'
 
 type AddMode = 'none' | 'link' | 'curl'
 
@@ -235,10 +236,8 @@ export default function SupplyListTab() {
       )}
 
       {/* 关联商品弹窗 */}
-      {addMode === 'link' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={closeDialog} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[80vh] flex flex-col">
+      <Modal open={addMode === 'link'} onClose={closeDialog} disableClose size="lg">
+        <div className="p-6 flex flex-col">
             <h3 className="text-lg font-semibold mb-4">关联商品</h3>
             <div className="space-y-3 flex-1 overflow-y-auto">
               <div>
@@ -287,14 +286,11 @@ export default function SupplyListTab() {
               <button onClick={handleLinkProduct} disabled={!selectedProduct || !linkSupplierId} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">确认关联</button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* cURL 录入弹窗 */}
-      {addMode === 'curl' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={closeDialog} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[80vh] flex flex-col">
+      <Modal open={addMode === 'curl'} onClose={closeDialog} disableClose size="lg">
+        <div className="p-6 flex flex-col">
             <h3 className="text-lg font-semibold mb-4">cURL 录入商品</h3>
             <div className="space-y-3 flex-1 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -358,21 +354,18 @@ export default function SupplyListTab() {
               <button onClick={handleCurlSave} disabled={!curlParsed || !curlSupplierId || !curlShopId} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm disabled:bg-gray-300 disabled:cursor-not-allowed">确认添加</button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* 编辑关联弹窗 */}
-      {editingLink && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setEditingLink(null)} />
-          <div className="relative bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+      <Modal open={!!editingLink} onClose={() => setEditingLink(null)} disableClose size="sm">
+        <div className="p-6">
             <h3 className="text-lg font-semibold mb-4">编辑进货信息</h3>
             <div className="space-y-4">
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                {editingLink.product_image && <img src={editingLink.product_image} alt="" className="w-10 h-10 rounded object-cover" />}
+                {editingLink?.product_image && <img src={editingLink.product_image} alt="" className="w-10 h-10 rounded object-cover" />}
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-gray-800 truncate">{editingLink.product_description || editingLink.product_name}</p>
-                  <p className="text-xs text-gray-400">{editingLink.product_sku || '-'}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{editingLink?.product_description || editingLink?.product_name}</p>
+                  <p className="text-xs text-gray-400">{editingLink?.product_sku || '-'}</p>
                 </div>
               </div>
               <div>
@@ -400,9 +393,8 @@ export default function SupplyListTab() {
               <button onClick={() => setEditingLink(null)} className="px-4 py-2 border border-gray-300 rounded-md text-sm hover:bg-gray-50">取消</button>
               <button onClick={handleEditLink} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm">保存</button>
             </div>
-          </div>
         </div>
-      )}
+      </Modal>
 
       {/* 关联列表表格 */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">

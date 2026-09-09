@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { Supplier } from '@statistic/shared'
+import Modal from '../../components/ui/Modal'
 
 interface Props {
   supplier?: Supplier | null
@@ -26,11 +27,8 @@ export default function SupplierForm({ supplier, onSubmit, onCancel }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-      {/* 弹窗 */}
-      <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
+    <Modal open onClose={onCancel} disableClose size="md">
+      <div className="p-6">
         <h2 className="text-lg font-semibold mb-5">{supplier ? '编辑供应商' : '添加供应商'}</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -76,6 +74,6 @@ export default function SupplierForm({ supplier, onSubmit, onCancel }: Props) {
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }

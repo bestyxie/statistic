@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { api } from '../../../lib/api'
 import { colorFor } from '../hooks/useLabelTrend'
 import LabelProductDrawer, { type LabelProductDrawerTarget } from './LabelProductDrawer'
+import Modal from '../../../components/ui/Modal'
 import type { ProductLabel } from '@statistic/shared'
 
 interface Props {
@@ -79,27 +80,13 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
     }
   }, [open, labels, yesterday])
 
-  // 打开时锁定背景滚动
-  useEffect(() => {
-    if (!open) return
-    const original = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = original
-    }
-  }, [open])
-
-  if (!open) return null
-
   const totalVisitors = rows.reduce((sum, r) => sum + r.visitor_count, 0)
 
   return (
-    <div className="fixed inset-0 z-40">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-      {/* 抽屉（z-40，与 LabelProductDrawer 同级）*/}
-      <div className="absolute inset-y-0 right-0 sm:w-[90vw] sm:max-w-[480px] w-full bg-gray-50 shadow-xl overflow-hidden flex flex-col">
+    <>
+      {/* 抽屉（点击某品牌行时 LabelProductDrawer 同 z-50、DOM 在后叠在上层）*/}
+      <Modal open={open} onClose={onClose} variant="drawer">
+        <div className="bg-gray-50 h-full overflow-hidden flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white shrink-0">
           <div className="min-w-0">
@@ -165,10 +152,11 @@ export default function YesterdayVisitorRankDrawer({ open, labels, onClose }: Pr
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </Modal>
 
-      {/* 点击某品牌行 → 展示该品牌昨日的商品浏览记录（复用 LabelProductDrawer，z-40 同级、DOM 在后故叠在上层）*/}
+      {/* 点击某品牌行 → 展示该品牌昨日的商品浏览记录（复用 LabelProductDrawer，同 z-50、DOM 在后故叠在上层）*/}
       <LabelProductDrawer target={productTarget} onClose={() => setProductTarget(null)} />
-    </div>
+    </>
   )
 }

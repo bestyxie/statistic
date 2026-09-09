@@ -12,6 +12,7 @@ import ProductNotesAddModal from '../../components/ProductNotesAddModal'
 import BatchAddSupplierModal from './BatchAddSupplierModal'
 import SearchableSelect from '../../components/SearchableSelect'
 import TransactionModal from '../../components/TransactionModal'
+import Modal from '../../components/ui/Modal'
 
 export default function MobileProducts() {
   const { show: showImage } = useImagePreview()
@@ -387,9 +388,8 @@ export default function MobileProducts() {
       />
 
       {/* Add/edit form modal */}
-      {showForm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-md w-full p-4 max-h-[90vh] overflow-y-auto">
+      <Modal open={showForm} onClose={cancelForm} disableClose size="md">
+        <div className="p-4 overflow-y-auto">
             <h2 className="text-base font-semibold mb-3">
               {editing ? '编辑商品' : '添加商品'}
             </h2>
@@ -533,8 +533,7 @@ export default function MobileProducts() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Transaction form modal */}
       {txProduct && (
@@ -542,22 +541,15 @@ export default function MobileProducts() {
       )}
 
       {/* Product transaction list modal (card-based for mobile) */}
-      {showProductTx && productTxProduct && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowProductTx(false)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-lg w-full p-4 max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={showProductTx && !!productTxProduct} onClose={() => setShowProductTx(false)} size="lg">
+        <div className="p-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <h2
                 className="text-sm font-semibold truncate flex-1 mr-2"
-                title={productTxProduct.description || productTxProduct.sku}
+                title={productTxProduct?.description || productTxProduct?.sku}
               >
                 成交记录 —{' '}
-                {productTxProduct.description || productTxProduct.sku}
+                {productTxProduct?.description || productTxProduct?.sku}
               </h2>
               <button
                 onClick={() => setShowProductTx(false)}
@@ -697,22 +689,14 @@ export default function MobileProducts() {
               </button>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Product suppliers modal */}
-      {showProductSuppliers && psProduct && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowProductSuppliers(false)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-lg w-full p-4 max-h-[80vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={showProductSuppliers && !!psProduct} onClose={() => setShowProductSuppliers(false)} size="lg">
+        <div className="p-4 overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-semibold truncate">
-                供应商 — {psProduct.description || psProduct.sku}
+                供应商 — {psProduct?.description || psProduct?.sku}
               </h2>
               <button
                 onClick={() => setShowProductSuppliers(false)}
@@ -747,21 +731,13 @@ export default function MobileProducts() {
               </div>
             )}
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Add supplier modal */}
-      {showAddSupplier && addSupplierProduct && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowAddSupplier(false)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-md w-full p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={showAddSupplier && !!addSupplierProduct} onClose={() => setShowAddSupplier(false)} disableClose size="md">
+        <div className="p-4">
             <h2 className="text-base font-semibold mb-3">
-              添加供应商 — {(addSupplierProduct.description || addSupplierProduct.sku).slice(0, 30)}
+              添加供应商 — {addSupplierProduct ? (addSupplierProduct.description || addSupplierProduct.sku).slice(0, 30) : ''}
             </h2>
             <div className="space-y-3">
               <div>
@@ -802,8 +778,7 @@ export default function MobileProducts() {
               </div>
             </div>
           </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Product detail drawer */}
       <ProductDetailDrawer

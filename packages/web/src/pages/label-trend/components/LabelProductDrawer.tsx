@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import ProductDetailDrawer from '../../../components/ProductDetailDrawer'
 import { useImagePreview } from '../../../components/mobile/MobileImagePreview'
+import Modal from '../../../components/ui/Modal'
 import type { LabelProductStat } from '@statistic/shared'
 
 export interface LabelProductDrawerTarget {
@@ -45,33 +46,19 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
     }
   }, [target])
 
-  // 打开时锁定背景滚动
-  useEffect(() => {
-    if (!target) return
-    const original = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.body.style.overflow = original
-    }
-  }, [target])
-
-  if (!target) return null
-
   const totalVisitors = products.reduce((sum, p) => sum + p.visitor_count, 0)
   const totalViews = products.reduce((sum, p) => sum + p.view_count, 0)
 
   return (
-    <div className="fixed inset-0 z-40">
-      {/* 遮罩 */}
-      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-
-      {/* 抽屉（z-40，低于 ProductDetailDrawer 的 z-50，便于点击商品后在其上叠加）*/}
-      <div className="absolute inset-y-0 right-0 sm:w-[90vw] sm:max-w-[560px] w-full bg-gray-50 shadow-xl overflow-hidden flex flex-col">
+    <>
+      {/* 抽屉（点击单个商品时 ProductDetailDrawer 以 z-50 叠在其上）*/}
+      <Modal open={!!target} onClose={onClose} variant="drawer">
+        <div className="bg-gray-50 h-full overflow-hidden flex flex-col">
         {/* 头部 */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white shrink-0">
           <div className="min-w-0">
-            <h1 className="text-base sm:text-lg font-bold text-gray-800 truncate">{target.label_name}</h1>
-            <p className="text-xs text-gray-500">{target.date} 商品浏览记录</p>
+            <h1 className="text-base sm:text-lg font-bold text-gray-800 truncate">{target?.label_name}</h1>
+            <p className="text-xs text-gray-500">{target?.date} 商品浏览记录</p>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 shrink-0 ml-3">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" viewBox="0 0 20 20" fill="currentColor">
@@ -137,10 +124,11 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </Modal>
 
       {/* 点击单个商品 → 复用已有商品详情抽屉（z-50，叠在本抽屉之上）*/}
       <ProductDetailDrawer productId={selectedProductId} onClose={() => setSelectedProductId(null)} />
-    </div>
+    </>
   )
 }

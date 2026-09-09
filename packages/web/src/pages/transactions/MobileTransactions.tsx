@@ -4,6 +4,7 @@ import MobileFilter from '../../components/mobile/MobileFilter'
 import MobilePagination from '../../components/mobile/MobilePagination'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
 import TimeRangePicker from '../../components/TimeRangePicker'
+import Modal from '../../components/ui/Modal'
 import SearchableSelect from '../../components/SearchableSelect'
 import TransactionModal from '../../components/TransactionModal'
 import { useTransactions } from '../../hooks/useTransactions'
@@ -203,33 +204,26 @@ export default function MobileTransactions() {
         <TransactionModal key={editTx.id} transaction={editTx} onClose={() => setEditTx(null)} onSaved={loadTransactions} />
       )}
 
-      {refundModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setRefundModal(null)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-md w-full p-4"
-            onClick={(e) => e.stopPropagation()}
-          >
+      <Modal open={!!refundModal} onClose={() => setRefundModal(null)} disableClose size="md">
+        <div className="p-4">
             <h3 className="text-base font-semibold mb-3">录入退款</h3>
             <div className="mb-4 p-3 bg-gray-50 rounded-md">
               <p className="text-sm text-gray-700">
                 原成交：
                 <span
                   className="font-medium truncate inline-block max-w-[220px] align-bottom"
-                  title={refundModal.description || refundModal.product_name}
+                  title={refundModal?.description || refundModal?.product_name}
                 >
-                  {refundModal.description || refundModal.product_name}
+                  {refundModal?.description || refundModal?.product_name}
                 </span>
               </p>
               <p className="text-sm text-gray-600 mt-1">
-                ¥{refundModal.price} x {refundModal.quantity}
+                ¥{refundModal?.price} x {refundModal?.quantity}
               </p>
-              {(refundModal.refund_quantity || 0) > 0 && (
+              {(refundModal?.refund_quantity || 0) > 0 && (
                 <p className="text-sm text-red-600 mt-1">
-                  已退 <span className="font-medium">{refundModal.refund_quantity}</span> 件，
-                  剩余 <span className="font-medium">{refundModal.quantity - (refundModal.refund_quantity || 0)}</span> 件
+                  已退 <span className="font-medium">{refundModal?.refund_quantity}</span> 件，
+                  剩余 <span className="font-medium">{(refundModal?.quantity || 0) - (refundModal?.refund_quantity || 0)}</span> 件
                 </p>
               )}
             </div>
@@ -250,14 +244,14 @@ export default function MobileTransactions() {
                   <input
                     type="number"
                     min={1}
-                    max={refundModal.quantity - (refundModal.refund_quantity || 0)}
+                    max={(refundModal?.quantity || 0) - (refundModal?.refund_quantity || 0)}
                     value={refundForm.quantity}
                     onChange={(e) => setRefundForm({ ...refundForm, quantity: e.target.value })}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    最多可退 {refundModal.quantity - (refundModal.refund_quantity || 0)} 件
+                    最多可退 {(refundModal?.quantity || 0) - (refundModal?.refund_quantity || 0)} 件
                   </p>
                 </div>
               </div>
@@ -296,9 +290,8 @@ export default function MobileTransactions() {
                 </button>
               </div>
             </form>
-          </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

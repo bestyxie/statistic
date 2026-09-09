@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supplierApi } from '../../lib/supplierApi'
+import Modal from '../../components/ui/Modal'
 import type { Product } from '@statistic/shared'
 import type { ProductSupplierWithInfo } from '../../lib/supplierApi'
 
@@ -29,13 +30,11 @@ export default function ProductSuppliersModal({ product, onClose }: Props) {
     fetchList()
   }
 
-  if (!product) return null
-
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4" onClick={onClose}>
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <Modal open={!!product} onClose={onClose} size="xl">
+      <div className="p-4 sm:p-6 overflow-hidden flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm sm:text-lg font-semibold truncate" title={product.description || product.sku}>供应商 — {product.description || product.sku}</h2>
+          <h2 className="text-sm sm:text-lg font-semibold truncate" title={product?.description || product?.sku}>供应商 — {product?.description || product?.sku}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
         </div>
         {loading ? (
@@ -69,6 +68,6 @@ export default function ProductSuppliersModal({ product, onClose }: Props) {
           </div>
         )}
       </div>
-    </div>
+    </Modal>
   )
 }

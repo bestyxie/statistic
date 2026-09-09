@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { api } from '../../lib/api'
+import Modal from '../../components/ui/Modal'
 import type { Product, Shop } from '@statistic/shared'
 
 interface Props {
@@ -10,8 +11,7 @@ interface Props {
 }
 
 export default function ProductFormModal({ product, shops, onClose, onSaved }: Props) {
-  if (product === null) return null
-  const isEdit = product !== 'new'
+  const isEdit = product !== null && product !== 'new'
   const editProduct = isEdit ? product as Product : null
   const initial = editProduct
     ? { shop_id: editProduct.shop_id, name: editProduct.name, image_url: editProduct.image_url, sku: editProduct.sku, price: editProduct.price }
@@ -42,8 +42,8 @@ export default function ProductFormModal({ product, shops, onClose, onSaved }: P
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-      <div className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 max-w-lg w-full max-h-[90vh] overflow-y-auto">
+    <Modal open={product !== null} onClose={onClose} disableClose size="lg">
+      <div className="p-4 sm:p-6 overflow-y-auto">
         <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">{isEdit ? '编辑商品' : '添加商品'}</h2>
 
         {isEdit && editProduct && (
@@ -116,6 +116,6 @@ export default function ProductFormModal({ product, shops, onClose, onSaved }: P
           </div>
         </form>
       </div>
-    </div>
+    </Modal>
   )
 }
