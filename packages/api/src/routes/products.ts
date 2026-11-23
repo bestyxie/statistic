@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { getPriceWithFallback } from '../utils/price'
+import type { PriceCompareItem, PriceCompareResult } from '@statistic/shared'
 
 type Env = { DB: D1Database }
 
@@ -217,6 +218,77 @@ products.delete('/:id/notes/:noteId', async (c) => {
   await db.prepare('DELETE FROM product_notes WHERE id = ? AND product_id = ?')
     .bind(c.req.param('noteId'), c.req.param('id')).run()
   return c.json({ message: '删除成功' })
+})
+
+// --- 比价（以图搜图）：下载商品封面图，调 gxhy 接口搜同款报价 ---
+// 接口调研见 docs/research/2026-11-23-gxhy1688-image-search-api.md：
+// multipart 传 file + index，无鉴权；浏览器直连会被 CORS 拦（白名单制），只能服务端代理
+const GXHY_IMG_SEARCH_URL = 'https://api.gxhy1688.com/personProduct/getImgSearchResultV2.action'
+
+/** gxhy 以图搜图原始响应（仅取用到的字段） */
+interface GxhyImgSearchResponse {
+  success?: boolean
+  msg?: string
+  data: { sortList: GxhySortItem[] | null } | null
+}
+
+interface GxhySortItem {
+  title: string | null
+  address: string | null
+  price: number | null
+  pics: { picList: string[] } | null
+}
+
+products.post('/:id/price-compare', async (c) => {
+  const db = c.env.DB
+  const product = await db.prepare('SELECT image_url, price FROM products WHERE id = ?')
+    .bind(c.req.param('id')).first<{ image_url: string | null; price: string | null }>()
+  if (!product || !product.image_url) {
+    return c.json({ error: '该商品没有封面图，无法比价' }, 400)
+  }
+  const myPrice = Number.parseFloat(product.price || '')
+
+  // 下载封面图（8s 超时）
+  let imageBytes: ArrayBuffer
+  try {
+    const imgResp = await fetch(product.image_url, { signal: AbortSignal.timeout(8000) })
+    if (!imgResp.ok) {
+      return c.json({ error: '封面图下载失败' }, 502)
+    }
+    imageBytes = await imgResp.arrayBuffer()
+  } catch {
+    return c.json({ error: '封面图下载失败' }, 502)
+  }
+
+  // 调 gxhu 以图搜图（15s 超时），只取第一页（index=0，约 96 条）
+  const form = new FormData()
+  form.append('file', new File([imageBytes], 'cover.jpg', { type: 'image/jpeg' }))
+  form.append('index', '0')
+  let result: PriceCompareResult
+  try {
+    const resp = await fetch(GXHY_IMG_SEARCH_URL, { method: 'POST', body: form, signal: AbortSignal.timeout(15000) })
+    const body = await resp.json<GxhyImgSearchResponse>()
+    if (body.success === false || !body.data) {
+      return c.json({ error: body.msg || '比价服务暂不可用' }, 502)
+    }
+    const items = (body.data.sortList || [])
+      .map((s): PriceCompareItem => ({
+        title: s.title || '',
+        merchant: s.address || '',
+        price: typeof s.price === 'number' ? s.price : null,
+        imageUrl: (s.pics && s.pics.picList[0]) || '',
+      }))
+      .sort((a, b) => {
+        if (a.price === null) return 1
+        if (b.price === null) return -1
+        return a.price - b.price
+      })
+    result = { items, myPrice: Number.isFinite(myPrice) ? myPrice : null }
+  } catch {
+    return c.json({ error: '比价服务暂不可用' }, 502)
+  }
+
+  return c.json(result)
 })
 
 export default products

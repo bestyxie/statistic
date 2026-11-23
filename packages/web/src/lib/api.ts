@@ -1,5 +1,5 @@
 import CryptoJS from 'crypto-js'
-import type { Shop, Product, ProductNote, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem } from '@statistic/shared'
+import type { Shop, Product, ProductNote, DashboardData, ExternalProduct, ExternalData, Visitor, ProductLabel, LabelProductStat, LabelSalesItem, LabelSalesProduct, LabelTrendItem, LabelTxTrendItem, PriceCompareResult } from '@statistic/shared'
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api'
 const ENCRYPT_KEY = 'wxtdefgabcdawn12'
@@ -309,4 +309,6 @@ export const api = {
     request<{ items: LabelSalesProduct[] }>(
       `/stats/label-sales-products?label_id=${labelId}${start ? `&start=${start}` : ''}${end ? `&end=${end}` : ''}${shopId ? `&shop_id=${shopId}` : ''}`,
     ),
+  priceCompare: (productId: string) =>
+    request<PriceCompareResult>(`/products/${productId}/price-compare`, { method: 'POST' }),
 }

@@ -317,3 +317,17 @@ export interface LabelSalesProduct {
   description: string
   tx_quantity: number
 }
+
+/** 比价结果里的一条外部商家报价（由 gxhy 以图搜图结果映射而来） */
+export interface PriceCompareItem {
+  title: string
+  merchant: string
+  price: number | null
+  imageUrl: string
+}
+
+/** 比价接口响应：items 已按 price 升序（null 价沉底）；myPrice 为本店价格（DB 字符串解析，无效为 null） */
+export interface PriceCompareResult {
+  items: PriceCompareItem[]
+  myPrice: number | null
+}

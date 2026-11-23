@@ -10,6 +10,7 @@ import AddSupplierModal from './products/AddSupplierModal'
 import BatchAddSupplierModal from './products/BatchAddSupplierModal'
 import SearchableSelect from '../components/SearchableSelect'
 import SetLabelModal from './products/SetLabelModal'
+import PriceCompareDrawer from './products/PriceCompareDrawer'
 import ProductNotesModal from '../components/ProductNotesModal'
 import ProductNotesAddModal from '../components/ProductNotesAddModal'
 import HoverPopup from '../components/HoverPopup'
@@ -73,6 +74,7 @@ export default function Products() {
   const [addSupplierProduct, setAddSupplierProduct] = useState<Product | null>(null)
   const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
   const [labelProduct, setLabelProduct] = useState<Product | null>(null)
+  const [compareProduct, setCompareProduct] = useState<Product | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -308,6 +310,7 @@ export default function Products() {
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
       <BatchAddSupplierModal productIds={batchSupplierIds} onClose={() => setBatchSupplierIds(null)} onSuccess={() => setSelectedIds(new Set())} />
       <SetLabelModal product={labelProduct} onClose={() => setLabelProduct(null)} />
+      <PriceCompareDrawer product={compareProduct} onClose={() => setCompareProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} onChanged={load} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} onChanged={load} />
 
@@ -404,6 +407,7 @@ export default function Products() {
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 mr-3">统计</button>
                         <button onClick={() => setTxProduct(p)} className="text-orange-600 hover:text-orange-800 mr-3">成交</button>
                         <button onClick={() => setNotesProduct(p)} className="text-blue-600 hover:text-blue-800 mr-3">备注</button>
+                        <button onClick={() => setCompareProduct(p)} className="text-cyan-600 hover:text-cyan-800 mr-3">比价</button>
                         <HoverPopup
                           side="bottom-right"
                           interactive
