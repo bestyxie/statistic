@@ -271,18 +271,13 @@ products.post('/:id/price-compare', async (c) => {
     if (body.success === false || !body.data) {
       return c.json({ error: body.msg || '比价服务暂不可用' }, 502)
     }
-    const items = (body.data.sortList || [])
-      .map((s): PriceCompareItem => ({
-        title: s.title || '',
-        merchant: s.address || '',
-        price: typeof s.price === 'number' ? s.price : null,
-        imageUrl: (s.pics && s.pics.picList[0]) || '',
-      }))
-      .sort((a, b) => {
-        if (a.price === null) return 1
-        if (b.price === null) return -1
-        return a.price - b.price
-      })
+    // 保持接口返回顺序展示（不排序）
+    const items = (body.data.sortList || []).map((s): PriceCompareItem => ({
+      title: s.title || '',
+      merchant: s.address || '',
+      price: typeof s.price === 'number' ? s.price : null,
+      imageUrl: (s.pics && s.pics.picList[0]) || '',
+    }))
     result = { items, myPrice: Number.isFinite(myPrice) ? myPrice : null }
   } catch {
     return c.json({ error: '比价服务暂不可用' }, 502)

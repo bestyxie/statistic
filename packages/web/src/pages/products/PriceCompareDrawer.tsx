@@ -39,9 +39,9 @@ export default function PriceCompareDrawer({ product, onClose }: Props) {
 
   const items = result?.items ?? []
   const myPrice = result?.myPrice ?? null
-  // 接口已按价格升序、null 价沉底，首个有价项即最低价
+  // 列表按接口原顺序展示，最低价从全部有价项中取
   const priced = items.filter((i): i is PricedItem => i.price !== null)
-  const minPrice = priced.length > 0 ? priced[0].price : null
+  const minPrice = priced.length > 0 ? Math.min(...priced.map((i) => i.price)) : null
   const cheaperCount = myPrice !== null ? priced.filter((i) => i.price < myPrice).length : 0
 
   return (

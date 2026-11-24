@@ -34,7 +34,7 @@ describe('POST /products/:id/price-compare', () => {
     vi.unstubAllGlobals()
   })
 
-  it('下载封面图并调 gxhy 接口，返回按价格升序的精简结果（null 价沉底）', async () => {
+  it('下载封面图并调 gxhy 接口，返回保持接口原顺序的精简结果（不排序）', async () => {
     await db.prepare("INSERT INTO products (id, shop_id, name, image_url, price) VALUES (?, ?, ?, ?, ?)")
       .bind('p-A', 'shop-1', 'A', 'http://img.example.com/cover.jpg', '160').run()
 
@@ -55,12 +55,12 @@ describe('POST /products/:id/price-compare', () => {
     const body = await res.json() as { items: PriceCompareItem[]; myPrice: number | null }
 
     expect(body.myPrice).toBe(160)
-    expect(body.items.map((i) => i.title)).toEqual(['便宜的', '贵的', '无价'])
+    expect(body.items.map((i) => i.title)).toEqual(['贵的', '便宜的', '无价'])
     expect(body.items[0]).toEqual({
-      title: '便宜的',
-      merchant: '档口甲',
-      price: 80,
-      imageUrl: 'http://img.example.com/1.jpg',
+      title: '贵的',
+      merchant: '档口乙',
+      price: 300,
+      imageUrl: 'http://img.example.com/2.jpg',
     })
 
     // 第二跳 fetch：FormData 携带 file + index=0

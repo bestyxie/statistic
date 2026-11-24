@@ -26,11 +26,12 @@ const product: Product = {
   updated_at: '2026-01-01',
 }
 
+// 顺序同接口原样返回（不排序）：贵在前、最低价在中间
 const result: PriceCompareResult = {
   myPrice: 160,
   items: [
-    { title: '便宜同款', merchant: '档口甲', price: 80, imageUrl: 'http://img.example.com/1.jpg' },
     { title: '贵同款', merchant: '档口乙', price: 300, imageUrl: 'http://img.example.com/2.jpg' },
+    { title: '便宜同款', merchant: '档口甲', price: 80, imageUrl: 'http://img.example.com/1.jpg' },
     { title: '无价同款', merchant: '档口丙', price: null, imageUrl: 'http://img.example.com/3.jpg' },
   ],
 }
