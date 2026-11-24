@@ -2,10 +2,18 @@ import { useEffect, useState } from 'react'
 import { api } from '../../lib/api'
 import Modal from '../../components/ui/Modal'
 import { useImagePreview } from '../../components/mobile/MobileImagePreview'
-import type { Product, PriceCompareItem, PriceCompareResult } from '@statistic/shared'
+import type { PriceCompareItem, PriceCompareResult } from '@statistic/shared'
+
+/** 发起比价所需的最小商品信息（Product、LabelProductStat 均结构兼容） */
+export interface PriceCompareTarget {
+  id: string
+  image_url: string
+  description: string
+  sku: string
+}
 
 interface Props {
-  product: Product | null
+  product: PriceCompareTarget | null
   onClose: () => void
 }
 

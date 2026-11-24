@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../../../lib/api'
 import ProductDetailDrawer from '../../../components/ProductDetailDrawer'
+import PriceCompareDrawer from '../../products/PriceCompareDrawer'
 import { useImagePreview } from '../../../components/mobile/MobileImagePreview'
 import Modal from '../../../components/ui/Modal'
 import type { LabelProductStat } from '@statistic/shared'
@@ -21,6 +22,7 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null)
+  const [compareProduct, setCompareProduct] = useState<LabelProductStat | null>(null)
   const { show: showImage } = useImagePreview()
 
   useEffect(() => {
@@ -91,10 +93,15 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
           ) : (
             <div className="bg-white rounded-lg border border-gray-200 divide-y divide-gray-100">
               {products.map((p, idx) => (
-                <button
+                <div
                   key={p.id}
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setSelectedProductId(p.id)}
-                  className="w-full flex items-center gap-3 p-3 sm:p-4 text-left hover:bg-gray-50"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setSelectedProductId(p.id)
+                  }}
+                  className="w-full flex items-center gap-3 p-3 sm:p-4 text-left hover:bg-gray-50 cursor-pointer"
                 >
                   <span className="text-xs text-gray-400 w-5 text-center shrink-0">{idx + 1}</span>
                   {p.image_url ? (
@@ -119,7 +126,16 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
                     <p className="text-sm font-semibold text-gray-800">{p.visitor_count} 访客</p>
                     <p className="text-xs text-gray-500">{p.view_count} 次浏览</p>
                   </div>
-                </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setCompareProduct(p)
+                    }}
+                    className="text-cyan-600 hover:text-cyan-800 text-sm shrink-0"
+                  >
+                    比价
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -129,6 +145,9 @@ export default function LabelProductDrawer({ target, onClose }: Props) {
 
       {/* 点击单个商品 → 复用已有商品详情抽屉（z-50，叠在本抽屉之上）*/}
       <ProductDetailDrawer productId={selectedProductId} onClose={() => setSelectedProductId(null)} />
+
+      {/* 点击比价 → 复用比价抽屉（同 z-50，DOM 在后叠在上层）*/}
+      <PriceCompareDrawer product={compareProduct} onClose={() => setCompareProduct(null)} />
     </>
   )
 }
