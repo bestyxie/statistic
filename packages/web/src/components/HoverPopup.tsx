@@ -1,4 +1,5 @@
 import { useState, useRef, useLayoutEffect, type ReactNode, type CSSProperties } from 'react'
+import { createPortal } from 'react-dom'
 
 type Side = 'right' | 'overlay' | 'bottom-right' | 'bottom-left'
 
@@ -110,17 +111,23 @@ export default function HoverPopup({ children, popup, side = 'right', popupClass
       onClick={(e) => { e.stopPropagation(); cancelClose(); setShow((s) => !s) }}
     >
       {children}
-      {show && (
-        <div
-          ref={popupRef}
-          className={`fixed z-[80] bg-white rounded-lg shadow-xl border border-gray-200 ${popupClassName}`}
-          style={style}
-          onMouseEnter={handleEnter}
-          onMouseLeave={handleLeave}
-        >
-          {popup}
-        </div>
-      )}
+      {show &&
+        createPortal(
+          // 必须挂到 body：常驻场景是弹窗内悬停看大图，而 Modal 面板因动画
+          // fill-mode both 残留 transform（scale(1)/translateX(0)），transform
+          // 非 none 的元素是 fixed 后代的包含块，留在面板内时按视口算出的
+          // top/left 会被当作面板内坐标，弹层大幅偏移
+          <div
+            ref={popupRef}
+            className={`fixed z-[80] bg-white rounded-lg shadow-xl border border-gray-200 ${popupClassName}`}
+            style={style}
+            onMouseEnter={handleEnter}
+            onMouseLeave={handleLeave}
+          >
+            {popup}
+          </div>,
+          document.body,
+        )}
     </span>
   )
 }
