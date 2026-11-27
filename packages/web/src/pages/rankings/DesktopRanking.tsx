@@ -8,6 +8,7 @@ import BatchAddSupplierModal from '../products/BatchAddSupplierModal'
 import SearchableSelect from '../../components/SearchableSelect'
 import AddSupplierModal from '../products/AddSupplierModal'
 import ProductSuppliersModal from '../products/ProductSuppliersModal'
+import PriceCompareDrawer from '../products/PriceCompareDrawer'
 import type { ProductRankingItem } from '../../lib/api'
 import { useNavigate } from 'react-router-dom'
 import { useState, useCallback } from 'react'
@@ -30,6 +31,7 @@ export default function DesktopRanking() {
   const [batchSupplierIds, setBatchSupplierIds] = useState<string[] | null>(null)
   const [suppliersProduct, setSuppliersProduct] = useState<ProductRankingItem | null>(null)
   const [addSupplierProduct, setAddSupplierProduct] = useState<ProductRankingItem | null>(null)
+  const [compareProduct, setCompareProduct] = useState<ProductRankingItem | null>(null)
 
   const toggleSelectAll = useCallback(() => {
     const allSelected = ranking.every((p) => selectedIds.has(p.id))
@@ -166,6 +168,7 @@ export default function DesktopRanking() {
                       <td className="py-3 px-5 text-right whitespace-nowrap">
                         <button onClick={() => setDrawerId(p.id)} className="text-green-600 hover:text-green-800 text-sm">统计</button>
                         <button onClick={() => setNotesProduct(p)} className="text-blue-600 hover:text-blue-800 text-sm ml-3">备注</button>
+                        <button onClick={() => setCompareProduct(p)} className="text-cyan-600 hover:text-cyan-800 text-sm ml-3">比价</button>
                         <HoverPopup
                           side="bottom-right"
                           interactive
@@ -204,6 +207,7 @@ export default function DesktopRanking() {
       <AddSupplierModal product={addSupplierProduct} onClose={() => setAddSupplierProduct(null)} />
       <ProductNotesModal product={notesProduct} onClose={() => setNotesProduct(null)} />
       <ProductNotesAddModal product={addNoteProduct} onClose={() => setAddNoteProduct(null)} />
+      <PriceCompareDrawer product={compareProduct} onClose={() => setCompareProduct(null)} />
     </>
   )
 }
